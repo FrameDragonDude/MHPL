@@ -1,0 +1,41 @@
+# Java
+*.class
+*.log
+*.jar
+*.war
+*.ear
+*.xml
+hs_err_pid*
+
+# IntelliJ
+.idea/
+*.iml
+out/
+
+# Eclipse
+.classpath
+.project
+.settings/
+
+# NetBeans
+nbproject/private/
+build/
+dist/
+nbbuild/
+
+# VS Code
+.vscode/
+target/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Gradle
+.gradle/
+gradle/
+bin/
+build.gradle.kts
+gradle.properties
+gradlew
+settings.gradle.kts
