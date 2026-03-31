@@ -42,4 +42,50 @@ public class CandidateService {
 		}
 		return candidateDAO.updateCandidate(candidate);
 	}
+
+	public boolean createCandidate(CandidateDTO candidate) throws SQLException {
+		if (candidate == null) {
+			return false;
+		}
+		if (candidate.getCccd() == null || candidate.getCccd().trim().isEmpty()) {
+			return false;
+		}
+		if (candidate.getTen() == null || candidate.getTen().trim().isEmpty()) {
+			return false;
+		}
+		return candidateDAO.createCandidate(candidate);
+	}
+
+	public boolean createCandidateFull(CandidateDTO candidate) throws SQLException {
+		if (candidate == null) {
+			return false;
+		}
+		if (candidate.getCccd() == null || candidate.getCccd().trim().isEmpty()) {
+			return false;
+		}
+		if (candidate.getTen() == null || candidate.getTen().trim().isEmpty()) {
+			return false;
+		}
+		return candidateDAO.createCandidateFull(candidate);
+	}
+
+	public boolean updateCandidateFull(CandidateDTO candidate) throws SQLException {
+		if (candidate == null || candidate.getIdThisinh() <= 0) {
+			return false;
+		}
+		if (candidate.getCccd() == null || candidate.getCccd().trim().isEmpty()) {
+			return false;
+		}
+		if (candidate.getTen() == null || candidate.getTen().trim().isEmpty()) {
+			return false;
+		}
+		return candidateDAO.updateCandidateFull(candidate);
+	}
+
+	public boolean deleteCandidateById(int idThisinh) throws SQLException {
+		if (idThisinh <= 0) {
+			return false;
+		}
+		return candidateDAO.deleteCandidateById(idThisinh);
+	}
 }
