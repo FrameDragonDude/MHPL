@@ -14,10 +14,29 @@ public class DBConnection {
 	}
 
 	public static Connection getConnection() throws SQLException {
+		ensureJdbcDriverLoaded();
 		String url = getEnvOrDefault("MHPL_DB_URL", DEFAULT_URL);
 		String user = getEnvOrDefault("MHPL_DB_USER", DEFAULT_USER);
 		String password = getEnvOrDefault("MHPL_DB_PASSWORD", DEFAULT_PASSWORD);
 		return DriverManager.getConnection(url, user, password);
+	}
+
+	private static void ensureJdbcDriverLoaded() throws SQLException {
+		try {
+			Class.forName("com.mysql.cj.jdbc.Driver");
+			return;
+		} catch (ClassNotFoundException ignored) {
+			// Fallback for older connector naming.
+		}
+
+		try {
+			Class.forName("com.mysql.jdbc.Driver");
+		} catch (ClassNotFoundException ex) {
+			throw new SQLException(
+				"MySQL JDBC driver not found. Add mysql-connector-j*.jar into libs/ and reload Java project.",
+				ex
+			);
+		}
 	}
 
 	private static String getEnvOrDefault(String key, String defaultValue) {
