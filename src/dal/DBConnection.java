@@ -6,9 +6,9 @@ import java.sql.SQLException;
 
 public class DBConnection {
 
-	private static final String DEFAULT_URL = "jdbc:mysql://localhost:3306/xettuyen2026?useSSL=false&serverTimezone=UTC";
+	private static final String DEFAULT_URL = "jdbc:mysql://localhost:3306/xettuyen2026?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC";
 	private static final String DEFAULT_USER = "root";
-	private static final String DEFAULT_PASSWORD = "";
+	private static final String DEFAULT_PASSWORD = "12345";
 
 	private DBConnection() {
 	}
