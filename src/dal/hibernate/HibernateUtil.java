@@ -1,7 +1,13 @@
 package dal.hibernate;
 
+import dal.entities.AspirationEntity;
 import dal.entities.CandidateEntity;
 import dal.entities.ExamScoreEntity;
+import dal.entities.PermissionEntity;
+import dal.entities.RoleEntity;
+import dal.entities.RolePermissionEntity;
+import dal.entities.UserEntity;
+import dal.entities.UserRoleEntity;
 import org.hibernate.SessionFactory;
 import org.hibernate.boot.Metadata;
 import org.hibernate.boot.MetadataSources;
@@ -34,9 +40,14 @@ public final class HibernateUtil {
 		settings.put(Environment.USER, getEnvOrDefault("MHPL_DB_USER", DEFAULT_USER));
 		settings.put(Environment.PASS, getEnvOrDefault("MHPL_DB_PASSWORD", DEFAULT_PASSWORD));
 		settings.put(Environment.DIALECT, "org.hibernate.dialect.MySQL8Dialect");
-		settings.put(Environment.SHOW_SQL, "false");
-		settings.put(Environment.FORMAT_SQL, "false");
+		settings.put(Environment.SHOW_SQL, getEnvOrDefault("MHPL_HIBERNATE_SHOW_SQL", "false"));
+		settings.put(Environment.FORMAT_SQL, getEnvOrDefault("MHPL_HIBERNATE_FORMAT_SQL", "false"));
 		settings.put(Environment.HBM2DDL_AUTO, "none");
+		settings.put(Environment.POOL_SIZE, getEnvOrDefault("MHPL_HIBERNATE_POOL_SIZE", "10"));
+		settings.put(Environment.STATEMENT_BATCH_SIZE, getEnvOrDefault("MHPL_HIBERNATE_BATCH_SIZE", "30"));
+		settings.put(Environment.ORDER_INSERTS, "true");
+		settings.put(Environment.ORDER_UPDATES, "true");
+		settings.put(Environment.JDBC_TIME_ZONE, "UTC");
 
 		StandardServiceRegistry registry = new StandardServiceRegistryBuilder()
 				.applySettings(settings)
@@ -45,6 +56,12 @@ public final class HibernateUtil {
 		Metadata metadata = new MetadataSources(registry)
 				.addAnnotatedClass(CandidateEntity.class)
 				.addAnnotatedClass(ExamScoreEntity.class)
+				.addAnnotatedClass(AspirationEntity.class)
+				.addAnnotatedClass(UserEntity.class)
+				.addAnnotatedClass(RoleEntity.class)
+				.addAnnotatedClass(PermissionEntity.class)
+				.addAnnotatedClass(UserRoleEntity.class)
+				.addAnnotatedClass(RolePermissionEntity.class)
 				.buildMetadata();
 
 		sessionFactory = metadata.buildSessionFactory();
