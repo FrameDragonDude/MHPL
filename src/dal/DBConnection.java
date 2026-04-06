@@ -10,8 +10,8 @@ public class DBConnection {
 	private static final String DEFAULT_USER = "root";
 	private static final String DEFAULT_PASSWORD = "12345";
 
-	private DBConnection() {
-	}
+//	private DBConnection() {
+//	}
 
 	public static Connection getConnection() throws SQLException {
 		ensureJdbcDriverLoaded();
