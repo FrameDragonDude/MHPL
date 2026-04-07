@@ -49,5 +49,17 @@
             <artifactId>poi-ooxml</artifactId>
             <version>5.3.0</version>
         </dependency>
+                <dependency>
+            <groupId>org.lucee</groupId>
+            <artifactId>lucee</artifactId>
+            <version>7.0.0.242-RC</version>
+            <type>jar</type>
+        </dependency>
+        <dependency>
+            <groupId>org.tomitribe.jkta</groupId>
+            <artifactId>jkta</artifactId>
+            <version>0.12</version>
+            <type>jar</type>
+        </dependency>
     </dependencies>
 </project>
