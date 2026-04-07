@@ -1,5 +1,7 @@
 package dal.hibernate;
 
+import dal.entities.CandidateEntity;
+import dal.entities.ExamScoreEntity;
 import org.hibernate.SessionFactory;
 import org.hibernate.boot.registry.StandardServiceRegistry;
 import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
@@ -18,6 +20,8 @@ public final class HibernateUtil {
             try {
                 Configuration configuration = new Configuration();
                 configuration.configure("hibernate.cfg.xml");
+                configuration.addAnnotatedClass(CandidateEntity.class);
+                configuration.addAnnotatedClass(ExamScoreEntity.class);
 
                 registry = new StandardServiceRegistryBuilder()
                         .applySettings(configuration.getProperties())
