@@ -19,6 +19,8 @@ import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.ListSelectionModel;
 import javax.swing.SwingUtilities;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
@@ -81,6 +83,8 @@ public class CandidatePanel extends JPanel {
 		this.lblPaging = new JLabel("Trang 1/1 (20 dòng/trang)");
 		this.lblRows = new JLabel("Tổng dòng: 0");
 		this.actionColumnIndex = tableModel.getColumnCount() - 1;
+
+		attachLiveSearch();
 
 		setLayout(new BorderLayout(8, 8));
 		add(buildTopPanel(), BorderLayout.NORTH);
@@ -220,16 +224,10 @@ public class CandidatePanel extends JPanel {
 
 		JPanel searchPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
 		searchPanel.setOpaque(false);
-		JButton btnSearch = new JButton("Tìm");
-		JButton btnReset = new JButton("Đặt lại");
-		styleButton(btnSearch, COLOR_BLUE);
-		styleButton(btnReset, COLOR_BLUE_SOFT);
 		searchPanel.add(new JLabel("CCCD:"));
 		searchPanel.add(txtSearchCccd);
 		searchPanel.add(new JLabel("Họ tên:"));
 		searchPanel.add(txtSearchName);
-		searchPanel.add(btnSearch);
-		searchPanel.add(btnReset);
 		searchCard.add(searchPanel, BorderLayout.CENTER);
 
 		JPanel controls = new JPanel(new FlowLayout(FlowLayout.RIGHT));
@@ -247,13 +245,6 @@ public class CandidatePanel extends JPanel {
 		controls.add(btnPrev);
 		controls.add(btnNext);
 
-		btnSearch.addActionListener(e -> loadPage(1));
-		btnReset.addActionListener(e -> {
-			txtSearchCccd.setText("");
-			txtSearchName.setText("");
-			loadPage(1);
-		});
-
 		btnPrev.addActionListener(e -> {
 			if (currentPage > 1) {
 				loadPage(currentPage - 1);
@@ -269,6 +260,28 @@ public class CandidatePanel extends JPanel {
 		wrapper.add(searchCard, BorderLayout.CENTER);
 		wrapper.add(controls, BorderLayout.SOUTH);
 		return wrapper;
+	}
+
+	private void attachLiveSearch() {
+		DocumentListener listener = new DocumentListener() {
+			@Override
+			public void insertUpdate(DocumentEvent e) {
+				loadPage(1);
+			}
+
+			@Override
+			public void removeUpdate(DocumentEvent e) {
+				loadPage(1);
+			}
+
+			@Override
+			public void changedUpdate(DocumentEvent e) {
+				loadPage(1);
+			}
+		};
+
+		txtSearchCccd.getDocument().addDocumentListener(listener);
+		txtSearchName.getDocument().addDocumentListener(listener);
 	}
 
 	private void loadPage(int page) {
