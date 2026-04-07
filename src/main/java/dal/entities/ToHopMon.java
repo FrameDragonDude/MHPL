@@ -14,15 +14,21 @@ import jakarta.persistence.*;
 public class ToHopMon implements Serializable{
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name="idtohop")
     private int idtohop;
+    
     @Column(name="matohop")
     private String matohop;
+    
     @Column(name="mon1")
     private String mon1;
+    
     @Column(name="mon2")
     private String mon2;
+    
     @Column(name="mon3")
     private String mon3;
+    
     @Column(name="tentohop")
     private String tentohop;
 
