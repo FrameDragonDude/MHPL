@@ -2,6 +2,7 @@ package dal.hibernate;
 
 import dal.entities.CandidateEntity;
 import dal.entities.ExamScoreEntity;
+import dal.entities.Nganh;
 import dal.entities.ToHopMon;
 import org.hibernate.SessionFactory;
 import org.hibernate.boot.registry.StandardServiceRegistry;
@@ -21,10 +22,14 @@ public final class HibernateUtil {
             try {
                 Configuration configuration = new Configuration();
                 configuration.configure("hibernate.cfg.xml");
+                
+                // tạo entity mới thì phải add vào đây trước thì mới sử dụng được
                 configuration.addAnnotatedClass(CandidateEntity.class);
                 configuration.addAnnotatedClass(ExamScoreEntity.class);
                 configuration.addAnnotatedClass(ToHopMon.class);
+                configuration.addAnnotatedClass(Nganh.class);
 
+                
                 registry = new StandardServiceRegistryBuilder()
                         .applySettings(configuration.getProperties())
                         .build();

@@ -12,9 +12,12 @@ import dal.dao.ToHopMonDAO;
  */
 public class daoTester {
     public static void main(String[] args) {
-        ToHopMonDAO dao = new ToHopMonDAO();
+//        ToHopMonDAO dao = new ToHopMonDAO();
 //        dao.Sua("tohop_test", "Toan", "Tin học", "Bóng đá", "tổ hợp thử nghiệm");
 //        dao.Xoa();
-        dao.LayDanhSach();
+//        dao.LayDanhSach();
+            
+          NganhDAO dao = new NganhDAO();
+          dao.LayDanhSach();
     }
 }
