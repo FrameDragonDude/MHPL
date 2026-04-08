@@ -20,12 +20,13 @@ C:\Users\KIET\Documents\NetBeansProjects\QuanLyTuyenSinh\src\main\java\dal\dao\E
 C:\Users\KIET\Documents\NetBeansProjects\QuanLyTuyenSinh\src\main\java\dal\dao\MajorCombinationDAO.java
 C:\Users\KIET\Documents\NetBeansProjects\QuanLyTuyenSinh\src\main\java\dal\dao\MajorDAO.java
 C:\Users\KIET\Documents\NetBeansProjects\QuanLyTuyenSinh\src\main\java\dal\dao\RolePermissionDAO.java
-C:\Users\KIET\Documents\NetBeansProjects\QuanLyTuyenSinh\src\main\java\dal\dao\SubjectCombinationDAO.java
+C:\Users\KIET\Documents\NetBeansProjects\QuanLyTuyenSinh\src\main\java\dal\dao\ToHopMonDAO.java
 C:\Users\KIET\Documents\NetBeansProjects\QuanLyTuyenSinh\src\main\java\dal\dao\UserDAO.java
 C:\Users\KIET\Documents\NetBeansProjects\QuanLyTuyenSinh\src\main\java\dal\DBConnection.java
 C:\Users\KIET\Documents\NetBeansProjects\QuanLyTuyenSinh\src\main\java\dal\entities\AspirationEntity.java
 C:\Users\KIET\Documents\NetBeansProjects\QuanLyTuyenSinh\src\main\java\dal\entities\CandidateEntity.java
 C:\Users\KIET\Documents\NetBeansProjects\QuanLyTuyenSinh\src\main\java\dal\entities\ExamScoreEntity.java
+C:\Users\KIET\Documents\NetBeansProjects\QuanLyTuyenSinh\src\main\java\dal\entities\Nganh.java
 C:\Users\KIET\Documents\NetBeansProjects\QuanLyTuyenSinh\src\main\java\dal\entities\PermissionEntity.java
 C:\Users\KIET\Documents\NetBeansProjects\QuanLyTuyenSinh\src\main\java\dal\entities\RoleEntity.java
 C:\Users\KIET\Documents\NetBeansProjects\QuanLyTuyenSinh\src\main\java\dal\entities\RolePermissionEntity.java
@@ -70,6 +71,7 @@ C:\Users\KIET\Documents\NetBeansProjects\QuanLyTuyenSinh\src\main\java\gui\panel
 C:\Users\KIET\Documents\NetBeansProjects\QuanLyTuyenSinh\src\main\java\gui\panels\ExamScorePanel.java
 C:\Users\KIET\Documents\NetBeansProjects\QuanLyTuyenSinh\src\main\java\gui\panels\ScoreStatisticsPanel.java
 C:\Users\KIET\Documents\NetBeansProjects\QuanLyTuyenSinh\src\main\java\gui\panels\UserManagementPanel.java
+C:\Users\KIET\Documents\NetBeansProjects\QuanLyTuyenSinh\src\main\java\NganhDAO.java
 C:\Users\KIET\Documents\NetBeansProjects\QuanLyTuyenSinh\src\main\java\QuanLyTuyenSinh.java
 C:\Users\KIET\Documents\NetBeansProjects\QuanLyTuyenSinh\src\main\java\utils\excel\CandidateExcelExportUtil.java
 C:\Users\KIET\Documents\NetBeansProjects\QuanLyTuyenSinh\src\main\java\utils\excel\CandidateExcelImportUtil.java

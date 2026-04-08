@@ -13,6 +13,7 @@ QuanLyTuyenSinh.class
 gui\panels\UserManagementPanel.class
 dal\dao\AuditLogDAO.class
 dal\entities\CandidateEntity.class
+NganhDAO.class
 dal\dao\RolePermissionDAO.class
 utils\HibernateUtils.class
 bus\CatalogService.class
@@ -22,7 +23,6 @@ gui\panels\ScoreStatisticsPanel.class
 gui\panels\AuditLogPanel.class
 bus\CandidateService.class
 dto\AspirationDTO.class
-dal\dao\SubjectCombinationDAO.class
 gui\panels\AspirationPanel.class
 utils\excel\CandidateExcelImportUtil.class
 bus\AspirationService.class
@@ -58,6 +58,7 @@ gui\components\AppHeader.class
 dal\entities\ExamScoreEntity.class
 gui\panels\CandidatePanel$1.class
 bus\AuthorizationService.class
+dal\dao\ToHopMonDAO.class
 gui\dialogs\CandidateFormDialog.class
 gui\panels\BonusPointPanel.class
 gui\panels\CandidatePanel$ActionCellEditor.class
@@ -77,3 +78,4 @@ dto\ConversionRuleDTO.class
 dto\BonusPointDTO.class
 dal\entities\AspirationEntity.class
 gui\panels\CandidatePanel$ActionCellRenderer.class
+dal\entities\Nganh.class

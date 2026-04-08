@@ -51,7 +51,7 @@ public class ToHopMonDAO {
         
         session.close();
     }
-    public void LayDanhSach() {
+    public List<ToHopMon> LayDanhSach() {
         Session session = HibernateUtil.getSessionFactory().openSession();
         
         Query q = session.createQuery("FROM ToHopMon");
@@ -60,5 +60,7 @@ public class ToHopMonDAO {
         ds.forEach(c -> System.out.println(c.getMatohop() + " " + c.getTentohop()));
         
         session.close();
+        
+        return ds;
     }
 }
