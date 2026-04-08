@@ -3,3 +3,5 @@ target/
 .vscode/
 
 nb-configuration.xml
+src/main/resources/hibernate.cfg.xml
+src\test\java\daoTester.java
