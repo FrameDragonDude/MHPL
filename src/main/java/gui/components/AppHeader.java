@@ -1,61 +1,124 @@
 package gui.components;
 
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.Dimension;
-import java.awt.Font;
-import java.awt.GridLayout;
-import javax.swing.BorderFactory;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.SwingConstants;
+import com.formdev.flatlaf.FlatClientProperties;
+import gui.SessionManager;
+import gui.MainFrame;
+import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.net.URL;
+import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 
 public class AppHeader extends JPanel {
 
-    public AppHeader() {
+    private final MainFrame parentFrame;
+    private final Color TEXT_MAIN = new Color(255,255,255);
+    private final Color TEXT_SUB = new Color(199, 106,0); 
+
+    public AppHeader(MainFrame parentFrame) {
+        this.parentFrame = parentFrame;
+        
         setLayout(new BorderLayout());
-        setPreferredSize(new Dimension(0, 60));
-        setBackground(new Color(37, 99, 235));
-        setBorder(BorderFactory.createEmptyBorder(8, 14, 8, 14));
+        setOpaque(false);
+        setBorder(new EmptyBorder(0, 20, 0, 20));
 
-        JLabel closeLabel = new JLabel("x");
-        closeLabel.setForeground(Color.WHITE);
-        closeLabel.setFont(new Font("Segoe UI", Font.PLAIN, 16));
+        add(createLeftTitle(), BorderLayout.WEST);
 
-        JLabel titleLabel = new JLabel("He thong quan ly tuyen sinh");
-        titleLabel.setForeground(Color.WHITE);
-        titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 28));
+        add(createUserProfile(), BorderLayout.EAST);
+    }
 
-        JLabel subtitleLabel = new JLabel("Admin Dashboard");
-        subtitleLabel.setForeground(new Color(219, 234, 254));
-        subtitleLabel.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+    private JPanel createLeftTitle() {
+        JPanel panel = new JPanel(new GridLayout(2, 1, 0, 2));
+        panel.setOpaque(false);
 
-        JPanel leftPanel = new JPanel(new BorderLayout(10, 0));
-        leftPanel.setOpaque(false);
-        leftPanel.add(closeLabel, BorderLayout.WEST);
+        JLabel titleLabel = new JLabel("HỆ THỐNG TUYỂN SINH SGU");
+        titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 18));
+        titleLabel.setForeground(TEXT_MAIN);
 
-        JPanel titlePanel = new JPanel(new GridLayout(2, 1));
-        titlePanel.setOpaque(false);
-        titlePanel.add(titleLabel);
-        titlePanel.add(subtitleLabel);
-        leftPanel.add(titlePanel, BorderLayout.CENTER);
+        JLabel subtitleLabel = new JLabel("Học kỳ 2 - Niên khóa 2025-2026");
+        subtitleLabel.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        subtitleLabel.setForeground(TEXT_SUB);
 
-        JLabel userLabel = new JLabel("Admin User");
-        userLabel.setForeground(Color.WHITE);
-        userLabel.setHorizontalAlignment(SwingConstants.RIGHT);
-        userLabel.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        panel.add(titleLabel);
+        panel.add(subtitleLabel);
+        return panel;
+    }
 
-        JLabel emailLabel = new JLabel("admin@tuyensinh.edu.vn");
-        emailLabel.setForeground(new Color(219, 234, 254));
-        emailLabel.setHorizontalAlignment(SwingConstants.RIGHT);
-        emailLabel.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+    private JPanel createUserProfile() {
+        JPanel panel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 15, 10));
+        panel.setOpaque(false);
+        JPanel textPanel = new JPanel(new GridLayout(2, 1, 0, 2));
+        textPanel.setOpaque(false);
 
-        JPanel rightPanel = new JPanel(new GridLayout(2, 1));
-        rightPanel.setOpaque(false);
-        rightPanel.add(userLabel);
-        rightPanel.add(emailLabel);
+        String fullName = SessionManager.getCurrentUserFullname() != null ? 
+                           SessionManager.getCurrentUserFullname() : "Admin";
+        String role = SessionManager.isAdmin() ? "Quản trị viên" : "Nhân viên";
 
-        add(leftPanel, BorderLayout.WEST);
-        add(rightPanel, BorderLayout.EAST);
+        JLabel nameLabel = new JLabel(fullName, SwingConstants.RIGHT);
+        nameLabel.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        nameLabel.setForeground(TEXT_MAIN);
+
+        JLabel roleLabel = new JLabel(role, SwingConstants.RIGHT);
+        roleLabel.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        roleLabel.setForeground(TEXT_MAIN); 
+
+        textPanel.add(nameLabel);
+        textPanel.add(roleLabel);
+
+
+        JLabel avatarLabel = new JLabel();
+        try {
+            URL url = getClass().getResource("/icons/icons8-user-32.png"); 
+            if (url != null) {
+                avatarLabel.setIcon(new ImageIcon(url));
+            }
+        } catch (Exception ignored) {}
+        
+        panel.add(textPanel);
+        panel.add(avatarLabel);
+
+        JPopupMenu userMenu = createUserInfoPopup();
+        panel.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                userMenu.show(panel, 0, panel.getHeight());
+            }
+
+            @Override
+            public void mouseExited(MouseEvent e) {
+                panel.setOpaque(false);
+                panel.repaint();
+            }
+        });
+
+        return panel;
+    }
+
+    private JPopupMenu createUserInfoPopup() {
+        JPopupMenu menu = new JPopupMenu();
+        menu.putClientProperty(FlatClientProperties.STYLE, "arc: 12; border: 1,1,1,1,#e2e8f0");
+
+        JMenuItem itemProfile = new JMenuItem(" Thông tin cá nhân");
+        
+        JMenuItem itemPassword = new JMenuItem(" Đổi mật khẩu");
+        itemPassword.addActionListener(e -> {
+            if (parentFrame != null) {
+                parentFrame.switchPanel("CHANGE_PASSWORD");
+            }
+        });
+
+        JMenuItem itemLogout = new JMenuItem(" Đăng xuất");
+        itemLogout.setForeground(Color.RED);
+        itemLogout.addActionListener(e -> {
+            if (parentFrame != null) parentFrame.logout();
+        });
+
+        menu.add(itemProfile);
+        menu.add(itemPassword);
+        menu.addSeparator();
+        menu.add(itemLogout);
+
+        return menu;
     }
 }
