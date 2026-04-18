@@ -1,12 +1,13 @@
-import gui.MainFrame;
+import gui.LoginFrame;
 import javax.swing.SwingUtilities;
 
 public class QuanLyTuyenSinh {
 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
-            MainFrame frame = new MainFrame();
-            frame.setVisible(true);
+            // Hiển thị LoginFrame trước
+            LoginFrame loginFrame = new LoginFrame();
+            loginFrame.setVisible(true);
         });
     }
 }
