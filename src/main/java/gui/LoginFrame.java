@@ -12,7 +12,6 @@ import java.sql.SQLException;
 
 public class LoginFrame extends JFrame {
 
-    // Khai báo các biến thành viên để dùng chung trong class
     private final AuthService authService;
     private JTextField tfUser;
     private JPasswordField tfPass;
@@ -23,7 +22,6 @@ public class LoginFrame extends JFrame {
     private final Color TEXT_SUB = new Color(100, 116, 139);
 
     public LoginFrame() {
-        // Khởi tạo service
         this.authService = new AuthService();
 
         try {
@@ -50,7 +48,6 @@ public class LoginFrame extends JFrame {
         JPanel mainPanel = new JPanel(new GridLayout(1, 2));
         mainPanel.setBackground(Color.WHITE);
 
-        // --- PHẦN BÊN TRÁI: GRADIENT ---
         JPanel leftPanel = new JPanel() {
             @Override
             protected void paintComponent(Graphics g) {
@@ -71,7 +68,6 @@ public class LoginFrame extends JFrame {
         welcomeTxt.setForeground(Color.WHITE);
         leftPanel.add(welcomeTxt);
 
-        // --- PHẦN BÊN PHẢI: FORM ---
         JPanel rightPanel = new JPanel(new GridBagLayout());
         rightPanel.setBackground(Color.WHITE);
 
@@ -88,7 +84,6 @@ public class LoginFrame extends JFrame {
         lbSub.setFont(new Font("Segoe UI", Font.PLAIN, 14));
         lbSub.setForeground(TEXT_SUB);
 
-        // Username
         JLabel lbUserLabel = new JLabel("Username / Email");
         lbUserLabel.setFont(new Font("Segoe UI", Font.BOLD, 15));
         lbUserLabel.setBorder(new EmptyBorder(30, 0, 8, 0));
@@ -99,7 +94,6 @@ public class LoginFrame extends JFrame {
         tfUser.putClientProperty(FlatClientProperties.STYLE, "arc: 16; focusWidth: 2; outlineColor: #6366f1");
         setLeadingIcon(tfUser, "/icons/icons8-user-16.png");
 
-        // Password
         JLabel lbPassLabel = new JLabel("Mật khẩu");
         lbPassLabel.setFont(new Font("Segoe UI", Font.BOLD, 15));
         lbPassLabel.setBorder(new EmptyBorder(15, 0, 8, 0));
@@ -109,7 +103,7 @@ public class LoginFrame extends JFrame {
         tfPass.putClientProperty(FlatClientProperties.STYLE, "arc: 16; focusWidth: 2; outlineColor: #6366f1; showRevealButton: true");
         setLeadingIcon(tfPass, "/icons/icons8-lock-16.png");
 
-        // Extras & Button
+   
         JPanel extraPanel = new JPanel(new BorderLayout());
         extraPanel.setOpaque(false);
         extraPanel.setBorder(new EmptyBorder(15, 0, 0, 0));
@@ -124,13 +118,11 @@ public class LoginFrame extends JFrame {
         btnLogin.setCursor(new Cursor(Cursor.HAND_CURSOR));
         btnLogin.setMaximumSize(new Dimension(Integer.MAX_VALUE, 45));
 
-        // Social
         JButton btnGoogle = new JButton("Tiếp tục với Google");
         setLeadingIcon(btnGoogle, "/icons/icons8-google-16.png");
         btnGoogle.setBackground(Color.WHITE);
         btnGoogle.setMaximumSize(new Dimension(Integer.MAX_VALUE, 42));
 
-        // Add to container
         formContainer.add(lbHeader);
         formContainer.add(lbSub);
         formContainer.add(lbUserLabel);
