@@ -186,7 +186,7 @@ public class CandidateDAO {
 			score.setCccd(safeNullable(candidate.getCccd()));
 			score.setSoBaoDanh(safeNullable(candidate.getSoBaoDanh()));
 			String phuongThuc = safeNullable(candidate.getMaMonNn());
-			score.setPhuongThuc(phuongThuc == null ? "THPT" : phuongThuc);
+			score.setPhuongThuc(phuongThuc);
 			session.persist(score);
 
 			tx.commit();
@@ -223,7 +223,7 @@ public class CandidateDAO {
 				score.setCccd(safeNullable(candidate.getCccd()));
 				score.setSoBaoDanh(safeNullable(candidate.getSoBaoDanh()));
 				String phuongThuc = safeNullable(candidate.getMaMonNn());
-				score.setPhuongThuc(phuongThuc == null ? "THPT" : phuongThuc);
+				score.setPhuongThuc(phuongThuc);
 				applyScoreFromDto(score, candidate);
 				session.persist(score);
 			} else {
@@ -232,8 +232,6 @@ public class CandidateDAO {
 				String phuongThuc = safeNullable(candidate.getMaMonNn());
 				if (phuongThuc != null) {
 					score.setPhuongThuc(phuongThuc);
-				} else if (safeNullable(score.getPhuongThuc()) == null) {
-					score.setPhuongThuc("THPT");
 				}
 				applyScoreFromDto(score, candidate);
 			}

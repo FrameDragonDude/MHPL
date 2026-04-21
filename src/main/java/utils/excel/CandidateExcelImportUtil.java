@@ -57,16 +57,15 @@ public final class CandidateExcelImportUtil {
                 dto.setCccd(cccd);
                 dto.setSoBaoDanh(text(row, headerIndex, formatter, evaluator, "sobaodanh", "so_bao_danh", "sbd", "số báo danh"));
 
-                String ho = text(row, headerIndex, formatter, evaluator, "ho", "họ");
-                String ten = text(row, headerIndex, formatter, evaluator, "ten", "tên");
-                if (!fullName.isEmpty() && (ho.isEmpty() || ten.isEmpty())) {
+                String ho = "";
+                String ten = "";
+                if (!fullName.isEmpty()) {
                     String[] split = splitFullName(fullName);
-                    if (ho.isEmpty()) {
-                        ho = split[0];
-                    }
-                    if (ten.isEmpty()) {
-                        ten = split[1];
-                    }
+                    ho = split[0];
+                    ten = split[1];
+                } else {
+                    ho = text(row, headerIndex, formatter, evaluator, "ho", "họ");
+                    ten = text(row, headerIndex, formatter, evaluator, "ten", "tên");
                 }
                 dto.setHo(ho);
                 dto.setTen(ten);
@@ -103,7 +102,20 @@ public final class CandidateExcelImportUtil {
                 dto.setDiemDi(number(row, headerIndex, formatter, evaluator, "di", "dia", "dia_ly", "dia ly"));
                 dto.setDiemGdcd(number(row, headerIndex, formatter, evaluator, "gdcd"));
                 dto.setDiemNn(number(row, headerIndex, formatter, evaluator, "nn", "ngoai_ngu", "ngoai ngu"));
-                dto.setMaMonNn(text(row, headerIndex, formatter, evaluator, "ma_mon_nn", "mamonnn", "ma mon nn"));
+                dto.setMaMonNn(text(
+                    row,
+                    headerIndex,
+                    formatter,
+                    evaluator,
+                    "ma_mon_nn",
+                    "mamonnn",
+                    "ma mon nn",
+                    "monnn",
+                    "mamonnn",
+                    "ma mon ngoai ngu",
+                    "mon ngoai ngu",
+                    "ngoai ngu"
+                ));
                 dto.setDiemKtpl(number(row, headerIndex, formatter, evaluator, "ktpl"));
                 dto.setDiemTi(number(row, headerIndex, formatter, evaluator, "ti", "tin"));
                 dto.setDiemCncn(number(row, headerIndex, formatter, evaluator, "cncn"));
