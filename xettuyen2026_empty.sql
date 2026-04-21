@@ -1,3 +1,4 @@
+
 -- MySQL dump 10.13  Distrib 8.0.44, for macos15 (arm64)
 --
 -- Host: localhost    Database: xettuyen2026
@@ -18,7 +19,6 @@
 --
 -- Table structure for table `xt_bangquydoi`
 --
-
 create database xettuyen2026;
 use xettuyen2026;
 
@@ -35,11 +35,11 @@ CREATE TABLE `xt_staff_accounts` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 INSERT INTO `xt_staff_accounts` (`username`, `password`, `fullname`, `role`) VALUES
-('admin_sgu', 'admin123', 'Quản trị viên SGU', 'ADMIN'),
-('truongphong_sgu', 'sgu2026admin', 'Nguyễn Minh Triết', 'ADMIN'),
-('nhaplieu_01', 'staff_pass_1', 'Lê Thị Thanh Thảo', 'NHAN_VIEN'),
-('thamdinh_02', 'staff_pass_2', 'Trần Hoàng Nam', 'NHAN_VIEN'),
-('support_tech', 'tech_pass_sgu', 'Phạm Đức Anh', 'NHAN_VIEN');
+('admin_sgu', '$2a$12$Dt.M/4RSKHWx9HI72JPPmOLxUgnCSKd/XgKDpdZr2HadO6d1FrHo2', 'Quản trị viên SGU', 'ADMIN'), /*admin123*/
+('truongphong_sgu', '$2a$12$5lIAIHUgFhvkaR9uqQuooewmWqVkBQdXQqc.eITIXr3B73Ed6.X2a', 'Nguyễn Minh Triết', 'ADMIN'),/*sgu2026admin*/
+('nhaplieu_01', '$2a$12$oi1W1MWkbxqo5RCGrpHU2.h.9HH2CM4wnDP584xSnJFLGcxtALjVy', 'Lê Thị Thanh Thảo', 'NHAN_VIEN'),/*staff_pass_1*/
+('thamdinh_02', '$2a$12$AS1bkeWbIDpKAODWaR5U4uYRzk7/rvm8SgZ9QhYVc0ZCvI24npeJa', 'Trần Hoàng Nam', 'NHAN_VIEN'),/*staff_pass_2*/
+('support_tech', '$2a$12$gFvVlXsw6PCArk9ztmQg0.INhSTRPynXi6lwUnKlWtWjxJHL3C30C', 'Phạm Đức Anh', 'NHAN_VIEN');/*tech_pass_sgu*/
 
 
 DROP TABLE IF EXISTS `xt_bangquydoi`;
@@ -67,15 +67,6 @@ CREATE TABLE `xt_bangquydoi` (
 
 LOCK TABLES `xt_bangquydoi` WRITE;
 /*!40000 ALTER TABLE `xt_bangquydoi` DISABLE KEYS */;
-INSERT INTO `xt_bangquydoi`
-(`d_phuongthuc`, `d_tohop`, `d_mon`, `d_diema`, `d_diemb`, `d_diemc`, `d_diemd`, `d_maquydoi`, `d_phanvi`)
-VALUES
-('THPT', 'A00', 'TO', 7.50, 8.00, 8.50, 9.00, 'QD_THPT_A00_TO', 'P50'),
-('THPT', 'A01', 'N1', 6.50, 7.00, 7.50, 8.00, 'QD_THPT_A01_N1', 'P50'),
-('DGNL', 'DGNL', 'NL1', 600.00, 700.00, 800.00, 900.00, 'QD_DGNL_NL1', 'P50'),
-('VSAT', 'VSAT', 'TO', 60.00, 70.00, 80.00, 90.00, 'QD_VSAT_TO', 'P50'),
-('THPT', 'D01', 'N1', 7.00, 7.50, 8.00, 8.50, 'QD_THPT_D01_N1', 'P50'),
-('THPT', 'C00', 'VA', 7.00, 7.50, 8.00, 8.50, 'QD_THPT_C00_VA', 'P50');
 /*!40000 ALTER TABLE `xt_bangquydoi` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -108,54 +99,6 @@ CREATE TABLE `xt_diemcongxetuyen` (
 
 LOCK TABLES `xt_diemcongxetuyen` WRITE;
 /*!40000 ALTER TABLE `xt_diemcongxetuyen` DISABLE KEYS */;
-INSERT INTO `xt_diemcongxetuyen`
-(`ts_cccd`, `manganh`, `matohop`, `phuongthuc`, `diemCC`, `diemUtxt`, `diemTong`, `ghichu`, `dc_keys`)
-SELECT
-  CONCAT('079000000', LPAD(s.n, 3, '0')) AS ts_cccd,
-  CASE MOD(s.n, 5)
-    WHEN 0 THEN '7340101'
-    WHEN 1 THEN '7480201'
-    WHEN 2 THEN '7220201'
-    WHEN 3 THEN '7310101'
-    ELSE '7320104'
-  END AS manganh,
-  CASE MOD(s.n, 4)
-    WHEN 0 THEN 'A00'
-    WHEN 1 THEN 'A01'
-    WHEN 2 THEN 'D01'
-    ELSE 'C00'
-  END AS matohop,
-  CASE MOD(s.n, 3)
-    WHEN 0 THEN 'THPT'
-    WHEN 1 THEN 'DGNL'
-    ELSE 'VSAT'
-  END AS phuongthuc,
-  ROUND((MOD(s.n, 4) * 0.25), 2) AS diemCC,
-  ROUND((MOD(s.n, 5) * 0.20), 2) AS diemUtxt,
-  ROUND((MOD(s.n, 4) * 0.25) + (MOD(s.n, 5) * 0.20), 2) AS diemTong,
-  'seed data' AS ghichu,
-  CONCAT(CONCAT('079000000', LPAD(s.n, 3, '0')), '_',
-    CASE MOD(s.n, 5)
-      WHEN 0 THEN '7340101'
-      WHEN 1 THEN '7480201'
-      WHEN 2 THEN '7220201'
-      WHEN 3 THEN '7310101'
-      ELSE '7320104'
-    END,
-    '_',
-    CASE MOD(s.n, 4)
-      WHEN 0 THEN 'A00'
-      WHEN 1 THEN 'A01'
-      WHEN 2 THEN 'D01'
-      ELSE 'C00'
-    END
-  ) AS dc_keys
-FROM (
-  SELECT 1 AS n UNION ALL SELECT 2 UNION ALL SELECT 3 UNION ALL SELECT 4 UNION ALL SELECT 5
-  UNION ALL SELECT 6 UNION ALL SELECT 7 UNION ALL SELECT 8 UNION ALL SELECT 9 UNION ALL SELECT 10
-  UNION ALL SELECT 11 UNION ALL SELECT 12 UNION ALL SELECT 13 UNION ALL SELECT 14 UNION ALL SELECT 15
-  UNION ALL SELECT 16 UNION ALL SELECT 17 UNION ALL SELECT 18 UNION ALL SELECT 19 UNION ALL SELECT 20
-) s;
 /*!40000 ALTER TABLE `xt_diemcongxetuyen` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -198,39 +141,6 @@ CREATE TABLE `xt_diemthixettuyen` (
 
 LOCK TABLES `xt_diemthixettuyen` WRITE;
 /*!40000 ALTER TABLE `xt_diemthixettuyen` DISABLE KEYS */;
-INSERT INTO `xt_diemthixettuyen`
-(`cccd`, `sobaodanh`, `d_phuongthuc`, `TO`, `LI`, `HO`, `SI`, `SU`, `DI`, `VA`, `N1_THI`, `N1_CC`, `CNCN`, `CNNN`, `TI`, `KTPL`, `NL1`, `NK1`, `NK2`)
-SELECT
-  CONCAT('079000000', LPAD(s.n, 3, '0')),
-  CONCAT('SBD', LPAD(s.n, 5, '0')),
-  CASE MOD(s.n, 3)
-    WHEN 0 THEN 'THPT'
-    WHEN 1 THEN 'DGNL'
-    ELSE 'VSAT'
-  END,
-  ROUND(6.0 + MOD(s.n, 4) * 0.75, 2),
-  ROUND(5.5 + MOD(s.n + 1, 4) * 0.75, 2),
-  ROUND(5.0 + MOD(s.n + 2, 4) * 0.75, 2),
-  ROUND(5.0 + MOD(s.n, 3) * 0.80, 2),
-  ROUND(5.0 + MOD(s.n + 1, 3) * 0.80, 2),
-  ROUND(5.0 + MOD(s.n + 2, 3) * 0.80, 2),
-  ROUND(6.0 + MOD(s.n, 5) * 0.60, 2),
-  ROUND(6.0 + MOD(s.n, 5) * 0.50, 2),
-  ROUND(6.0 + MOD(s.n, 5) * 0.50, 2),
-  ROUND(5.5 + MOD(s.n, 5) * 0.60, 2),
-  ROUND(5.5 + MOD(s.n + 1, 5) * 0.60, 2),
-  ROUND(5.5 + MOD(s.n + 2, 5) * 0.60, 2),
-  ROUND(5.5 + MOD(s.n + 3, 5) * 0.60, 2),
-  ROUND(650 + MOD(s.n, 8) * 30, 2),
-  ROUND(6.0 + MOD(s.n, 4) * 0.50, 2),
-  ROUND(6.0 + MOD(s.n + 1, 4) * 0.50, 2)
-FROM (
-  SELECT 1 AS n UNION ALL SELECT 2 UNION ALL SELECT 3 UNION ALL SELECT 4 UNION ALL SELECT 5
-  UNION ALL SELECT 6 UNION ALL SELECT 7 UNION ALL SELECT 8 UNION ALL SELECT 9 UNION ALL SELECT 10
-  UNION ALL SELECT 11 UNION ALL SELECT 12 UNION ALL SELECT 13 UNION ALL SELECT 14 UNION ALL SELECT 15
-  UNION ALL SELECT 16 UNION ALL SELECT 17 UNION ALL SELECT 18 UNION ALL SELECT 19 UNION ALL SELECT 20
-  UNION ALL SELECT 21 UNION ALL SELECT 22 UNION ALL SELECT 23 UNION ALL SELECT 24 UNION ALL SELECT 25
-) s;
 /*!40000 ALTER TABLE `xt_diemthixettuyen` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -267,14 +177,6 @@ CREATE TABLE `xt_nganh` (
 
 LOCK TABLES `xt_nganh` WRITE;
 /*!40000 ALTER TABLE `xt_nganh` DISABLE KEYS */;
-INSERT INTO `xt_nganh`
-(`manganh`, `tennganh`, `n_tohopgoc`, `n_chitieu`, `n_diemsan`, `n_diemtrungtuyen`, `n_tuyenthang`, `n_dgnl`, `n_thpt`, `n_vsat`, `sl_xtt`, `sl_dgnl`, `sl_vsat`, `sl_thpt`)
-VALUES
-('7480201', 'Cong nghe thong tin', 'A00', 80, 20.00, 24.50, 'N', 'Y', 'Y', 'Y', 5, 25, 20, '30'),
-('7340101', 'Quan tri kinh doanh', 'A01', 70, 18.00, 22.00, 'N', 'Y', 'Y', 'Y', 4, 20, 18, '28'),
-('7220201', 'Ngon ngu Anh', 'D01', 60, 19.00, 23.00, 'N', 'Y', 'Y', 'Y', 3, 18, 15, '24'),
-('7310101', 'Kinh te', 'A00', 75, 18.50, 22.50, 'N', 'Y', 'Y', 'Y', 4, 22, 18, '28'),
-('7320104', 'Truyen thong da phuong tien', 'C00', 50, 19.50, 23.50, 'N', 'Y', 'Y', 'Y', 3, 15, 12, '20');
 /*!40000 ALTER TABLE `xt_nganh` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -319,17 +221,6 @@ CREATE TABLE `xt_nganh_tohop` (
 
 LOCK TABLES `xt_nganh_tohop` WRITE;
 /*!40000 ALTER TABLE `xt_nganh_tohop` DISABLE KEYS */;
-INSERT INTO `xt_nganh_tohop`
-(`manganh`, `matohop`, `th_mon1`, `hsmon1`, `th_mon2`, `hsmon2`, `th_mon3`, `hsmon3`, `tb_keys`, `N1`, `TO`, `LI`, `HO`, `SI`, `VA`, `SU`, `DI`, `TI`, `KHAC`, `KTPL`, `dolech`)
-VALUES
-('7480201', 'A00', 'TO', 2, 'LI', 1, 'HO', 1, '7480201_A00', 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0.00),
-('7480201', 'A01', 'TO', 2, 'LI', 1, 'N1', 1, '7480201_A01', 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0.00),
-('7340101', 'A01', 'TO', 1, 'LI', 1, 'N1', 2, '7340101_A01', 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0.00),
-('7340101', 'D01', 'TO', 1, 'N1', 2, 'VA', 1, '7340101_D01', 1, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0.00),
-('7220201', 'D01', 'TO', 1, 'N1', 2, 'VA', 1, '7220201_D01', 1, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0.00),
-('7310101', 'A00', 'TO', 2, 'LI', 1, 'HO', 1, '7310101_A00', 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0.00),
-('7310101', 'C00', 'VA', 2, 'SU', 1, 'DI', 1, '7310101_C00', 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0.00),
-('7320104', 'C00', 'VA', 2, 'SU', 1, 'DI', 1, '7320104_C00', 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0.00);
 /*!40000 ALTER TABLE `xt_nganh_tohop` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -364,51 +255,6 @@ CREATE TABLE `xt_nguyenvongxettuyen` (
 
 LOCK TABLES `xt_nguyenvongxettuyen` WRITE;
 /*!40000 ALTER TABLE `xt_nguyenvongxettuyen` DISABLE KEYS */;
-INSERT INTO `xt_nguyenvongxettuyen`
-(`nn_cccd`, `nv_manganh`, `nv_tt`, `diem_thxt`, `diem_utqd`, `diem_cong`, `diem_xettuyen`, `nv_ketqua`, `nv_keys`, `tt_phuongthuc`, `tt_thm`)
-SELECT
-  CONCAT('079000000', LPAD(s.n, 3, '0')) AS nn_cccd,
-  CASE MOD(s.n + p.nv_tt, 5)
-    WHEN 0 THEN '7480201'
-    WHEN 1 THEN '7340101'
-    WHEN 2 THEN '7220201'
-    WHEN 3 THEN '7310101'
-    ELSE '7320104'
-  END AS nv_manganh,
-  p.nv_tt,
-  ROUND(20.0 + MOD(s.n, 6) + (3 - p.nv_tt) * 0.4, 5) AS diem_thxt,
-  ROUND(MOD(s.n, 4) * 0.25, 5) AS diem_utqd,
-  ROUND(MOD(s.n, 5) * 0.20, 2) AS diem_cong,
-  ROUND(20.0 + MOD(s.n, 6) + (3 - p.nv_tt) * 0.4 + MOD(s.n, 4) * 0.25, 5) AS diem_xettuyen,
-  CASE
-    WHEN p.nv_tt = 1 AND MOD(s.n, 4) <> 0 THEN 'TRUNG_TUYEN'
-    WHEN p.nv_tt = 2 AND MOD(s.n, 4) = 0 THEN 'TRUNG_TUYEN'
-    ELSE 'CHO_XU_LY'
-  END AS nv_ketqua,
-  CONCAT(CONCAT('079000000', LPAD(s.n, 3, '0')), '_NV', p.nv_tt) AS nv_keys,
-  CASE MOD(s.n, 3)
-    WHEN 0 THEN 'THPT'
-    WHEN 1 THEN 'DGNL'
-    ELSE 'VSAT'
-  END AS tt_phuongthuc,
-  CASE MOD(s.n, 4)
-    WHEN 0 THEN 'A00'
-    WHEN 1 THEN 'A01'
-    WHEN 2 THEN 'D01'
-    ELSE 'C00'
-  END AS tt_thm
-FROM (
-  SELECT 1 AS n UNION ALL SELECT 2 UNION ALL SELECT 3 UNION ALL SELECT 4 UNION ALL SELECT 5
-  UNION ALL SELECT 6 UNION ALL SELECT 7 UNION ALL SELECT 8 UNION ALL SELECT 9 UNION ALL SELECT 10
-  UNION ALL SELECT 11 UNION ALL SELECT 12 UNION ALL SELECT 13 UNION ALL SELECT 14 UNION ALL SELECT 15
-  UNION ALL SELECT 16 UNION ALL SELECT 17 UNION ALL SELECT 18 UNION ALL SELECT 19 UNION ALL SELECT 20
-  UNION ALL SELECT 21 UNION ALL SELECT 22 UNION ALL SELECT 23 UNION ALL SELECT 24 UNION ALL SELECT 25
-) s
-JOIN (
-  SELECT 1 AS nv_tt
-  UNION ALL
-  SELECT 2 AS nv_tt
-) p;
 /*!40000 ALTER TABLE `xt_nguyenvongxettuyen` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -445,48 +291,6 @@ CREATE TABLE `xt_thisinhxettuyen25` (
 
 LOCK TABLES `xt_thisinhxettuyen25` WRITE;
 /*!40000 ALTER TABLE `xt_thisinhxettuyen25` DISABLE KEYS */;
-INSERT INTO `xt_thisinhxettuyen25`
-(`cccd`, `sobaodanh`, `ho`, `ten`, `ngay_sinh`, `dien_thoai`, `password`, `gioi_tinh`, `email`, `noi_sinh`, `updated_at`, `doi_tuong`, `khu_vuc`)
-SELECT
-  CONCAT('079000000', LPAD(s.n, 3, '0')) AS cccd,
-  CONCAT('SBD', LPAD(s.n, 5, '0')) AS sobaodanh,
-  CASE MOD(s.n, 5)
-    WHEN 0 THEN 'Nguyen Van'
-    WHEN 1 THEN 'Tran Thi'
-    WHEN 2 THEN 'Le Quang'
-    WHEN 3 THEN 'Pham Gia'
-    ELSE 'Do Minh'
-  END AS ho,
-  CONCAT('TS', LPAD(s.n, 2, '0')) AS ten,
-  CONCAT(2003 + MOD(s.n, 4), '-', LPAD(1 + MOD(s.n, 12), 2, '0'), '-', LPAD(1 + MOD(s.n, 28), 2, '0')) AS ngay_sinh,
-  CONCAT('09', LPAD(10000000 + s.n, 8, '0')) AS dien_thoai,
-  CONCAT('hash_', LPAD(s.n, 3, '0')) AS password,
-  CASE WHEN MOD(s.n, 2) = 0 THEN 'Nam' ELSE 'Nu' END AS gioi_tinh,
-  CONCAT('thisinh', LPAD(s.n, 2, '0'), '@mhpl.edu.vn') AS email,
-  CASE MOD(s.n, 4)
-    WHEN 0 THEN 'Ha Noi'
-    WHEN 1 THEN 'Da Nang'
-    WHEN 2 THEN 'Hue'
-    ELSE 'TP HCM'
-  END AS noi_sinh,
-  DATE_SUB(CURDATE(), INTERVAL MOD(s.n, 30) DAY) AS updated_at,
-  CASE MOD(s.n, 3)
-    WHEN 0 THEN 'UT1'
-    WHEN 1 THEN 'UT2'
-    ELSE 'UT3'
-  END AS doi_tuong,
-  CASE MOD(s.n, 3)
-    WHEN 0 THEN 'KV1'
-    WHEN 1 THEN 'KV2'
-    ELSE 'KV3'
-  END AS khu_vuc
-FROM (
-  SELECT 1 AS n UNION ALL SELECT 2 UNION ALL SELECT 3 UNION ALL SELECT 4 UNION ALL SELECT 5
-  UNION ALL SELECT 6 UNION ALL SELECT 7 UNION ALL SELECT 8 UNION ALL SELECT 9 UNION ALL SELECT 10
-  UNION ALL SELECT 11 UNION ALL SELECT 12 UNION ALL SELECT 13 UNION ALL SELECT 14 UNION ALL SELECT 15
-  UNION ALL SELECT 16 UNION ALL SELECT 17 UNION ALL SELECT 18 UNION ALL SELECT 19 UNION ALL SELECT 20
-  UNION ALL SELECT 21 UNION ALL SELECT 22 UNION ALL SELECT 23 UNION ALL SELECT 24 UNION ALL SELECT 25
-) s;
 /*!40000 ALTER TABLE `xt_thisinhxettuyen25` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -515,13 +319,6 @@ CREATE TABLE `xt_tohop_monthi` (
 
 LOCK TABLES `xt_tohop_monthi` WRITE;
 /*!40000 ALTER TABLE `xt_tohop_monthi` DISABLE KEYS */;
-INSERT INTO `xt_tohop_monthi`
-(`matohop`, `mon1`, `mon2`, `mon3`, `tentohop`)
-VALUES
-('A00', 'TO', 'LI', 'HO', 'Toan - Ly - Hoa'),
-('A01', 'TO', 'LI', 'N1', 'Toan - Ly - Tieng Anh'),
-('D01', 'TO', 'N1', 'VA', 'Toan - Tieng Anh - Van'),
-('C00', 'VA', 'SU', 'DI', 'Van - Su - Dia');
 /*!40000 ALTER TABLE `xt_tohop_monthi` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
