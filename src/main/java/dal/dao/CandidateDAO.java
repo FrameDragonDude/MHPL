@@ -185,7 +185,8 @@ public class CandidateDAO {
 			applyScoreFromDto(score, candidate);
 			score.setCccd(safeNullable(candidate.getCccd()));
 			score.setSoBaoDanh(safeNullable(candidate.getSoBaoDanh()));
-			score.setPhuongThuc("THPT");
+			String phuongThuc = safeNullable(candidate.getMaMonNn());
+			score.setPhuongThuc(phuongThuc == null ? "THPT" : phuongThuc);
 			session.persist(score);
 
 			tx.commit();
@@ -221,13 +222,17 @@ public class CandidateDAO {
 				score = new ExamScoreEntity();
 				score.setCccd(safeNullable(candidate.getCccd()));
 				score.setSoBaoDanh(safeNullable(candidate.getSoBaoDanh()));
-				score.setPhuongThuc("THPT");
+				String phuongThuc = safeNullable(candidate.getMaMonNn());
+				score.setPhuongThuc(phuongThuc == null ? "THPT" : phuongThuc);
 				applyScoreFromDto(score, candidate);
 				session.persist(score);
 			} else {
 				score.setCccd(safeNullable(candidate.getCccd()));
 				score.setSoBaoDanh(safeNullable(candidate.getSoBaoDanh()));
-				if (safeNullable(score.getPhuongThuc()) == null) {
+				String phuongThuc = safeNullable(candidate.getMaMonNn());
+				if (phuongThuc != null) {
+					score.setPhuongThuc(phuongThuc);
+				} else if (safeNullable(score.getPhuongThuc()) == null) {
 					score.setPhuongThuc("THPT");
 				}
 				applyScoreFromDto(score, candidate);
@@ -255,6 +260,9 @@ public class CandidateDAO {
 		candidate.setNoiSinh(entity.getNoiSinh());
 		candidate.setDoiTuong(entity.getDoiTuong());
 		candidate.setKhuVuc(entity.getKhuVuc());
+		candidate.setChuongTrinh(entity.getChuongTrinh());
+		candidate.setDanToc(entity.getDanToc());
+		candidate.setMaDanToc(entity.getMaDanToc());
 		return candidate;
 	}
 
@@ -274,49 +282,15 @@ public class CandidateDAO {
 			candidate.setDiemCnnn(score.getDiemCnnn());
 			candidate.setDiemNk1(score.getDiemNk1());
 			candidate.setDiemNk2(score.getDiemNk2());
-			candidate.setMaMonNn(safeNullable(score.getPhuongThuc()) == null ? "THPT" : score.getPhuongThuc());
+			candidate.setMaMonNn(safeNullable(score.getPhuongThuc()));
 		} else {
-			candidate.setMaMonNn("THPT");
+			candidate.setMaMonNn(null);
 		}
 
-		double nk1 = candidate.getDiemNk1() == null ? 0.0 : candidate.getDiemNk1();
-		double nk2 = candidate.getDiemNk2() == null ? 0.0 : candidate.getDiemNk2();
-		candidate.setDiemNk3(round2(nk1 + 0.10));
-		candidate.setDiemNk4(round2(nk1 + 0.20));
-		candidate.setDiemNk5(round2(nk1 + 0.30));
-		candidate.setDiemNk6(round2(nk2 + 0.10));
-		candidate.setDiemNk7(round2(nk2 + 0.20));
-		candidate.setDiemNk8(round2(nk2 + 0.30));
-		candidate.setDiemNk9(round2((nk1 + nk2) / 2.0));
-		candidate.setDiemNk10(round2((nk1 + nk2) / 2.0 + 0.25));
-
-		double to = candidate.getDiemTo() == null ? 0.0 : candidate.getDiemTo();
-		double va = candidate.getDiemVa() == null ? 0.0 : candidate.getDiemVa();
-		double li = candidate.getDiemLi() == null ? 0.0 : candidate.getDiemLi();
-		candidate.setDiemXetTotNghiep(round2((to + va + li) / 3.0));
-		candidate.setDiemGdcd(candidate.getDiemKtpl() == null
-				? round2(5.0 + (candidate.getIdThisinh() % 5) * 0.50)
-				: candidate.getDiemKtpl());
-
-		int idMod3 = candidate.getIdThisinh() % 3;
-		candidate.setChuongTrinh(idMod3 == 0 ? "CT_CHUAN" : idMod3 == 1 ? "CT_CLC" : "CT_QT");
-
-		int idMod5 = candidate.getIdThisinh() % 5;
-		if (idMod5 == 0) {
-			candidate.setDanToc("Kinh");
-			candidate.setMaDanToc("01");
-		} else if (idMod5 == 1) {
-			candidate.setDanToc("Tay");
-			candidate.setMaDanToc("02");
-		} else if (idMod5 == 2) {
-			candidate.setDanToc("Thai");
-			candidate.setMaDanToc("03");
-		} else if (idMod5 == 3) {
-			candidate.setDanToc("Muong");
-			candidate.setMaDanToc("04");
+		if (candidate.getDiemTo() != null && candidate.getDiemVa() != null && candidate.getDiemLi() != null) {
+			candidate.setDiemXetTotNghiep(round2((candidate.getDiemTo() + candidate.getDiemVa() + candidate.getDiemLi()) / 3.0));
 		} else {
-			candidate.setDanToc("Nung");
-			candidate.setMaDanToc("05");
+			candidate.setDiemXetTotNghiep(null);
 		}
 	}
 
@@ -332,6 +306,9 @@ public class CandidateDAO {
 		entity.setNoiSinh(safeNullable(candidate.getNoiSinh()));
 		entity.setDoiTuong(safeNullable(candidate.getDoiTuong()));
 		entity.setKhuVuc(safeNullable(candidate.getKhuVuc()));
+		entity.setChuongTrinh(safeNullable(candidate.getChuongTrinh()));
+		entity.setDanToc(safeNullable(candidate.getDanToc()));
+		entity.setMaDanToc(safeNullable(candidate.getMaDanToc()));
 	}
 
 	private void applyScoreFromDto(ExamScoreEntity score, CandidateDTO candidate) {

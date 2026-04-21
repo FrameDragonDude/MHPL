@@ -44,6 +44,52 @@ public class CandidatePanel extends JPanel {
 	private static final Color COLOR_BLUE = new Color(21, 101, 192);
 	private static final Color COLOR_BLUE_SOFT = new Color(30, 136, 229);
 	private static final Color COLOR_RED = new Color(198, 40, 40);
+	private static final int PAGE_SIZE = 20;
+
+	private static final String[] TABLE_COLUMNS = {
+			"STT", "CCCD", "Họ Tên", "Ngày sinh", "Giới tính", "ĐTƯT", "KVƯT",
+			"TO", "VA", "LI", "HO", "SI", "SU", "DI", "GDCD", "NN", "Mã môn NN", "KTPL", "TI", "CNCN", "CNNN",
+			"Chương trình", "NK1", "NK2", "NK3", "NK4", "NK5", "NK6", "NK7", "NK8", "NK9", "NK10",
+			"Điểm xét tốt nghiệp", "Dân tộc", "Mã dân tộc", "Nơi sinh", "Thao tác"
+	};
+
+	private static final int COL_STT = 0;
+	private static final int COL_CCCD = 1;
+	private static final int COL_HO_TEN = 2;
+	private static final int COL_NGAY_SINH = 3;
+	private static final int COL_GIOI_TINH = 4;
+	private static final int COL_DTUT = 5;
+	private static final int COL_KVUT = 6;
+	private static final int COL_TO = 7;
+	private static final int COL_VA = 8;
+	private static final int COL_LI = 9;
+	private static final int COL_HO = 10;
+	private static final int COL_SI = 11;
+	private static final int COL_SU = 12;
+	private static final int COL_DI = 13;
+	private static final int COL_GDCD = 14;
+	private static final int COL_NN = 15;
+	private static final int COL_MA_MON_NN = 16;
+	private static final int COL_KTPL = 17;
+	private static final int COL_TI = 18;
+	private static final int COL_CNCN = 19;
+	private static final int COL_CNNN = 20;
+	private static final int COL_CHUONG_TRINH = 21;
+	private static final int COL_NK1 = 22;
+	private static final int COL_NK2 = 23;
+	private static final int COL_NK3 = 24;
+	private static final int COL_NK4 = 25;
+	private static final int COL_NK5 = 26;
+	private static final int COL_NK6 = 27;
+	private static final int COL_NK7 = 28;
+	private static final int COL_NK8 = 29;
+	private static final int COL_NK9 = 30;
+	private static final int COL_NK10 = 31;
+	private static final int COL_DIEM_XET = 32;
+	private static final int COL_DAN_TOC = 33;
+	private static final int COL_MA_DAN_TOC = 34;
+	private static final int COL_NOI_SINH = 35;
+	private static final int COL_ACTION = 36;
 
 	private final CandidateService candidateService;
 	private final DefaultTableModel tableModel;
@@ -63,12 +109,7 @@ public class CandidatePanel extends JPanel {
 
 	public CandidatePanel() {
 		this.candidateService = new CandidateService();
-		this.tableModel = new DefaultTableModel(new String[]{
-				"STT", "CCCD", "Họ tên", "Ngày sinh", "Giới tính", "Số điện thoại", "Email", "Nơi sinh", "ĐTƯT", "KVƯT",
-				"TO", "VA", "LI", "HO", "SI", "SU", "DI", "GDCD", "NN", "Ma mon NN", "KTPL", "TI", "CNCN", "CNNN",
-				"Chương trình", "NK1", "NK2", "NK3", "NK4", "NK5", "NK6", "NK7", "NK8", "NK9", "NK10",
-				"Điểm xét tốt nghiệp", "Dân tộc", "Mã dân tộc", "Thao tác"
-		}, 0) {
+		this.tableModel = new DefaultTableModel(TABLE_COLUMNS, 0) {
 			@Override
 			public boolean isCellEditable(int row, int column) {
 				return column == actionColumnIndex;
@@ -199,10 +240,10 @@ public class CandidatePanel extends JPanel {
 
 	private void applyFixedColumnWidths() {
 		int[] widths = {
-				70, 150, 200, 110, 90, 130, 220, 140, 80, 80,
-				70, 70, 70, 70, 70, 70, 70, 70, 80, 95, 80, 70, 85, 85,
+				70, 150, 210, 110, 90, 80, 80,
+				70, 70, 70, 70, 70, 70, 70, 70, 70, 95, 80, 70, 85, 85,
 				110, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70,
-				240, 100, 110, 130
+				170, 100, 110, 140, 130, 96
 		};
 		for (int i = 0; i < widths.length && i < table.getColumnModel().getColumnCount(); i++) {
 			table.getColumnModel().getColumn(i).setPreferredWidth(widths[i]);
@@ -299,18 +340,15 @@ public class CandidatePanel extends JPanel {
 			tableModel.setRowCount(0);
 			for (int i = 0; i < rows.size(); i++) {
 				CandidateDTO c = rows.get(i);
-				int stt = (safePage - 1) * 20 + i + 1;
+				int stt = (safePage - 1) * PAGE_SIZE + i + 1;
 				tableModel.addRow(new Object[]{
 						stt,
 						c.getCccd(),
 						c.getHoTen(),
 						c.getNgaySinh(),
 						c.getGioiTinh(),
-						emptyIfNull(c.getDienThoai()),
-						emptyIfNull(c.getEmail()),
-						emptyIfNull(c.getNoiSinh()),
-						c.getDoiTuong(),
-						c.getKhuVuc(),
+						emptyIfNull(c.getDoiTuong()),
+						emptyIfNull(c.getKhuVuc()),
 						formatNumber(c.getDiemTo()),
 						formatNumber(c.getDiemVa()),
 						formatNumber(c.getDiemLi()),
@@ -339,6 +377,7 @@ public class CandidatePanel extends JPanel {
 						formatNumber(c.getDiemXetTotNghiep()),
 						emptyIfNull(c.getDanToc()),
 						emptyIfNull(c.getMaDanToc()),
+						emptyIfNull(c.getNoiSinh()),
 						""
 				});
 			}
@@ -360,45 +399,43 @@ public class CandidatePanel extends JPanel {
 			return;
 		}
 		candidate.setIdThisinh(idThisinh);
-		String[] split = splitFullName(stringValueAt(row, 2));
-		candidate.setCccd(stringValueAt(row, 1));
+		String[] split = splitFullName(stringValueAt(row, COL_HO_TEN));
+		candidate.setCccd(stringValueAt(row, COL_CCCD));
 		candidate.setHo(split[0]);
 		candidate.setTen(split[1]);
-		candidate.setNgaySinh(stringValueAt(row, 3));
-		candidate.setGioiTinh(stringValueAt(row, 4));
-		candidate.setDienThoai(stringValueAt(row, 5));
-		candidate.setEmail(stringValueAt(row, 6));
-		candidate.setNoiSinh(stringValueAt(row, 7));
-		candidate.setDoiTuong(stringValueAt(row, 8));
-		candidate.setKhuVuc(stringValueAt(row, 9));
-		candidate.setDiemTo(parseDoubleOrNull(stringValueAt(row, 10)));
-		candidate.setDiemVa(parseDoubleOrNull(stringValueAt(row, 11)));
-		candidate.setDiemLi(parseDoubleOrNull(stringValueAt(row, 12)));
-		candidate.setDiemHo(parseDoubleOrNull(stringValueAt(row, 13)));
-		candidate.setDiemSi(parseDoubleOrNull(stringValueAt(row, 14)));
-		candidate.setDiemSu(parseDoubleOrNull(stringValueAt(row, 15)));
-		candidate.setDiemDi(parseDoubleOrNull(stringValueAt(row, 16)));
-		candidate.setDiemGdcd(parseDoubleOrNull(stringValueAt(row, 17)));
-		candidate.setDiemNn(parseDoubleOrNull(stringValueAt(row, 18)));
-		candidate.setMaMonNn(stringValueAt(row, 19));
-		candidate.setDiemKtpl(parseDoubleOrNull(stringValueAt(row, 20)));
-		candidate.setDiemTi(parseDoubleOrNull(stringValueAt(row, 21)));
-		candidate.setDiemCncn(parseDoubleOrNull(stringValueAt(row, 22)));
-		candidate.setDiemCnnn(parseDoubleOrNull(stringValueAt(row, 23)));
-		candidate.setChuongTrinh(stringValueAt(row, 24));
-		candidate.setDiemNk1(parseDoubleOrNull(stringValueAt(row, 25)));
-		candidate.setDiemNk2(parseDoubleOrNull(stringValueAt(row, 26)));
-		candidate.setDiemNk3(parseDoubleOrNull(stringValueAt(row, 27)));
-		candidate.setDiemNk4(parseDoubleOrNull(stringValueAt(row, 28)));
-		candidate.setDiemNk5(parseDoubleOrNull(stringValueAt(row, 29)));
-		candidate.setDiemNk6(parseDoubleOrNull(stringValueAt(row, 30)));
-		candidate.setDiemNk7(parseDoubleOrNull(stringValueAt(row, 31)));
-		candidate.setDiemNk8(parseDoubleOrNull(stringValueAt(row, 32)));
-		candidate.setDiemNk9(parseDoubleOrNull(stringValueAt(row, 33)));
-		candidate.setDiemNk10(parseDoubleOrNull(stringValueAt(row, 34)));
-		candidate.setDiemXetTotNghiep(parseDoubleOrNull(stringValueAt(row, 35)));
-		candidate.setDanToc(stringValueAt(row, 36));
-		candidate.setMaDanToc(stringValueAt(row, 37));
+		candidate.setNgaySinh(stringValueAt(row, COL_NGAY_SINH));
+		candidate.setGioiTinh(stringValueAt(row, COL_GIOI_TINH));
+		candidate.setDoiTuong(stringValueAt(row, COL_DTUT));
+		candidate.setKhuVuc(stringValueAt(row, COL_KVUT));
+		candidate.setDiemTo(parseDoubleOrNull(stringValueAt(row, COL_TO)));
+		candidate.setDiemVa(parseDoubleOrNull(stringValueAt(row, COL_VA)));
+		candidate.setDiemLi(parseDoubleOrNull(stringValueAt(row, COL_LI)));
+		candidate.setDiemHo(parseDoubleOrNull(stringValueAt(row, COL_HO)));
+		candidate.setDiemSi(parseDoubleOrNull(stringValueAt(row, COL_SI)));
+		candidate.setDiemSu(parseDoubleOrNull(stringValueAt(row, COL_SU)));
+		candidate.setDiemDi(parseDoubleOrNull(stringValueAt(row, COL_DI)));
+		candidate.setDiemGdcd(parseDoubleOrNull(stringValueAt(row, COL_GDCD)));
+		candidate.setDiemNn(parseDoubleOrNull(stringValueAt(row, COL_NN)));
+		candidate.setMaMonNn(stringValueAt(row, COL_MA_MON_NN));
+		candidate.setDiemKtpl(parseDoubleOrNull(stringValueAt(row, COL_KTPL)));
+		candidate.setDiemTi(parseDoubleOrNull(stringValueAt(row, COL_TI)));
+		candidate.setDiemCncn(parseDoubleOrNull(stringValueAt(row, COL_CNCN)));
+		candidate.setDiemCnnn(parseDoubleOrNull(stringValueAt(row, COL_CNNN)));
+		candidate.setChuongTrinh(stringValueAt(row, COL_CHUONG_TRINH));
+		candidate.setDiemNk1(parseDoubleOrNull(stringValueAt(row, COL_NK1)));
+		candidate.setDiemNk2(parseDoubleOrNull(stringValueAt(row, COL_NK2)));
+		candidate.setDiemNk3(parseDoubleOrNull(stringValueAt(row, COL_NK3)));
+		candidate.setDiemNk4(parseDoubleOrNull(stringValueAt(row, COL_NK4)));
+		candidate.setDiemNk5(parseDoubleOrNull(stringValueAt(row, COL_NK5)));
+		candidate.setDiemNk6(parseDoubleOrNull(stringValueAt(row, COL_NK6)));
+		candidate.setDiemNk7(parseDoubleOrNull(stringValueAt(row, COL_NK7)));
+		candidate.setDiemNk8(parseDoubleOrNull(stringValueAt(row, COL_NK8)));
+		candidate.setDiemNk9(parseDoubleOrNull(stringValueAt(row, COL_NK9)));
+		candidate.setDiemNk10(parseDoubleOrNull(stringValueAt(row, COL_NK10)));
+		candidate.setDiemXetTotNghiep(parseDoubleOrNull(stringValueAt(row, COL_DIEM_XET)));
+		candidate.setDanToc(stringValueAt(row, COL_DAN_TOC));
+		candidate.setMaDanToc(stringValueAt(row, COL_MA_DAN_TOC));
+		candidate.setNoiSinh(stringValueAt(row, COL_NOI_SINH));
 
 		CandidateDTO edited = CandidateFormDialog.showDialog(this, candidate, true);
 		if (edited == null) {

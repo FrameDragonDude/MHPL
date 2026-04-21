@@ -49,6 +49,15 @@ public class CandidateEntity {
 	@Column(name = "khu_vuc")
 	private String khuVuc;
 
+	@Column(name = "chuong_trinh")
+	private String chuongTrinh;
+
+	@Column(name = "dan_toc")
+	private String danToc;
+
+	@Column(name = "ma_dan_toc")
+	private String maDanToc;
+
 	public Integer getId() {
 		return id;
 	}
@@ -153,5 +162,29 @@ public class CandidateEntity {
 		String hoSafe = ho == null ? "" : ho.trim();
 		String tenSafe = ten == null ? "" : ten.trim();
 		return (hoSafe + " " + tenSafe).trim();
+	}
+
+	public String getChuongTrinh() {
+		return chuongTrinh;
+	}
+
+	public void setChuongTrinh(String chuongTrinh) {
+		this.chuongTrinh = chuongTrinh;
+	}
+
+	public String getDanToc() {
+		return danToc;
+	}
+
+	public void setDanToc(String danToc) {
+		this.danToc = danToc;
+	}
+
+	public String getMaDanToc() {
+		return maDanToc;
+	}
+
+	public void setMaDanToc(String maDanToc) {
+		this.maDanToc = maDanToc;
 	}
 }
