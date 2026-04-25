@@ -40,6 +40,7 @@ public final class HibernateUtil {
                 if (registry != null) {
                     StandardServiceRegistryBuilder.destroy(registry);
                 }
+                ex.printStackTrace();
                 throw new RuntimeException("Khoi tao SessionFactory that bai", ex);
             }
         }
