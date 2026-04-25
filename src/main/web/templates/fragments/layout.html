@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+	<meta charset="UTF-8"/>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+	<title>Hệ thống tra cứu xét tuyển</title>
+	<link rel="stylesheet" th:href="@{/css/student-portal.css}"/>
+	<script defer th:src="@{/js/layout.js}"></script>
+</head>
+<body class="portal-body portal-layout-page">
+<header class="portal-topbar">
+	<div class="portal-topbar-inner">
+		<div class="portal-brand">Hệ thống tra cứu xét tuyển</div>
+		<nav class="portal-tabs" aria-label="Chuyển trang tra cứu">
+			<button type="button" class="portal-tab-btn active" data-tab="lookup">Tra cứu kết quả</button>
+			<button type="button" class="portal-tab-btn" data-tab="dgnl">Tính điểm ĐGNL</button>
+			<button type="button" class="portal-tab-btn" data-tab="vsat">Tính điểm VSAT/THPT</button>
+		</nav>
+	</div>
+</header>
+
+<main class="portal-shell portal-layout-shell">
+	<section class="tab-panel is-active" data-tab-panel="lookup">
+		<section class="hero-card">
+			<div>
+				<p class="eyebrow">Tra cứu kết quả xét tuyển</p>
+				<h1>Thí sinh</h1>
+				<p class="hero-note">Nhập CCCD làm tên đăng nhập và 8 số ngày sinh làm mật khẩu.</p>
+			</div>
+		</section>
+
+		<section class="lookup-grid">
+			<article class="panel form-panel">
+				<h2>Thông tin đăng nhập</h2>
+				<form class="lookup-form" th:action="@{/lookup}" method="post">
+					<label>
+						<span>Username / CCCD</span>
+						<input type="text" name="username" placeholder="Ví dụ: 079200001234" autocomplete="off"/>
+					</label>
+					<label>
+						<span>Password / Ngày sinh (ddMMyyyy)</span>
+						<input type="password" name="password" placeholder="Ví dụ: 25072007" autocomplete="off"/>
+					</label>
+					<button type="submit" class="primary-btn">Tra cứu</button>
+				</form>
+			</article>
+
+			<article class="panel result-panel">
+				<h2>Kết quả</h2>
+				<div class="hint-box">
+					Nhập CCCD và 8 số ngày sinh, sau đó bấm <strong>Tra cứu</strong> để xem kết quả.
+				</div>
+				<div class="empty-state">
+					Khu vực này sẽ hiển thị kết quả trúng tuyển sau khi tra cứu ở trang riêng.
+				</div>
+			</article>
+		</section>
+	</section>
+
+	<section class="tab-panel" data-tab-panel="dgnl" hidden>
+		<section class="panel dgnl-card">
+			<h2>Công cụ tham khảo tính điểm xét tuyển</h2>
+			<div class="dgnl-alert">Điểm thi DGNL giả định lúc cao nhất</div>
+			<p class="dgnl-note">Môn thi không có điểm: nhập 0.</p>
+
+			<form id="dgnlForm" class="dgnl-form-grid">
+				<label>
+					<span>Chọn ngành:</span>
+					<select id="dgnlMajor" required>
+						<option value="">-- Chọn ngành --</option>
+						<option value="Kỹ thuật phần mềm" data-code="7480103" data-combo="D01" data-threshold="20.0" data-admission="25.5">Kỹ thuật phần mềm</option>
+						<option value="Công nghệ thông tin" data-code="7480201" data-combo="A01" data-threshold="19.5" data-admission="24.8">Công nghệ thông tin</option>
+						<option value="Quản trị kinh doanh" data-code="7340101" data-combo="A00" data-threshold="18.0" data-admission="23.0">Quản trị kinh doanh</option>
+						<option value="Kế toán" data-code="7340301" data-combo="A00" data-threshold="17.0" data-admission="22.0">Kế toán</option>
+					</select>
+				</label>
+
+				<label>
+					<span>Điểm thi:</span>
+					<input id="dgnlScore" type="number" min="0" max="1200" step="0.01" placeholder="Nhập điểm thi DGNL (0-1200)" required/>
+				</label>
+
+				<label>
+					<span>Điểm cộng (&lt;=3.0):</span>
+					<input id="dgnlBonus" type="number" min="0" max="3" step="0.1" value="0.0"/>
+				</label>
+
+				<label>
+					<span>Khu vực ưu tiên:</span>
+					<select id="dgnlArea">
+						<option value="0">Không có</option>
+						<option value="0.75">Khu vực 1</option>
+						<option value="0.5">Khu vực 2NT</option>
+						<option value="0.25">Khu vực 2</option>
+					</select>
+				</label>
+
+				<label class="span-2">
+					<span>Đối tượng ưu tiên:</span>
+					<select id="dgnlObject">
+						<option value="0">Không đối tượng</option>
+						<option value="2.0">Đối tượng 1</option>
+						<option value="1.0">Đối tượng 2</option>
+						<option value="0.5">Đối tượng 3</option>
+					</select>
+				</label>
+
+				<div class="span-2 dgnl-submit-wrap">
+					<button type="submit" class="primary-btn dgnl-btn">Tính điểm</button>
+				</div>
+			</form>
+		</section>
+
+		<section id="dgnlResultCard" class="panel dgnl-result-card" hidden>
+			<h2 id="dgnlResultTitle">Tính quy đổi điểm xét tuyển DGNL</h2>
+			<div class="dgnl-info-line">
+				Tổ hợp quy đổi ưu tiên cao nhất <strong id="dgnlCombo">D01</strong>, ngưỡng đầu vào. <a href="#" id="dgnlReset">Quay lại</a>
+			</div>
+
+			<div class="details-table-wrap">
+				<div class="details-table">
+					<div class="details-row details-head">
+						<span>Nội dung</span>
+						<span>Chi tiết điểm</span>
+					</div>
+					<div class="details-row">
+						<span>Điểm thi DGNL</span>
+						<span id="dgnlInputScore">0.00</span>
+					</div>
+					<div class="details-row">
+						<span>Công thức quy đổi về thang 30 (THPT gốc-DH1)</span>
+						<span id="dgnlFormula">0 × 30 / 1200 = 0.00</span>
+					</div>
+					<div class="details-row">
+						<span>Điểm thi quy đổi</span>
+						<span id="dgnlConverted">0.00</span>
+					</div>
+					<div class="details-row">
+						<span>Điểm cộng</span>
+						<span id="dgnlBonusOut">0.00</span>
+					</div>
+					<div class="details-row">
+						<span>Điểm ưu tiên quy đổi</span>
+						<span id="dgnlPriority">0.00</span>
+					</div>
+					<div class="details-row highlight-row">
+						<span>Điểm xét tuyển = điểm thi quy đổi + điểm cộng + điểm ưu tiên</span>
+						<span><strong id="dgnlTotal">0.00</strong></span>
+					</div>
+				</div>
+			</div>
+
+			<div id="dgnlThresholdStatus" class="dgnl-status danger">X So với điểm ngưỡng: CHƯA ĐẠT</div>
+			<div id="dgnlAdmissionStatus" class="dgnl-status warning">! So với điểm trúng tuyển: CHƯA ĐẠT</div>
+		</section>
+	</section>
+
+	<section class="tab-panel" data-tab-panel="vsat" hidden>
+		<section class="hero-card calculator-hero">
+			<div class="hero-copy">
+				<p class="eyebrow">Công cụ tham khảo tính điểm xét tuyển</p>
+				<h1>VSAT / THPT</h1>
+				<p class="hero-note">Nhập điểm theo từng môn, chọn ngành xét tuyển và xem bảng chi tiết theo từng tổ hợp tương ứng.</p>
+			</div>
+			<div class="hero-score-card accent-card">
+				<span class="mini-label">Phương thức</span>
+				<strong>VSAT</strong>
+				<p>Hiển thị điểm quy đổi về thang 10 nếu là VSAT.</p>
+			</div>
+		</section>
+
+		<section class="mode-switcher">
+			<button type="button" class="mode-pill active">THPT</button>
+			<button type="button" class="mode-pill">VSAT</button>
+			<button type="button" class="mode-pill">Tổ hợp</button>
+		</section>
+
+		<section class="calculator-grid vsat-grid">
+			<article class="panel form-panel prominent-panel">
+				<div class="panel-heading">
+					<div>
+						<p class="panel-kicker">Điểm thi VSAT (thang điểm 150)</p>
+						<h2>Công cụ tham khảo tính điểm xét tuyển</h2>
+						<p class="panel-subtitle">Môn thi không có điểm: nhập 0.</p>
+					</div>
+					<span class="panel-badge">Bản xem trước</span>
+				</div>
+
+				<form class="calculator-form">
+					<div class="field-row three-col top-controls-grid">
+						<label>
+							<span>Chọn ngành:</span>
+							<select>
+								<option>Quản lý giáo dục</option>
+								<option>Công nghệ thông tin</option>
+								<option>Quản trị kinh doanh</option>
+								<option>Kế toán</option>
+							</select>
+						</label>
+						<label>
+							<span>Điểm cộng (<=3.0):</span>
+							<input type="number" min="0" max="3" step="0.1" placeholder="1.5"/>
+						</label>
+						<label>
+							<span>Khu vực ưu tiên:</span>
+							<select>
+								<option>Khu vực 2NT</option>
+								<option>Khu vực 1</option>
+								<option>Khu vực 2</option>
+								<option>Khu vực 3</option>
+							</select>
+						</label>
+					</div>
+
+					<div class="field-row three-col">
+						<label>
+							<span>Đối tượng ưu tiên</span>
+							<select>
+								<option>Đối tượng 6</option>
+								<option>Đối tượng 1</option>
+								<option>Đối tượng 2</option>
+								<option>Đối tượng 3</option>
+							</select>
+						</label>
+						<label>
+							<span>Chọn môn có điểm cộng:</span>
+							<select>
+								<option>Hóa học</option>
+								<option>Toán</option>
+								<option>Ngữ văn</option>
+								<option>Tiếng Anh</option>
+							</select>
+						</label>
+						<label>
+							<span>Mức điểm cộng tương ứng:</span>
+							<select>
+								<option>1.5</option>
+								<option>1.0</option>
+								<option>0.5</option>
+								<option>0.0</option>
+							</select>
+						</label>
+					</div>
+
+					<div class="score-band">
+						<p class="score-band-title">Nhập điểm từng môn (thang 10, nếu là VSAT hệ thống sẽ quy đổi về thang 10)</p>
+					</div>
+
+					<div class="field-row three-col score-input-grid">
+						<label><span>Điểm môn Toán:</span><input type="number" min="0" max="10" step="0.01" placeholder="7.00"/></label>
+						<label><span>Điểm môn Ngữ văn:</span><input type="number" min="0" max="10" step="0.01" placeholder="6.50"/></label>
+						<label><span>Điểm môn Vật lý:</span><input type="number" min="0" max="10" step="0.01" placeholder="0"/></label>
+					</div>
+
+					<div class="field-row three-col score-input-grid">
+						<label><span>Điểm môn Hóa học:</span><input type="number" min="0" max="10" step="0.01" placeholder="0"/></label>
+						<label><span>Điểm môn Sinh học:</span><input type="number" min="0" max="10" step="0.01" placeholder="0"/></label>
+						<label><span>Điểm môn Lịch sử:</span><input type="number" min="0" max="10" step="0.01" placeholder="0"/></label>
+					</div>
+
+					<div class="field-row three-col score-input-grid">
+						<label><span>Điểm môn Địa lý:</span><input type="number" min="0" max="10" step="0.01" placeholder="0"/></label>
+						<label><span>Điểm môn Tiếng Anh:</span><input type="number" min="0" max="10" step="0.01" placeholder="9.0"/></label>
+						<label><span>Quy đổi tiếng Anh (nếu có):</span><input type="number" min="0" max="10" step="0.01" placeholder="9.0"/></label>
+					</div>
+
+					<div class="field-note-inline">Môn thi không có điểm: nhập 0.</div>
+
+					<div class="form-actions align-right">
+						<button type="button" class="primary-btn">Tính điểm</button>
+					</div>
+				</form>
+			</article>
+
+			<aside class="panel result-panel calculator-preview-panel">
+				<div class="panel-heading">
+					<div>
+						<p class="panel-kicker">Tính điểm vào ngành xét tuyển</p>
+						<h2>Quản lý giáo dục (7140114)</h2>
+						<p class="panel-subtitle">Tổ hợp có điểm xét tuyển cao nhất: D01, 22.83 điểm. Tổ hợp có <span class="badge-inline">B03</span> ngưỡng đầu vào.</p>
+					</div>
+					<span class="panel-badge muted">Đã mô phỏng</span>
+				</div>
+
+				<div class="result-summary-banner">
+					<div>
+						<span class="mini-label">Ngưỡng xét tuyển cao nhất</span>
+						<strong>19.77</strong>
+					</div>
+					<div>
+						<span class="mini-label">Trạng thái</span>
+						<strong class="status-inline success">Đạt</strong>
+					</div>
+				</div>
+
+				<div class="details-table-wrap">
+					<div class="details-table">
+						<div class="details-row details-head">
+							<span>Nội dung</span>
+							<span>Chi tiết điểm</span>
+						</div>
+						<div class="details-row">
+							<span>Khu vực ưu tiên: 2NT</span>
+							<span>0.50</span>
+						</div>
+						<div class="details-row">
+							<span>Đối tượng ưu tiên: 06</span>
+							<span>1.00</span>
+						</div>
+						<div class="details-row">
+							<span>Điểm cộng (<=3)</span>
+							<span>1.50</span>
+						</div>
+						<div class="section-row">
+							<span>1) Tổ hợp B03 - Toán, Sinh học, Ngữ văn</span>
+						</div>
+						<div class="details-row">
+							<span>Điểm môn Toán</span>
+							<span>7.00</span>
+						</div>
+						<div class="details-row">
+							<span>Điểm môn Ngữ văn</span>
+							<span>8.50</span>
+						</div>
+						<div class="details-row">
+							<span>Điểm môn Sinh học</span>
+							<span>7.76</span>
+						</div>
+						<div class="details-row">
+							<span>Xét ngưỡng = Tổng 3 môn + điểm ưu tiên</span>
+							<span><strong>17.76</strong></span>
+						</div>
+						<div class="details-row highlight-row">
+							<span>Điểm xét tuyển (ĐXT)</span>
+							<span><strong>19.77</strong></span>
+						</div>
+						<div class="section-row">
+							<span>2) Tổ hợp C01 - Ngữ văn, Toán, Vật lý</span>
+						</div>
+						<div class="details-row">
+							<span>Điểm môn Toán</span>
+							<span>7.00</span>
+						</div>
+						<div class="details-row">
+							<span>Điểm môn Vật lý</span>
+							<span>0.00</span>
+						</div>
+						<div class="details-row">
+							<span>Điểm môn Ngữ văn</span>
+							<span>8.50</span>
+						</div>
+						<div class="details-row highlight-row">
+							<span>Điểm xét tuyển</span>
+							<span><strong>15.50</strong></span>
+						</div>
+						<div class="section-row">
+							<span>3) Tổ hợp D01 - Ngữ văn, Toán, Tiếng Anh</span>
+						</div>
+						<div class="details-row">
+							<span>Điểm môn Tiếng Anh / Quy đổi</span>
+							<span>9.00</span>
+						</div>
+						<div class="details-row highlight-row">
+							<span>Điểm xét tuyển</span>
+							<span><strong>22.83</strong></span>
+						</div>
+					</div>
+				</div>
+			</aside>
+		</section>
+
+		<section class="panel info-panel">
+			<div class="panel-heading compact-heading">
+				<div>
+					<p class="panel-kicker">Kết quả hiển thị</p>
+					<h2>Điểm quy đổi về thang 10</h2>
+				</div>
+				<span class="panel-badge">VSAT / THPT</span>
+			</div>
+
+			<div class="score-matrix">
+				<div class="score-matrix-card">
+					<span>VSAT</span>
+					<strong>8.62</strong>
+					<p>Quy đổi từ thang 150 về thang 10.</p>
+				</div>
+				<div class="score-matrix-card">
+					<span>THPT</span>
+					<strong>24.50</strong>
+					<p>Tổng điểm theo tổ hợp môn đã chọn.</p>
+				</div>
+				<div class="score-matrix-card">
+					<span>Điểm cộng</span>
+					<strong>1.50</strong>
+					<p>Mức cộng đã bổ sung theo môn có điểm cộng.</p>
+				</div>
+			</div>
+		</section>
+	</section>
+</main>
+</body>
+</html>

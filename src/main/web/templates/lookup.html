@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+	<meta charset="UTF-8"/>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+	<title>Tra cứu kết quả xét tuyển</title>
+	<link rel="stylesheet" th:href="@{/css/student-portal.css}"/>
+</head>
+<body class="portal-body">
+<main class="portal-shell">
+	<section class="hero-card">
+		<div>
+			<p class="eyebrow">Tra cứu kết quả xét tuyển</p>
+			<h1>Thí sinh</h1>
+			<p class="hero-note">Nhập CCCD làm tên đăng nhập và 8 số ngày sinh làm mật khẩu.</p>
+		</div>
+	</section>
+
+	<section class="lookup-grid">
+		<article class="panel form-panel">
+			<h2>Thông tin đăng nhập</h2>
+			<form th:action="@{/lookup}" method="post" th:object="${lookupRequest}" class="lookup-form">
+				<label>
+					<span>Username / CCCD</span>
+					<input type="text" th:field="*{username}" placeholder="Ví dụ: 079200001234" autocomplete="off"/>
+				</label>
+				<label>
+					<span>Password / Ngày sinh (ddMMyyyy)</span>
+					<input type="password" th:field="*{password}" placeholder="Ví dụ: 25072007" autocomplete="off"/>
+				</label>
+				<button type="submit" class="primary-btn">Tra cứu</button>
+			</form>
+		</article>
+
+		<article class="panel result-panel" th:if="${result != null and result.searched}">
+			<h2>Kết quả</h2>
+
+			<div th:if="${result.searched and result.message != null and !result.message.isEmpty()}" class="message-box" th:text="${result.message}"></div>
+
+			<div th:if="${result.found}" class="result-summary">
+				<div class="status-badge success" th:if="${result.admitted}">Chúc mừng! Bạn đã trúng tuyển</div>
+				<div class="status-badge warning" th:unless="${result.admitted}">Không trúng tuyển</div>
+
+				<dl class="result-list">
+					<div>
+						<dt>Họ tên</dt>
+						<dd th:text="${result.fullName}">--</dd>
+					</div>
+					<div>
+						<dt>CCCD</dt>
+						<dd th:text="${result.cccd}">--</dd>
+					</div>
+					<div>
+						<dt>Ngày sinh</dt>
+						<dd th:text="${result.ngaySinh}">--</dd>
+					</div>
+					<div th:if="${result.admitted}">
+						<dt>Ngành trúng tuyển</dt>
+						<dd>
+							<span th:text="${result.majorCode}">--</span>
+							<span th:if="${result.majorName != null and !result.majorName.isEmpty()}" th:text="' - ' + ${result.majorName}"></span>
+						</dd>
+					</div>
+					<div th:if="${result.admitted}">
+						<dt>Điểm</dt>
+						<dd th:text="${result.score}">--</dd>
+					</div>
+					<div th:if="${result.admitted}">
+						<dt>Tổ hợp</dt>
+						<dd th:text="${result.combination}">--</dd>
+					</div>
+					<div th:if="${result.admitted}">
+						<dt>Phương thức</dt>
+						<dd th:text="${result.method}">--</dd>
+					</div>
+				</dl>
+			</div>
+
+			<div th:if="${result.searched and !result.found}" class="empty-state">
+				Không tìm thấy thông tin thí sinh với CCCD và ngày sinh đã nhập!
+			</div>
+		</article>
+
+		<article class="panel result-panel" th:if="${result != null and !result.searched}">
+			<h2>Kết quả</h2>
+			<div class="hint-box">
+				Nhập CCCD và 8 số ngày sinh, sau đó bấm <strong>Tra cứu</strong> để xem kết quả.
+			</div>
+		</article>
+	</section>
+</main>
+</body>
+</html>
