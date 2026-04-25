@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+	<meta charset="UTF-8"/>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+	<title>Tính điểm ĐGNL</title>
+	<link rel="stylesheet" th:href="@{/css/student-portal.css}"/>
+	<script defer th:src="@{/js/DGNLcalculator.js}"></script>
+</head>
+<body class="portal-body calculator-body">
+<main class="portal-shell calculator-shell">
+	<section class="hero-card calculator-hero">
+		<div class="hero-copy">
+			<p class="eyebrow">Công cụ xét tuyển</p>
+			<h1>Tính điểm ĐGNL</h1>
+			<p class="hero-note">Nhập điểm thi thang 1200, chọn ngành xét tuyển và các yếu tố ưu tiên để xem bản xem trước kết quả.</p>
+		</div>
+		<div class="hero-score-card">
+			<span class="mini-label">Thang quy đổi</span>
+			<strong>30 điểm</strong>
+			<p>Hiển thị điểm quy đổi tương ứng với từng nguyện vọng.</p>
+		</div>
+	</section>
+
+	<section class="calculator-toolbar">
+		<div class="toolbar-chip active">ĐGNL</div>
+		<div class="toolbar-chip">So sánh ngưỡng</div>
+		<div class="toolbar-chip">Điểm trúng tuyển</div>
+		<div class="toolbar-chip">Ưu tiên</div>
+	</section>
+
+	<section class="calculator-grid dgnl-grid">
+		<article class="panel form-panel prominent-panel">
+			<div class="panel-heading">
+				<div>
+					<p class="panel-kicker">Bước 1</p>
+					<h2>Nhập thông tin xét tuyển</h2>
+				</div>
+				<span class="panel-badge">UI preview</span>
+			</div>
+
+			<form class="calculator-form">
+				<div class="field-row two-col">
+					<label>
+						<span>Điểm thi ĐGNL</span>
+						<input type="number" min="0" max="1200" step="0.1" placeholder="Ví dụ: 925.5"/>
+					</label>
+					<label>
+						<span>Ngành xét tuyển</span>
+						<select>
+							<option>Chọn ngành</option>
+							<option>Công nghệ thông tin</option>
+							<option>Quản trị kinh doanh</option>
+							<option>Kế toán</option>
+							<option>Luật</option>
+						</select>
+					</label>
+				</div>
+
+				<div class="field-row two-col">
+					<label>
+						<span>Đối tượng ưu tiên</span>
+						<select>
+							<option>Không ưu tiên</option>
+							<option>UT1</option>
+							<option>UT2</option>
+							<option>UT3</option>
+						</select>
+					</label>
+					<label>
+						<span>Khu vực ưu tiên</span>
+						<select>
+							<option>Không khu vực</option>
+							<option>KV1</option>
+							<option>KV2-NT</option>
+							<option>KV2</option>
+						</select>
+					</label>
+				</div>
+
+				<div class="field-row two-col">
+					<label>
+						<span>Điểm cộng (nếu có)</span>
+						<input type="number" min="0" step="0.1" placeholder="Ví dụ: 1.5"/>
+					</label>
+					<label>
+						<span>Tổ hợp gốc</span>
+						<select>
+							<option>A00</option>
+							<option>A01</option>
+							<option>B00</option>
+							<option>C00</option>
+						</select>
+					</label>
+				</div>
+
+				<div class="form-note-box">
+					<strong>Gợi ý:</strong> hệ thống sẽ quy đổi từ thang 1200 về thang 30 và hiển thị trạng thái đạt/không đạt theo ngưỡng.
+				</div>
+
+				<div class="form-actions">
+					<button type="button" class="primary-btn">Xem kết quả</button>
+					<button type="button" class="secondary-btn">Nhập lại</button>
+				</div>
+			</form>
+		</article>
+
+		<aside class="panel result-panel calculator-preview-panel">
+			<div class="panel-heading">
+				<div>
+					<p class="panel-kicker">Bước 2</p>
+					<h2>Khung kết quả</h2>
+				</div>
+				<span class="panel-badge muted">Chưa tính</span>
+			</div>
+
+			<div class="score-hero">
+				<div>
+					<span class="mini-label">Quy đổi hiện tại</span>
+					<strong>0.00 / 30</strong>
+				</div>
+				<div class="score-ring">30</div>
+			</div>
+
+			<div class="result-stack">
+				<div class="result-card success-card">
+					<span>So với điểm ngưỡng</span>
+					<strong>Đạt</strong>
+					<p>Điểm hiện tại đang cao hơn ngưỡng của ngành.</p>
+				</div>
+				<div class="result-card info-card">
+					<span>So với điểm trúng tuyển</span>
+					<strong>Đạt</strong>
+					<p>Chỉ hiển thị khi ngành có điểm trúng tuyển đã công bố.</p>
+				</div>
+			</div>
+
+			<div class="result-meta-grid">
+				<div>
+					<span>Ngành</span>
+					<strong>Công nghệ thông tin</strong>
+				</div>
+				<div>
+					<span>Tổ hợp gốc</span>
+					<strong>A00</strong>
+				</div>
+				<div>
+					<span>Ưu tiên</span>
+					<strong>1.25</strong>
+				</div>
+				<div>
+					<span>Điểm cộng</span>
+					<strong>1.50</strong>
+				</div>
+			</div>
+		</aside>
+	</section>
+
+	<section class="panel info-panel">
+		<div class="panel-heading compact-heading">
+			<div>
+				<p class="panel-kicker">Bước 3</p>
+				<h2>Bảng xem trước cho từng nguyện vọng</h2>
+			</div>
+			<span class="panel-badge">4 ví dụ</span>
+		</div>
+
+		<div class="preview-table">
+			<div class="preview-row preview-head">
+				<span>Ngành</span>
+				<span>Tổ hợp gốc</span>
+				<span>Ngưỡng</span>
+				<span>Điểm trúng tuyển</span>
+				<span>Trạng thái</span>
+			</div>
+			<div class="preview-row">
+				<span>Kỹ thuật phần mềm</span>
+				<span>A00</span>
+				<span>22.50</span>
+				<span>25.10</span>
+				<span class="status-pill success">Đạt</span>
+			</div>
+			<div class="preview-row">
+				<span>Quản trị kinh doanh</span>
+				<span>A01</span>
+				<span>21.00</span>
+				<span>23.40</span>
+				<span class="status-pill success">Đạt</span>
+			</div>
+			<div class="preview-row">
+				<span>Luật</span>
+				<span>C00</span>
+				<span>20.00</span>
+				<span>22.60</span>
+				<span class="status-pill warning">Gần đạt</span>
+			</div>
+			<div class="preview-row">
+				<span>Kế toán</span>
+				<span>B00</span>
+				<span>19.50</span>
+				<span>21.80</span>
+				<span class="status-pill neutral">Chưa có dữ liệu</span>
+			</div>
+		</div>
+	</section>
+</main>
+</body>
+</html>
