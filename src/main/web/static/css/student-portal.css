@@ -895,6 +895,75 @@
 	color: #5f7190;
 }
 
+.vsat-card {
+	max-width: 980px;
+	margin: 0 auto;
+	padding: 20px;
+	border-radius: 12px;
+}
+
+.vsat-card h2 {
+	font-size: 2rem;
+	line-height: 1.2;
+	color: #1294c7;
+	margin-bottom: 12px;
+}
+
+.vsat-form-grid {
+	display: grid;
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+	gap: 10px;
+}
+
+.vsat-form-grid label {
+	display: grid;
+	gap: 6px;
+	font-weight: 700;
+	color: #2f4058;
+}
+
+.vsat-form-grid input,
+.vsat-form-grid select {
+	border: 1px solid #cdd7e6;
+	border-radius: 8px;
+	padding: 10px 10px;
+	font-size: 0.96rem;
+	outline: none;
+	background: #fff;
+}
+
+.vsat-form-grid input:focus,
+.vsat-form-grid select:focus {
+	border-color: #2d6cdf;
+	box-shadow: 0 0 0 3px rgba(45, 108, 223, 0.14);
+}
+
+.vsat-form-grid .span-3 {
+	grid-column: 1 / -1;
+}
+
+.vsat-type-row {
+	display: flex;
+	gap: 12px;
+	align-items: center;
+	flex-wrap: wrap;
+	font-weight: 700;
+	color: #2f4058;
+}
+
+.radio-chip {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	font-weight: 700;
+	color: #243a5a;
+}
+
+.radio-chip input {
+	margin: 0;
+	accent-color: #2d6cdf;
+}
+
 @media (max-width: 1080px) {
 	.calculator-grid,
 	.calculator-hero {
@@ -946,7 +1015,8 @@
 	.field-row.three-col,
 	.result-meta-grid,
 	.combo-grid,
-	.dgnl-form-grid {
+	.dgnl-form-grid,
+	.vsat-form-grid {
 		grid-template-columns: 1fr;
 	}
 
