@@ -8,6 +8,7 @@ import gui.panels.DashboardPanel;
 import gui.panels.CandidatePanel;
 import gui.panels.ChangePasswordPanel;
 import gui.panels.UserManagementPanel;
+import gui.panels.ExamScorePanel;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Cursor;
@@ -114,10 +115,10 @@ public class MainFrame extends JFrame {
             case "CANDIDATE": newPanel = new CandidatePanel(); break;
             case "USER_MANAGEMENT": newPanel = new UserManagementPanel(); break;
             case "CHANGE_PASSWORD": newPanel = new ChangePasswordPanel(this); break;
+            case "EXAM_SCORE": newPanel = new ExamScorePanel(); break;
             case "CATALOG":
             case "SUBJECT":
             case "MAJOR_SUBJECT":
-            case "EXAM_SCORE":
             case "BONUS_POINT":
             case "ASPIRATION":
             case "CONVERSION":
