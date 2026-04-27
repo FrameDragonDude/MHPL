@@ -128,7 +128,6 @@ public class ExamScorePanel extends JPanel {
         JScrollPane mainScroll = new JScrollPane(table);
         JScrollPane fixedScroll = new JScrollPane(fixedActionTable);
         
-        // Giống CandidatePanel
         mainScroll.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_NEVER);
         mainScroll.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
 
@@ -157,104 +156,6 @@ public class ExamScorePanel extends JPanel {
 
         return wrapper;
     }
-
-    // private JPanel buildTablePanel() {
-    //     // 1. Cấu hình bảng chính
-    //     table.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
-    //     table.setRowHeight(34);
-    //     styleTableHeader(table);
-
-    //     // 2. Cấu hình bảng thao tác cố định
-    //     fixedActionTable.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
-    //     fixedActionTable.setRowHeight(34);
-    //     styleTableHeader(fixedActionTable);
-
-    //     // Thiết lập độ rộng cột
-    //     applyColumnWidths();
-
-    //     // 3. Tách cột Thao tác sang bảng riêng (giữ nguyên logic của bạn)
-    //     if (table.getColumnCount() > actionColumnIndex) {
-    //         table.removeColumn(table.getColumnModel().getColumn(actionColumnIndex));
-    //     }
-        
-    //     for (int i = fixedActionTable.getColumnModel().getColumnCount() - 1; i >= 0; i--) {
-    //         if (fixedActionTable.getColumnModel().getColumn(i).getModelIndex() != actionColumnIndex) {
-    //             fixedActionTable.removeColumn(fixedActionTable.getColumnModel().getColumn(i));
-    //         }
-    //     }
-
-    //     fixedActionTable.getColumnModel().getColumn(0).setCellRenderer(new ActionCellRenderer());
-    //     fixedActionTable.getColumnModel().getColumn(0).setCellEditor(new ActionCellEditor());
-    //     fixedActionTable.getColumnModel().getColumn(0).setPreferredWidth(100);
-
-    //     // 4. CẤU HÌNH SCROLLPANE (Quan trọng)
-    //     JScrollPane mainScroll = new JScrollPane(table);
-    //     JScrollPane fixedScroll = new JScrollPane(fixedActionTable);
-        
-    //     // Tắt thanh cuộn của bảng Fixed (vì nó sẽ trượt theo bảng Main)
-    //     fixedScroll.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_NEVER);
-    //     fixedScroll.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
-    //     fixedScroll.setPreferredSize(new Dimension(100, 0));
-        
-    //     // Đồng bộ cuộn dọc giữa 2 bảng
-    //     fixedScroll.getVerticalScrollBar().setModel(mainScroll.getVerticalScrollBar().getModel());
-        
-    //     // 5. BỐ CỤC WRAPPER
-    //     JPanel wrapper = new JPanel(new BorderLayout());
-    //     wrapper.setBorder(BorderFactory.createEtchedBorder());
-        
-    //     wrapper.add(mainScroll, BorderLayout.CENTER);
-    //     wrapper.add(fixedScroll, BorderLayout.EAST);
-
-    //     // KHÔNG add thêm JScrollBar vào SOUTH nữa vì mainScroll đã tự có rồi.
-    //     return wrapper;
-    // }
-
-    // private JPanel buildTablePanel() {
-    //     // Cấu hình bảng chính
-    //     table.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
-    //     table.setRowHeight(34);
-    //     styleTableHeader(table);
-
-    //     // Cấu hình bảng thao tác cố định (giống CandidatePanel)
-    //     fixedActionTable.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
-    //     fixedActionTable.setRowHeight(34);
-    //     styleTableHeader(fixedActionTable);
-
-    //     // Thiết lập độ rộng cột
-    //     applyColumnWidths();
-
-    //     // Tách cột Thao tác sang bảng riêng
-    //     table.removeColumn(table.getColumnModel().getColumn(actionColumnIndex));
-    //     for (int i = fixedActionTable.getColumnModel().getColumnCount() - 1; i >= 0; i--) {
-    //         if (fixedActionTable.getColumnModel().getColumn(i).getModelIndex() != actionColumnIndex) {
-    //             fixedActionTable.removeColumn(fixedActionTable.getColumnModel().getColumn(i));
-    //         }
-    //     }
-
-    //     fixedActionTable.getColumnModel().getColumn(0).setCellRenderer(new ActionCellRenderer());
-    //     fixedActionTable.getColumnModel().getColumn(0).setCellEditor(new ActionCellEditor());
-    //     fixedActionTable.getColumnModel().getColumn(0).setPreferredWidth(100);
-
-    //     JScrollPane mainScroll = new JScrollPane(table);
-    //     JScrollPane fixedScroll = new JScrollPane(fixedActionTable);
-        
-    //     // Đồng bộ cuộn dọc giữa 2 bảng
-    //     fixedScroll.getVerticalScrollBar().setModel(mainScroll.getVerticalScrollBar().getModel());
-    //     fixedScroll.setPreferredSize(new Dimension(100, 0));
-        
-    //     JPanel wrapper = new JPanel(new BorderLayout());
-    //     wrapper.setBorder(BorderFactory.createEtchedBorder());
-    //     wrapper.add(mainScroll, BorderLayout.CENTER);
-    //     wrapper.add(fixedScroll, BorderLayout.EAST);
-
-    //     // Thanh cuộn ngang dùng chung
-    //     JScrollBar sharedHorizontalBar = new JScrollBar(JScrollBar.HORIZONTAL);
-    //     sharedHorizontalBar.setModel(mainScroll.getHorizontalScrollBar().getModel());
-    //     wrapper.add(sharedHorizontalBar, BorderLayout.SOUTH);
-
-    //     return wrapper;
-    // }
 
     private void applyColumnWidths() {
         int[] widths = {50, 120, 120, 100, 60, 60, 60, 60, 60, 60, 60, 70, 70, 70, 70, 60, 70, 70, 70, 70, 100};
