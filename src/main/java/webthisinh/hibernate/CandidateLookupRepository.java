@@ -24,13 +24,26 @@ public class CandidateLookupRepository {
 			return Optional.empty();
 		}
 
+		String input = cccd.trim();
+		String inputDigits = input.replaceAll("\\D", "");
+
 		try (Session session = HibernateUtil.getSessionFactory().openSession()) {
 			CandidateEntity entity = session.createQuery(
 					"from CandidateEntity c where c.cccd = :cccd",
 					CandidateEntity.class
 			)
-					.setParameter("cccd", cccd.trim())
+					.setParameter("cccd", input)
 					.uniqueResult();
+
+			if (entity == null && !inputDigits.isEmpty()) {
+				entity = session.createQuery(
+						"from CandidateEntity c where replace(replace(replace(c.cccd, '.', ''), '-', ''), ' ', '') = :cccdDigits",
+						CandidateEntity.class
+				)
+						.setParameter("cccdDigits", inputDigits)
+						.uniqueResult();
+			}
+
 			return Optional.ofNullable(entity);
 		} catch (Exception ex) {
 			throw new RuntimeException("Khong the tim thi sinh theo CCCD", ex);
@@ -61,8 +74,8 @@ public class CandidateLookupRepository {
 			       nv.nv_ketqua,
 			       nv.nv_tt
 			from xt_nguyenvongxettuyen nv
-			left join xt_nganh ng on ng.manganh = nv.nv_manganh
-			where nv.nn_cccd = :cccd
+			left join xt_nganh ng on binary ng.manganh = binary nv.nv_manganh
+			where binary nv.nn_cccd = binary :cccd
 			order by nv.nv_tt asc, nv.diem_xettuyen desc
 			""";
 

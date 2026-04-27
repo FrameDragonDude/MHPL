@@ -26,9 +26,9 @@ public class UserDAO {
 
         try (Session session = HibernateUtil.getSessionFactory().openSession()) {
             return session.createQuery(
-                    "from UserEntity u where u.username = :username",
+                    "from UserEntity u where lower(u.username) = :username",
                     UserEntity.class)
-                    .setParameter("username", value)
+                    .setParameter("username", value.toLowerCase())
                     .uniqueResult();
         } catch (Exception ex) {
             throw asSqlException("tìm user theo username", ex);

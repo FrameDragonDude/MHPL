@@ -40,7 +40,8 @@ public final class HibernateUtil {
                 if (registry != null) {
                     StandardServiceRegistryBuilder.destroy(registry);
                 }
-                throw new RuntimeException("Khoi tao SessionFactory that bai", ex);
+                String detail = ex.getMessage() == null ? "khong ro nguyen nhan" : ex.getMessage();
+                throw new RuntimeException("Khoi tao SessionFactory that bai: " + detail, ex);
             }
         }
 

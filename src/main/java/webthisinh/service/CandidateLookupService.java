@@ -2,6 +2,7 @@ package webthisinh.service;
 
 import dal.entities.CandidateEntity;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.List;
@@ -58,7 +59,15 @@ public class CandidateLookupService {
 		viewModel = candidateWebMapper.toViewModel(candidate);
 		viewModel.setMessage("Tìm thấy.");
 
-		List<CandidateLookupRepository.AdmissionRow> admissions = candidateLookupRepository.findAdmissionsByCccd(username);
+		List<CandidateLookupRepository.AdmissionRow> admissions;
+		try {
+			admissions = candidateLookupRepository.findAdmissionsByCccd(username);
+		} catch (RuntimeException ex) {
+			candidateWebMapper.markNotAdmitted(viewModel);
+			viewModel.setMessage("Tìm thấy thông tin thí sinh, nhưng chưa đọc được dữ liệu nguyện vọng.");
+			return viewModel;
+		}
+
 		Optional<CandidateLookupRepository.AdmissionRow> winning = admissions.stream()
 				.filter(row -> isPositiveResult(row.getResultLabel()))
 				.findFirst();
@@ -90,13 +99,43 @@ public class CandidateLookupService {
 			return "";
 		}
 
-		List<DateTimeFormatter> formatters = List.of(
+		String normalized = tryParseDate(input,
 				DateTimeFormatter.ofPattern("dd/MM/uuuu", Locale.getDefault()),
 				DateTimeFormatter.ofPattern("d/M/uuuu", Locale.getDefault()),
 				DateTimeFormatter.ofPattern("uuuu-MM-dd", Locale.getDefault()),
 				DateTimeFormatter.ofPattern("ddMMyyyy", Locale.getDefault())
 		);
+		if (!normalized.isEmpty()) {
+			return normalized;
+		}
 
+		normalized = tryParseDateTime(input,
+				DateTimeFormatter.ofPattern("uuuu-MM-dd HH:mm:ss", Locale.getDefault()),
+				DateTimeFormatter.ofPattern("uuuu-MM-dd HH:mm", Locale.getDefault()),
+				DateTimeFormatter.ofPattern("uuuu-MM-dd'T'HH:mm:ss", Locale.getDefault())
+		);
+		if (!normalized.isEmpty()) {
+			return normalized;
+		}
+
+		String digits = input.replaceAll("\\D", "");
+		if (digits.length() >= 8) {
+			String firstEight = digits.substring(0, 8);
+
+			// Ưu tiên nhận diện dạng yyyyMMdd (thường gặp khi DB lưu kèm time: yyyyMMddHHmmss)
+			try {
+				LocalDate ymd = LocalDate.parse(firstEight, DateTimeFormatter.ofPattern("uuuuMMdd"));
+				return ymd.format(DateTimeFormatter.ofPattern("ddMMyyyy"));
+			} catch (DateTimeParseException ignored) {
+			}
+
+			// Nếu không parse được như yyyyMMdd thì giữ nguyên 8 số đầu (ddMMyyyy)
+			return firstEight;
+		}
+		return digits;
+	}
+
+	private String tryParseDate(String input, DateTimeFormatter... formatters) {
 		for (DateTimeFormatter formatter : formatters) {
 			try {
 				LocalDate date = LocalDate.parse(input, formatter);
@@ -104,12 +143,18 @@ public class CandidateLookupService {
 			} catch (DateTimeParseException ignored) {
 			}
 		}
+		return "";
+	}
 
-		String digits = input.replaceAll("\\D", "");
-		if (digits.length() >= 8) {
-			return digits.substring(0, 8);
+	private String tryParseDateTime(String input, DateTimeFormatter... formatters) {
+		for (DateTimeFormatter formatter : formatters) {
+			try {
+				LocalDateTime dateTime = LocalDateTime.parse(input, formatter);
+				return dateTime.toLocalDate().format(DateTimeFormatter.ofPattern("ddMMyyyy"));
+			} catch (DateTimeParseException ignored) {
+			}
 		}
-		return digits;
+		return "";
 	}
 
 	private boolean isPositiveResult(String resultLabel) {

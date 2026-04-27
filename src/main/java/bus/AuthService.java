@@ -6,8 +6,11 @@ import dto.UserDTO;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 import java.sql.SQLException;
+import java.util.regex.Pattern;
 
 public class AuthService {
+
+    private static final Pattern BCRYPT_PATTERN = Pattern.compile("^\\$2[aby]\\$\\d{2}\\$[./A-Za-z0-9]{53}$");
 
     private final UserDAO userDAO;
     private final BCryptPasswordEncoder passwordEncoder;
@@ -32,8 +35,14 @@ public class AuthService {
             throw new SQLException("Tài khoản của bạn đã bị khóa. Vui lòng liên hệ admin.");
         }
 
-        if (!passwordEncoder.matches(password, user.getPassword())) {
+        if (!isPasswordMatch(password, user.getPassword())) {
             return null; // Mật khẩu sai
+        }
+
+        // Tự động nâng cấp mật khẩu cũ dạng plain text lên bcrypt sau đăng nhập thành công.
+        if (!isBcryptHash(user.getPassword())) {
+            user.setPassword(passwordEncoder.encode(password));
+            userDAO.updateUser(user);
         }
 
         userDAO.updateLastLogin(user.getId());
@@ -55,7 +64,7 @@ public class AuthService {
             return false;
         }
 
-        if (!passwordEncoder.matches(oldPassword, user.getPassword())) {
+        if (!isPasswordMatch(oldPassword, user.getPassword())) {
             throw new SQLException("Mật khẩu cũ không chính xác");
         }
 
@@ -93,5 +102,22 @@ public class AuthService {
         user.setPassword(hashedPassword);
 
         return userDAO.updateUser(user);
+    }
+
+    private boolean isPasswordMatch(String rawPassword, String storedPassword) {
+        if (rawPassword == null || storedPassword == null) {
+            return false;
+        }
+
+        String normalizedStored = storedPassword.trim();
+        if (isBcryptHash(normalizedStored)) {
+            return passwordEncoder.matches(rawPassword, normalizedStored);
+        }
+
+        return rawPassword.equals(normalizedStored);
+    }
+
+    private boolean isBcryptHash(String value) {
+        return value != null && BCRYPT_PATTERN.matcher(value.trim()).matches();
     }
 }

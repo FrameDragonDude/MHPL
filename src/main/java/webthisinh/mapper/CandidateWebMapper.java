@@ -19,6 +19,7 @@ public class CandidateWebMapper {
 		viewModel.setNgaySinh(candidate.getNgaySinh());
 		viewModel.setFound(true);
 		viewModel.setAuthenticated(true);
+		viewModel.setSearched(true);
 		return viewModel;
 	}
 

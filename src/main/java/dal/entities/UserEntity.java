@@ -8,8 +8,6 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
-import jakarta.persistence.Temporal;
-import jakarta.persistence.TemporalType;
 import java.time.LocalDateTime;
 
 /**
@@ -39,7 +37,6 @@ public class UserEntity {
     private UserRole role;
 
     @Column(name = "last_login")
-    @Temporal(TemporalType.TIMESTAMP)
     private LocalDateTime lastLogin;
 
     @Column(name = "status", nullable = false)
