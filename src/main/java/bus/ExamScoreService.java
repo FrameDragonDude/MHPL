@@ -32,4 +32,49 @@ public class ExamScoreService {
     public int countRows(String keyword) throws SQLException {
         return examScoreDAO.countExamScores(keyword);
     }
+
+    public ExamScoreDTO getExamScoreById(int id) {
+        try {
+            return examScoreDAO.findExamScoreById(id);
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    public boolean addExamScore(ExamScoreDTO dto) {
+        try {
+            if(examScoreDAO.findExamScoreById(dto.getIdDiemThi()) != null) {
+                return false; // ID đã tồn tại
+            }
+            examScoreDAO.insert(dto);
+            return true;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    public boolean updateExamScore(ExamScoreDTO dto) {
+        try {
+            if (dto.getIdDiemThi() <= 0) return false;
+            examScoreDAO.update(dto);
+            return true;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+    
+    public boolean deleteExamScore(int id) {
+        try {
+            if (id <= 0) return false;
+            examScoreDAO.delete(id);
+            return true;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
 }

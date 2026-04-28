@@ -11,6 +11,7 @@ import javax.swing.table.TableCellRenderer;
 
 import bus.ExamScoreService;
 import dto.ExamScoreDTO;
+import gui.dialogs.ExamScoreFormDialog;
 
 import java.awt.*;
 import java.sql.SQLException;
@@ -24,7 +25,7 @@ public class ExamScorePanel extends JPanel {
 
     // Định nghĩa các cột dựa trên Table xt_diemthixettuyen
     private static final String[] TABLE_COLUMNS = {
-            "STT", "CCCD", "SBD", "Phương thức", "Toán", "Lý", "Hóa", "Sinh", 
+            "STT", "ID", "CCCD", "SBD", "Phương thức", "Toán", "Lý", "Hóa", "Sinh", 
             "Sử", "Địa", "Văn", "N1 Thi", "N1 CC", "CNCN", "CNNN", "Tin", 
             "KTPL", "NL1", "NK1", "NK2", "Thao tác"
     };
@@ -90,6 +91,20 @@ public class ExamScorePanel extends JPanel {
         JButton btnAdd = new JButton("+ Nhập điểm");
         styleButton(btnImport, COLOR_GREEN);
         styleButton(btnAdd, COLOR_BLUE);
+
+        btnAdd.addActionListener(e -> {
+            ExamScoreFormDialog dialog = new ExamScoreFormDialog((Frame) SwingUtilities.getWindowAncestor(this), null);
+            dialog.setVisible(true);
+            if (dialog.isConfirmed()) {
+                boolean success = examScoreService.addExamScore(dialog.getResult());
+                if (success) {
+                    JOptionPane.showMessageDialog(this, "Thêm điểm thi thành công!");
+                    refreshData();
+                } else {    
+                    JOptionPane.showMessageDialog(this, "Thêm điểm thi thất bại!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                }
+            }
+        });
         
         actions.add(btnImport);
         actions.add(btnAdd);
@@ -158,7 +173,7 @@ public class ExamScorePanel extends JPanel {
     }
 
     private void applyColumnWidths() {
-        int[] widths = {50, 120, 120, 100, 60, 60, 60, 60, 60, 60, 60, 70, 70, 70, 70, 60, 70, 70, 70, 70, 100};
+        int[] widths = {50, 50, 120, 120, 100, 60, 60, 60, 60, 60, 60, 60, 70, 70, 70, 70, 60, 70, 70, 70, 70, 100};
         for (int i = 0; i < widths.length && i < table.getColumnModel().getColumnCount(); i++) {
             table.getColumnModel().getColumn(i).setPreferredWidth(widths[i]);
         }
@@ -222,21 +237,20 @@ public class ExamScorePanel extends JPanel {
     private void refreshData() {
         String keyword = txtSearchCccd.getText().trim();
         try {
-            // 1. Cập nhật thông tin phân trang
+            // Cập nhật thông tin phân trang
             this.totalPages = examScoreService.countPages(keyword);
             int totalRows = examScoreService.countRows(keyword);
             lblPaging.setText(String.format("Trang %d/%d (Tổng %d dòng)", currentPage, totalPages, totalRows));
 
-            // 2. Lấy danh sách DTO
+            // Lấy danh sách DTO
             List<ExamScoreDTO> list = examScoreService.getExamScores(keyword, currentPage);
-
-            // 3. Đổ vào TableModel
             tableModel.setRowCount(0);
             int stt = (currentPage - 1) * ExamScoreService.PAGE_SIZE + 1;
 
             for (ExamScoreDTO d : list) {
                 tableModel.addRow(new Object[]{
                         stt++,
+                        d.getIdDiemThi(),
                         d.getCccd(),
                         d.getSoBaoDanh(),
                         d.getPhuongThuc(),
@@ -281,7 +295,6 @@ public class ExamScorePanel extends JPanel {
         });
     }
 
-    // --- Renderer & Editor cho cột Thao tác (Sửa/Xóa) ---
     private class ActionCellRenderer extends JPanel implements TableCellRenderer {
         public ActionCellRenderer() {
             setLayout(new FlowLayout(FlowLayout.CENTER, 5, 2));
@@ -314,12 +327,34 @@ public class ExamScorePanel extends JPanel {
             
             btnEdit.addActionListener(e -> {
                 stopCellEditing();
-                JOptionPane.showMessageDialog(null, "Sửa điểm thi tại dòng " + table.getSelectedRow());
+                int row = table.getSelectedRow();
+                ExamScoreDTO selected = examScoreService.getExamScoreById(Integer.parseInt(tableModel.getValueAt(row, 1).toString()));
+                ExamScoreFormDialog dialog = new ExamScoreFormDialog((Frame) SwingUtilities.getWindowAncestor(ExamScorePanel.this), selected);
+                dialog.setVisible(true);
+                if (dialog.isConfirmed()) {
+                    examScoreService.updateExamScore(dialog.getResult());
+                    boolean success = examScoreService.updateExamScore(dialog.getResult());
+                    if (success) {  
+                        JOptionPane.showMessageDialog(btnEdit, "Cập nhật điểm thi thành công!");
+                    } else {
+                        JOptionPane.showMessageDialog(btnEdit, "Cập nhật điểm thi thất bại!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                    }
+                    refreshData();
+                }
             });
             
             btnDelete.addActionListener(e -> {
                 stopCellEditing();
-                JOptionPane.showMessageDialog(null, "Xóa điểm thi");
+                int result = JOptionPane.showConfirmDialog(btnDelete, "Bạn có chắc chắn muốn xóa điểm thi này?", "Xác nhận xóa", JOptionPane.YES_NO_OPTION);
+                if (result == JOptionPane.YES_OPTION) {
+                    boolean success = examScoreService.deleteExamScore(Integer.parseInt(tableModel.getValueAt(table.getSelectedRow(), 1).toString()));
+                    if (success) {
+                        JOptionPane.showMessageDialog(btnDelete, "Xóa điểm thi thành công!");
+                    } else {
+                        JOptionPane.showMessageDialog(btnDelete, "Xóa điểm thi thất bại!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                    }
+                    refreshData();
+                }
             });
 
             panel.add(btnEdit);
