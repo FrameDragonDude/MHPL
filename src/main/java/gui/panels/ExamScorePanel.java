@@ -11,7 +11,9 @@ import javax.swing.table.TableCellRenderer;
 
 import bus.ExamScoreService;
 import dto.ExamScoreDTO;
+import gui.MainFrame;
 import gui.dialogs.ExamScoreFormDialog;
+import lucee.debug.Main;
 
 import java.awt.*;
 import java.sql.SQLException;
@@ -40,8 +42,10 @@ public class ExamScorePanel extends JPanel {
     private final ExamScoreService examScoreService;
     private int currentPage = 1;
     private int totalPages = 1;
+    private MainFrame mainFrame;
 
-    public ExamScorePanel () {
+    public ExamScorePanel (MainFrame mainFrame) {
+        this.mainFrame = mainFrame;
         this.examScoreService = new ExamScoreService();
         this.actionColumnIndex = TABLE_COLUMNS.length - 1;
 
@@ -93,8 +97,14 @@ public class ExamScorePanel extends JPanel {
         JPanel actions = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
         JButton btnImport = new JButton("Import Excel");
         JButton btnAdd = new JButton("+ Nhập điểm");
+        JButton btnStats = new JButton("Xem thống kê");
+        styleButton(btnStats, new Color(255, 178, 102));
         styleButton(btnImport, COLOR_GREEN);
         styleButton(btnAdd, COLOR_BLUE);
+        
+        btnStats.addActionListener(e -> {
+            mainFrame.switchPanel("STATISTICS");
+        });
 
         btnAdd.addActionListener(e -> {
             ExamScoreFormDialog dialog = new ExamScoreFormDialog((Frame) SwingUtilities.getWindowAncestor(this), null);
@@ -110,6 +120,7 @@ public class ExamScorePanel extends JPanel {
             }
         });
         
+        actions.add(btnStats);
         actions.add(btnImport);
         actions.add(btnAdd);
 
@@ -156,14 +167,8 @@ public class ExamScorePanel extends JPanel {
         mainScroll.setBorder(BorderFactory.createEmptyBorder());
         fixedScroll.setBorder(BorderFactory.createEmptyBorder());
         fixedScroll.setViewportBorder(BorderFactory.createEmptyBorder());
-
-        // Sync scroll dọc
         fixedScroll.getVerticalScrollBar().setModel(mainScroll.getVerticalScrollBar().getModel());
-
-        // Set width cột thao tác
         fixedScroll.setPreferredSize(new Dimension(100, 0));
-
-        // Shared horizontal scrollbar
         JScrollBar sharedHorizontalBar = new JScrollBar(JScrollBar.HORIZONTAL);
         sharedHorizontalBar.setModel(mainScroll.getHorizontalScrollBar().getModel());
 

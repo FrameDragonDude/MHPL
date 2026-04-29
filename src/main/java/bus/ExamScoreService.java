@@ -107,22 +107,26 @@ public class ExamScoreService {
     public List<StatisticDTO> statisticBySubjectRange(String subject) throws SQLException {
         List<ScoreStatDTO> scores = examScoreDAO.statBySubject(subject);
 
-        int[] buckets = new int[5];
+        long[] buckets = new long[5];
+        long total = 0;
 
         for (ScoreStatDTO s : scores) {
-            if (s == null) continue;
+            if (s == null || s.getDiem() == null) continue;
 
-            if (s.getDiem() < 2) buckets[0]++;
-            else if (s.getDiem() < 4) buckets[1]++;
-            else if (s.getDiem() < 6) buckets[2]++;
-            else if (s.getDiem() < 8) buckets[3]++;
-            else buckets[4]++;
+            double diem = s.getDiem();
+            long count = s.getSoLuong();
+
+            total += count;
+
+            if (diem < 2) buckets[0] += count;
+            else if (diem < 4) buckets[1] += count;
+            else if (diem < 6) buckets[2] += count;
+            else if (diem < 8) buckets[3] += count;
+            else buckets[4] += count;
         }
 
         String[] labels = {"0-2", "2-4", "4-6", "6-8", "8-10"};
         List<StatisticDTO> result = new ArrayList<>();
-
-        int total = scores.size();
 
         for (int i = 0; i < buckets.length; i++) {
             StatisticDTO dto = new StatisticDTO(labels[i], buckets[i]);

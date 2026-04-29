@@ -6,7 +6,7 @@ import org.hibernate.exception.ConstraintViolationException;
 import dto.ExamScoreDTO;
 import dto.MethodStatDTO;
 import dto.ScoreStatDTO;
-
+import java.math.BigDecimal;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
 import java.sql.SQLException;
@@ -193,7 +193,8 @@ public class ExamScoreDAO {
             List<ScoreStatDTO> result = new ArrayList<>();
 
             for (Object[] row : rows) {
-                Double diem = (Double) row[0];
+                BigDecimal diemBD = (BigDecimal) row[0];
+                Double diem = diemBD != null ? diemBD.doubleValue() : null;
                 Long count = (Long) row[1];
                 result.add(new ScoreStatDTO(diem, count));
             }
