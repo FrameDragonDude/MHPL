@@ -16,21 +16,21 @@ public class ExamScoreService {
         this.examScoreDAO = new ExamScoreDAO();
     }
 
-    public List<ExamScoreDTO> getExamScores(String keyword, int page) throws SQLException {
+    public List<ExamScoreDTO> getExamScores(String keyword, String filter, int page) throws SQLException {
         int safePage = Math.max(page, 1);
-        return examScoreDAO.findExamScores(keyword, safePage, PAGE_SIZE);
+        return examScoreDAO.findExamScores(keyword, filter, safePage, PAGE_SIZE);
     }
 
-    public int countPages(String keyword) throws SQLException {
-        int totalRows = examScoreDAO.countExamScores(keyword);
+    public int countPages(String keyword, String filter) throws SQLException {
+        int totalRows = examScoreDAO.countExamScores(keyword, filter);
         if (totalRows == 0) {
             return 1;
         }
         return (totalRows + PAGE_SIZE - 1) / PAGE_SIZE;
     }
 
-    public int countRows(String keyword) throws SQLException {
-        return examScoreDAO.countExamScores(keyword);
+    public int countRows(String keyword, String filter) throws SQLException {
+        return examScoreDAO.countExamScores(keyword, filter);
     }
 
     public ExamScoreDTO getExamScoreById(int id) {

@@ -34,6 +34,7 @@ public class ExamScorePanel extends JPanel {
     private final JTable table;
     private final JTable fixedActionTable;
     private final JTextField txtSearchCccd;
+    private final JComboBox<String> cbFilterPhuongThuc;
     private final JLabel lblPaging;
     private final int actionColumnIndex;
     private final ExamScoreService examScoreService;
@@ -55,6 +56,9 @@ public class ExamScorePanel extends JPanel {
         this.table = new JTable(tableModel);
         this.fixedActionTable = new JTable(tableModel);
         this.txtSearchCccd = new JTextField(20);
+        this.cbFilterPhuongThuc = new JComboBox<>(new String[]{
+            "Tất cả", "THPT", "VSAT", "ĐGNL"
+        });
         this.lblPaging = new JLabel("Trang 1/1 (20 dòng/trang)");
 
         setupUI();
@@ -189,6 +193,9 @@ public class ExamScorePanel extends JPanel {
         
         searchCard.add(new JLabel("Tìm kiếm CCCD/SBD:"));
         searchCard.add(txtSearchCccd);
+
+        searchCard.add(new JLabel("Lọc theo:"));
+        searchCard.add(cbFilterPhuongThuc);
         
         JPanel pagingPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         pagingPanel.add(lblPaging);
@@ -196,6 +203,11 @@ public class ExamScorePanel extends JPanel {
         JButton btnNext = new JButton("▶");
         styleButton(btnPrev, COLOR_BLUE);
         styleButton(btnNext, COLOR_BLUE);
+
+        cbFilterPhuongThuc.addActionListener(e -> {
+            currentPage = 1;
+            refreshData();
+        });
 
         btnPrev.addActionListener(e -> {
             if (currentPage > 1) {
@@ -236,14 +248,18 @@ public class ExamScorePanel extends JPanel {
 
     private void refreshData() {
         String keyword = txtSearchCccd.getText().trim();
+        String filter = cbFilterPhuongThuc.getSelectedItem().toString();
+        if (filter.equals("Tất cả")) {
+            filter = null;
+        }
         try {
             // Cập nhật thông tin phân trang
-            this.totalPages = examScoreService.countPages(keyword);
-            int totalRows = examScoreService.countRows(keyword);
+            this.totalPages = examScoreService.countPages(keyword, filter);
+            int totalRows = examScoreService.countRows(keyword, filter);
             lblPaging.setText(String.format("Trang %d/%d (Tổng %d dòng)", currentPage, totalPages, totalRows));
 
             // Lấy danh sách DTO
-            List<ExamScoreDTO> list = examScoreService.getExamScores(keyword, currentPage);
+            List<ExamScoreDTO> list = examScoreService.getExamScores(keyword, filter, currentPage);
             tableModel.setRowCount(0);
             int stt = (currentPage - 1) * ExamScoreService.PAGE_SIZE + 1;
 
@@ -332,7 +348,6 @@ public class ExamScorePanel extends JPanel {
                 ExamScoreFormDialog dialog = new ExamScoreFormDialog((Frame) SwingUtilities.getWindowAncestor(ExamScorePanel.this), selected);
                 dialog.setVisible(true);
                 if (dialog.isConfirmed()) {
-                    examScoreService.updateExamScore(dialog.getResult());
                     boolean success = examScoreService.updateExamScore(dialog.getResult());
                     if (success) {  
                         JOptionPane.showMessageDialog(btnEdit, "Cập nhật điểm thi thành công!");

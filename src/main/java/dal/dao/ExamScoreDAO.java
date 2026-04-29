@@ -12,39 +12,45 @@ import java.util.List;
 
 public class ExamScoreDAO {
 
-    public int countExamScores(String keyword) throws SQLException {
-        String filter = safe(keyword);
+    public int countExamScores(String keyword, String filter) throws SQLException {
+        String key = safe(keyword);
+
         try (Session session = HibernateUtil.getSessionFactory().openSession()) {
             Long total = session.createQuery(
                 "select count(s.id) from ExamScoreEntity s " +
-                "where (:key = '' or s.cccd like :keyLike or s.soBaoDanh like :keyLike)", 
+                "where (:key = '' or s.cccd like :keyLike or s.soBaoDanh like :keyLike) " +
+                "and (:pt is null or s.dPhuongThuc = :pt)",
                 Long.class
             )
-            .setParameter("key", filter)
-            .setParameter("keyLike", "%" + filter + "%")
+            .setParameter("key", key)
+            .setParameter("keyLike", "%" + key + "%")
+            .setParameter("pt", filter)
             .uniqueResult();
+
             return total == null ? 0 : total.intValue();
         } catch (Exception ex) {
             throw asSqlException("đếm tổng số bản ghi điểm thi", ex);
         }
     }
 
-    public List<ExamScoreDTO> findExamScores(String keyword, int page, int pageSize) throws SQLException {
-        String filter = safe(keyword);
+    public List<ExamScoreDTO> findExamScores(String keyword, String filter, int page, int pageSize) throws SQLException {
+         String key = safe(keyword);
         int offset = (Math.max(page, 1) - 1) * Math.max(pageSize, 1);
 
         try (Session session = HibernateUtil.getSessionFactory().openSession()) {
             List<ExamScoreEntity> entities = session.createQuery(
-                    "from ExamScoreEntity s "
-                            + "where (:key = '' or s.cccd like :keyLike or s.soBaoDanh like :keyLike) "
-                            + "order by s.id asc",
+                    "from ExamScoreEntity s " +
+                    "where (:key = '' or s.cccd like :keyLike or s.soBaoDanh like :keyLike) " +
+                    "and (:pt is null or s.dPhuongThuc = :pt) " +
+                    "order by s.id asc",
                     ExamScoreEntity.class
             )
-                    .setParameter("key", filter)
-                    .setParameter("keyLike", "%" + filter + "%")
-                    .setFirstResult(offset)
-                    .setMaxResults(pageSize)
-                    .list();
+            .setParameter("key", key)
+            .setParameter("keyLike", "%" + key + "%")
+            .setParameter("pt", filter)
+            .setFirstResult(offset)
+            .setMaxResults(pageSize)
+            .list();
 
             List<ExamScoreDTO> results = new ArrayList<>();
             for (ExamScoreEntity entity : entities) {
