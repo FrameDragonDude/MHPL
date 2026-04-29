@@ -7,6 +7,9 @@ import gui.components.LeftSidebar;
 import gui.panels.DashboardPanel;
 import gui.panels.CandidatePanel;
 import gui.panels.ChangePasswordPanel;
+import gui.panels.NganhTuyenSinhPanel;
+import gui.panels.MajorCombinationPanel;
+import gui.panels.SubjectCombinationPanel;
 import gui.panels.UserManagementPanel;
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -112,11 +115,11 @@ public class MainFrame extends JFrame {
         switch (actionId) {
             case "DASHBOARD": newPanel = new DashboardPanel(); break;
             case "CANDIDATE": newPanel = new CandidatePanel(); break;
+            case "CATALOG": newPanel = new NganhTuyenSinhPanel(); break;
+            case "SUBJECT": newPanel = new SubjectCombinationPanel(); break;
+            case "MAJOR_SUBJECT": newPanel = new MajorCombinationPanel(); break;
             case "USER_MANAGEMENT": newPanel = new UserManagementPanel(); break;
             case "CHANGE_PASSWORD": newPanel = new ChangePasswordPanel(this); break;
-            case "CATALOG":
-            case "SUBJECT":
-            case "MAJOR_SUBJECT":
             case "EXAM_SCORE":
             case "BONUS_POINT":
             case "ASPIRATION":

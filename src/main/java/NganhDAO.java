@@ -1,5 +1,5 @@
 
-import dal.entities.Nganh;
+import dal.entities.NganhEntity;
 import dal.hibernate.HibernateUtil;
 import java.util.List;
 import org.hibernate.Session;
@@ -15,11 +15,11 @@ import org.hibernate.query.Query;
  * @author KIET
  */
 public class NganhDAO {
-    public List<Nganh> LayDanhSach() {
+    public List<NganhEntity> LayDanhSach() {
         Session session = HibernateUtil.getSessionFactory().openSession();
         
         Query q = session.createQuery("FROM Nganh");
-        List<Nganh> ds = q.getResultList();
+        List<NganhEntity> ds = q.getResultList();
         
         ds.forEach(c -> System.out.println(c.getManganh() + " " + c.getTennganh()));
         

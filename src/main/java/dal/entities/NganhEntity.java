@@ -5,6 +5,7 @@
 package dal.entities;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
 import jakarta.persistence.*;
 
 /**
@@ -13,7 +14,7 @@ import jakarta.persistence.*;
  */
 @Entity
 @Table(name="xt_nganh")
-public class Nganh implements Serializable {
+public class NganhEntity implements Serializable {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name="idnganh")
@@ -28,14 +29,14 @@ public class Nganh implements Serializable {
     @Column(name="n_tohopgoc")
     private String n_tohopgoc;
     
-    @Column(name="n_chitiet")
-    private String n_chitiet;
+    @Column(name="n_chitieu")
+    private int n_chitieu;
     
     @Column(name="n_diemsan")
-    private String n_diemsan;
+    private BigDecimal n_diemsan;
     
     @Column(name="n_diemtrungtuyen")
-    private String n_diemtrungtuyen;
+    private BigDecimal n_diemtrungtuyen;
     
     @Column(name="n_tuyenthang")
     private String n_tuyenthang;
@@ -50,16 +51,16 @@ public class Nganh implements Serializable {
     private String n_vsat;
     
     @Column(name="sl_xtt")
-    private int sl_xtt;
+    private Integer sl_xtt;
     
     @Column(name="sl_dgnl")
-    private int sl_dgnl;
+    private Integer sl_dgnl;
     
     @Column(name="sl_vsat")
-    private int sl_vsat;
+    private Integer sl_vsat;
     
     @Column(name="sl_thpt")
-    private int sl_thpt;
+    private String sl_thpt;
 
     public int getIdnganh() {
         return idnganh;
@@ -93,27 +94,27 @@ public class Nganh implements Serializable {
         this.n_tohopgoc = n_tohopgoc;
     }
 
-    public String getN_chitiet() {
-        return n_chitiet;
+    public int getN_chitieu() {
+        return n_chitieu;
     }
 
-    public void setN_chitiet(String n_chitiet) {
-        this.n_chitiet = n_chitiet;
+    public void setN_chitieu(int n_chitieu) {
+        this.n_chitieu = n_chitieu;
     }
 
-    public String getN_diemsan() {
+    public BigDecimal getN_diemsan() {
         return n_diemsan;
     }
 
-    public void setN_diemsan(String n_diemsan) {
+    public void setN_diemsan(BigDecimal n_diemsan) {
         this.n_diemsan = n_diemsan;
     }
 
-    public String getN_diemtrungtuyen() {
+    public BigDecimal getN_diemtrungtuyen() {
         return n_diemtrungtuyen;
     }
 
-    public void setN_diemtrungtuyen(String n_diemtrungtuyen) {
+    public void setN_diemtrungtuyen(BigDecimal n_diemtrungtuyen) {
         this.n_diemtrungtuyen = n_diemtrungtuyen;
     }
 
@@ -149,35 +150,35 @@ public class Nganh implements Serializable {
         this.n_vsat = n_vsat;
     }
 
-    public int getSl_xtt() {
+    public Integer getSl_xtt() {
         return sl_xtt;
     }
 
-    public void setSl_xtt(int sl_xtt) {
+    public void setSl_xtt(Integer sl_xtt) {
         this.sl_xtt = sl_xtt;
     }
 
-    public int getSl_dgnl() {
+    public Integer getSl_dgnl() {
         return sl_dgnl;
     }
 
-    public void setSl_dgnl(int sl_dgnl) {
+    public void setSl_dgnl(Integer sl_dgnl) {
         this.sl_dgnl = sl_dgnl;
     }
 
-    public int getSl_vsat() {
+    public Integer getSl_vsat() {
         return sl_vsat;
     }
 
-    public void setSl_vsat(int sl_vsat) {
+    public void setSl_vsat(Integer sl_vsat) {
         this.sl_vsat = sl_vsat;
     }
 
-    public int getSl_thpt() {
+    public String getSl_thpt() {
         return sl_thpt;
     }
 
-    public void setSl_thpt(int sl_thpt) {
+    public void setSl_thpt(String sl_thpt) {
         this.sl_thpt = sl_thpt;
     }
     

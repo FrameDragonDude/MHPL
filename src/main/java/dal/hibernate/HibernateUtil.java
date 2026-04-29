@@ -2,7 +2,7 @@ package dal.hibernate;
 
 import dal.entities.CandidateEntity;
 import dal.entities.ExamScoreEntity;
-import dal.entities.Nganh;
+import dal.entities.NganhEntity;
 import dal.entities.ToHopMon;
 import dal.entities.UserEntity;
 import org.hibernate.SessionFactory;
@@ -29,7 +29,7 @@ public final class HibernateUtil {
                 configuration.addAnnotatedClass(CandidateEntity.class);
                 configuration.addAnnotatedClass(ExamScoreEntity.class);
                 configuration.addAnnotatedClass(ToHopMon.class);
-                configuration.addAnnotatedClass(Nganh.class);
+                configuration.addAnnotatedClass(NganhEntity.class);
 
                 registry = new StandardServiceRegistryBuilder()
                         .applySettings(configuration.getProperties())
