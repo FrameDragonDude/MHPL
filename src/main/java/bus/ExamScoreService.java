@@ -2,8 +2,12 @@ package bus;
 
 import dal.dao.ExamScoreDAO;
 import dto.ExamScoreDTO;
+import dto.StatisticDTO;
+import dto.MethodStatDTO;
+import dto.ScoreStatDTO;
 
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.List;
 
 public class ExamScoreService {
@@ -75,6 +79,58 @@ public class ExamScoreService {
             e.printStackTrace();
             return false;
         }
+    }
+
+    public List<StatisticDTO> statisticByMethod() throws SQLException {
+        List<MethodStatDTO> raw = examScoreDAO.statByMethod();
+
+        List<StatisticDTO> result = new ArrayList<>();
+        long total = 0;
+
+        for (MethodStatDTO row : raw) {
+            total += row.getSoLuong();
+        }
+
+        for (MethodStatDTO row : raw) {
+            String method = row.getPhuongThuc();
+            long count = row.getSoLuong();
+
+            StatisticDTO dto = new StatisticDTO(method, count);
+            dto.setPercent(total == 0 ? 0 : (count * 100.0 / total));
+
+            result.add(dto);
+        }
+
+        return result;
+    }
+
+    public List<StatisticDTO> statisticBySubjectRange(String subject) throws SQLException {
+        List<ScoreStatDTO> scores = examScoreDAO.statBySubject(subject);
+
+        int[] buckets = new int[5];
+
+        for (ScoreStatDTO s : scores) {
+            if (s == null) continue;
+
+            if (s.getDiem() < 2) buckets[0]++;
+            else if (s.getDiem() < 4) buckets[1]++;
+            else if (s.getDiem() < 6) buckets[2]++;
+            else if (s.getDiem() < 8) buckets[3]++;
+            else buckets[4]++;
+        }
+
+        String[] labels = {"0-2", "2-4", "4-6", "6-8", "8-10"};
+        List<StatisticDTO> result = new ArrayList<>();
+
+        int total = scores.size();
+
+        for (int i = 0; i < buckets.length; i++) {
+            StatisticDTO dto = new StatisticDTO(labels[i], buckets[i]);
+            dto.setPercent(total == 0 ? 0 : buckets[i] * 100.0 / total);
+            result.add(dto);
+        }
+
+        return result;
     }
 
 }

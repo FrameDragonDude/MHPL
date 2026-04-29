@@ -4,6 +4,9 @@ import dal.entities.ExamScoreEntity;
 import dal.hibernate.HibernateUtil;
 import org.hibernate.exception.ConstraintViolationException;
 import dto.ExamScoreDTO;
+import dto.MethodStatDTO;
+import dto.ScoreStatDTO;
+
 import org.hibernate.Session;
 import org.hibernate.Transaction;
 import java.sql.SQLException;
@@ -149,6 +152,56 @@ public class ExamScoreDAO {
         } catch (Exception ex) {
             if (transaction != null) transaction.rollback();
             throw asSqlException("xóa điểm thi", ex);
+        }
+    }
+
+    public List<MethodStatDTO> statByMethod() throws SQLException {
+        try (Session session = HibernateUtil.getSessionFactory().openSession()) {
+
+            List<Object[]> rows = session.createQuery(
+                "select s.dPhuongThuc, count(s.id) " +
+                "from ExamScoreEntity s " +
+                "group by s.dPhuongThuc",
+                Object[].class
+            ).list();
+
+            List<MethodStatDTO> result = new ArrayList<>();
+
+            for (Object[] row : rows) {
+                String method = row[0] == null ? "Khác" : (String) row[0];
+                Long count = (Long) row[1];
+
+                result.add(new MethodStatDTO(method, count));
+            }
+
+            return result;
+
+        } catch (Exception ex) {
+            throw asSqlException("thống kê theo phương thức", ex);
+        }
+    }
+
+    public List<ScoreStatDTO> statBySubject(String field) throws SQLException {
+        try (Session session = HibernateUtil.getSessionFactory().openSession()) {
+
+            String hql = "select s." + field + ", count(s.id) " +
+                        "from ExamScoreEntity s " +
+                        "group by s." + field + " order by s." + field;
+
+            List<Object[]> rows = session.createQuery(hql, Object[].class).list();
+
+            List<ScoreStatDTO> result = new ArrayList<>();
+
+            for (Object[] row : rows) {
+                Double diem = (Double) row[0];
+                Long count = (Long) row[1];
+                result.add(new ScoreStatDTO(diem, count));
+            }
+
+            return result;
+
+        } catch (Exception ex) {
+            throw asSqlException("thống kê theo môn", ex);
         }
     }
 
