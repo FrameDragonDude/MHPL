@@ -66,6 +66,32 @@ public class ExamScoreDAO {
         }
     }
 
+    public List<ExamScoreDTO> findAll(String keyword, String filter) throws SQLException {
+        try (Session session = HibernateUtil.getSessionFactory().openSession()) {
+
+            List<ExamScoreEntity> entities = session.createQuery(
+                    "from ExamScoreEntity s " +
+                    "where (:key = '' or s.cccd like :keyLike or s.soBaoDanh like :keyLike) " +
+                    "and (:filter is null or s.dPhuongThuc = :filter)",
+                    ExamScoreEntity.class
+            )
+            .setParameter("key", keyword == null ? "" : keyword)
+            .setParameter("keyLike", "%" + (keyword == null ? "" : keyword) + "%")
+            .setParameter("filter", filter)
+            .list();
+
+            List<ExamScoreDTO> result = new ArrayList<>();
+            for (ExamScoreEntity e : entities) {
+                result.add(mapToDTO(e));
+            }
+
+            return result;
+
+        } catch (Exception ex) {
+            throw asSqlException("export danh sách điểm", ex);
+        }
+    }
+
     public ExamScoreDTO findExamScoreById(int id) throws SQLException {
         try (Session session = HibernateUtil.getSessionFactory().openSession()) {
             ExamScoreEntity entity = session.find(ExamScoreEntity.class, id);
@@ -203,6 +229,36 @@ public class ExamScoreDAO {
 
         } catch (Exception ex) {
             throw asSqlException("thống kê theo môn", ex);
+        }
+    }
+
+    public int insertBatch(List<ExamScoreDTO> list) throws SQLException {
+        Transaction tx = null;
+        int count = 0;
+
+        try (Session session = HibernateUtil.getSessionFactory().openSession()) {
+            tx = session.beginTransaction();
+
+            int batchSize = 50;
+
+            for (int i = 0; i < list.size(); i++) {
+                ExamScoreEntity entity = mapToEntity(list.get(i));
+                session.persist(entity);
+
+                if (i % batchSize == 0) {
+                    session.flush();
+                    session.clear();
+                }
+
+                count++;
+            }
+
+            tx.commit();
+            return count;
+
+        } catch (Exception ex) {
+            if (tx != null) tx.rollback();
+            throw asSqlException("import batch", ex);
         }
     }
 

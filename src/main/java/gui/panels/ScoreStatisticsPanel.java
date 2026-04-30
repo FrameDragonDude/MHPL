@@ -93,7 +93,7 @@ public class ScoreStatisticsPanel extends JPanel {
         cbSubject.addItem(new ComboItem("ktpl", "Kinh tế pháp luật"));
         cbSubject.addItem(new ComboItem("ti", "Tin"));
         cbSubject.addItem(new ComboItem("cncn", "Công nghệ công nghiệp"));
-        cbSubject.addItem(new ComboItem("cnnn", "Cơ nghệ nông nghiệp"));
+        cbSubject.addItem(new ComboItem("cnnn", "Công nghệ nông nghiệp"));
         cbSubject.addItem(new ComboItem("nl1", "NL1"));
         cbSubject.addItem(new ComboItem("nk1", "NK1"));
         cbSubject.addItem(new ComboItem("nk2", "NK2"));

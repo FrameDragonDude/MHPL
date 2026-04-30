@@ -25,6 +25,10 @@ public class ExamScoreService {
         return examScoreDAO.findExamScores(keyword, filter, safePage, PAGE_SIZE);
     }
 
+    public List<ExamScoreDTO> getAllExamScores(String keyword, String filter) throws SQLException {
+        return examScoreDAO.findAll(keyword, filter);
+    }
+
     public int countPages(String keyword, String filter) throws SQLException {
         int totalRows = examScoreDAO.countExamScores(keyword, filter);
         if (totalRows == 0) {
@@ -135,6 +139,10 @@ public class ExamScoreService {
         }
 
         return result;
+    }
+
+    public int importBatch(List<ExamScoreDTO> list) throws SQLException {
+        return examScoreDAO.insertBatch(list);
     }
 
 }

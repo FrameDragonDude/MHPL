@@ -16,8 +16,10 @@
         <property name="hibernate.globally_quoted_identifiers">true</property>
         <property name="hibernate.show_sql">true</property>
         <property name="hibernate.format_sql">true</property>
-        
         <property name="hibernate.hbm2ddl.auto">update</property>
+        <property name="hibernate.jdbc.batch_size">100</property>
+        <property name="hibernate.order_inserts">true</property>
+        <property name="hibernate.order_updates">true</property>
 
         </session-factory>
 </hibernate-configuration>

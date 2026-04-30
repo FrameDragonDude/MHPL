@@ -8,7 +8,8 @@ import javax.swing.table.DefaultTableModel;
 import javax.swing.table.JTableHeader;
 import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
-
+import utils.excel.ExamScoresExcelImportUtil;
+import utils.excel.ExamScoresExcelExportUtil;
 import bus.ExamScoreService;
 import dto.ExamScoreDTO;
 import gui.MainFrame;
@@ -49,7 +50,6 @@ public class ExamScorePanel extends JPanel {
         this.examScoreService = new ExamScoreService();
         this.actionColumnIndex = TABLE_COLUMNS.length - 1;
 
-        // Khởi tạo Table Model
         this.tableModel = new DefaultTableModel(TABLE_COLUMNS, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
@@ -95,12 +95,18 @@ public class ExamScorePanel extends JPanel {
         left.add(subtitle);
 
         JPanel actions = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
-        JButton btnImport = new JButton("Import Excel");
+        JButton btnImport = new JButton("Nhập Excel");
+        JButton btnExport = new JButton("Xuất Excel");
         JButton btnAdd = new JButton("+ Nhập điểm");
         JButton btnStats = new JButton("Xem thống kê");
         styleButton(btnStats, new Color(255, 178, 102));
         styleButton(btnImport, COLOR_GREEN);
+        styleButton(btnExport, new Color(30, 136, 229));
         styleButton(btnAdd, COLOR_BLUE);
+
+        btnExport.addActionListener(e -> exportExamScoresToExcel());
+
+        btnImport.addActionListener(e -> handleImportExcel());
         
         btnStats.addActionListener(e -> {
             mainFrame.switchPanel("STATISTICS");
@@ -121,6 +127,7 @@ public class ExamScorePanel extends JPanel {
         });
         
         actions.add(btnStats);
+        actions.add(btnExport);
         actions.add(btnImport);
         actions.add(btnAdd);
 
@@ -199,7 +206,7 @@ public class ExamScorePanel extends JPanel {
         searchCard.add(new JLabel("Tìm kiếm CCCD/SBD:"));
         searchCard.add(txtSearchCccd);
 
-        searchCard.add(new JLabel("Lọc theo:"));
+        searchCard.add(new JLabel("Lọc theo phương thức: "));
         searchCard.add(cbFilterPhuongThuc);
         
         JPanel pagingPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
@@ -258,12 +265,10 @@ public class ExamScorePanel extends JPanel {
             filter = null;
         }
         try {
-            // Cập nhật thông tin phân trang
             this.totalPages = examScoreService.countPages(keyword, filter);
             int totalRows = examScoreService.countRows(keyword, filter);
             lblPaging.setText(String.format("Trang %d/%d (Tổng %d dòng)", currentPage, totalPages, totalRows));
 
-            // Lấy danh sách DTO
             List<ExamScoreDTO> list = examScoreService.getExamScores(keyword, filter, currentPage);
             tableModel.setRowCount(0);
             int stt = (currentPage - 1) * ExamScoreService.PAGE_SIZE + 1;
@@ -314,6 +319,76 @@ public class ExamScorePanel extends JPanel {
                 refreshData(); 
             }
         });
+    }
+
+    private void handleImportExcel() {
+        JFileChooser fileChooser = new JFileChooser();
+        fileChooser.setDialogTitle("Chọn file Excel");
+        
+        int result = fileChooser.showOpenDialog(this);
+        if (result != JFileChooser.APPROVE_OPTION) return;
+
+        java.io.File file = fileChooser.getSelectedFile();
+
+        new Thread(() -> {
+            try {
+                List<ExamScoreDTO> list = ExamScoresExcelImportUtil.importExamScores(file);
+
+                int success = examScoreService.importBatch(list);
+
+                SwingUtilities.invokeLater(() -> {
+                    JOptionPane.showMessageDialog(this, 
+                        "Import thành công " + success + " dòng!");
+                    refreshData();
+                });
+
+            } catch (Exception ex) {
+                SwingUtilities.invokeLater(() -> {
+                    JOptionPane.showMessageDialog(this, 
+                        "Lỗi import: " + ex.getMessage(),
+                        "Lỗi", JOptionPane.ERROR_MESSAGE);
+                });
+            }
+        }).start();
+    }
+
+    private void exportExamScoresToExcel() {
+        JFileChooser chooser = new JFileChooser();
+        chooser.setDialogTitle("Lưu file Excel điểm thi");
+        chooser.setFileFilter(new javax.swing.filechooser.FileNameExtensionFilter("Excel files (*.xlsx)", "xlsx"));
+
+        int result = chooser.showSaveDialog(this);
+        if (result != JFileChooser.APPROVE_OPTION) return;
+
+        java.io.File file = chooser.getSelectedFile();
+        if (!file.getName().toLowerCase().endsWith(".xlsx")) {
+            file = new java.io.File(file.getParentFile(), file.getName() + ".xlsx");
+        }
+
+        try {
+            // 👉 Lấy toàn bộ dữ liệu theo filter hiện tại
+            String keyword = txtSearchCccd.getText().trim();
+            String filter = cbFilterPhuongThuc.getSelectedItem().toString();
+            if (filter.equals("Tất cả")) filter = null;
+
+            List<ExamScoreDTO> list = examScoreService.getAllExamScores(keyword, filter);
+
+            if (list.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Không có dữ liệu để export.");
+                return;
+            }
+
+            ExamScoresExcelExportUtil.exportExamScores(file, list);
+
+            JOptionPane.showMessageDialog(this,
+                    "Export thành công " + list.size() + " dòng\nFile: " + file.getAbsolutePath());
+
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this,
+                    "Lỗi export: " + ex.getMessage(),
+                    "Error",
+                    JOptionPane.ERROR_MESSAGE);
+        }
     }
 
     private class ActionCellRenderer extends JPanel implements TableCellRenderer {
