@@ -22,8 +22,16 @@ public final class SubjectCombinationExcelImportUtil {
     private SubjectCombinationExcelImportUtil() {
     }
 
-    private static final java.util.Map<String, String> SUBJECT_CODE_MAP = new java.util.HashMap<>();
+    private static final java.util.Map<String, String> SUBJECT_CODE_MAP = new java.util.LinkedHashMap<>();
     static {
+        // New subject codes from Candidate sheet
+        SUBJECT_CODE_MAP.put("TI", "Tin học");
+        SUBJECT_CODE_MAP.put("KTPL", "Kinh tế Pháp luật");
+        SUBJECT_CODE_MAP.put("CNCN", "Công nghệ công nghiệp");
+        SUBJECT_CODE_MAP.put("CNNN", "Công nghệ nông nghiệp");
+        SUBJECT_CODE_MAP.put("NK", "Năng khiếu");
+        SUBJECT_CODE_MAP.put("N", "Tiếng Anh");
+        // Legacy subject codes (for backward compatibility)
         SUBJECT_CODE_MAP.put("TO", "Toán");
         SUBJECT_CODE_MAP.put("VA", "Văn");
         SUBJECT_CODE_MAP.put("SI", "Sinh");

@@ -9,6 +9,9 @@ import gui.panels.CandidatePanel;
 import gui.panels.ChangePasswordPanel;
 import gui.panels.NganhTuyenSinhPanel;
 import gui.panels.MajorCombinationPanel;
+import gui.panels.NguyenVongPanel;
+import gui.panels.ConversionRulePanel;
+import gui.panels.BonusPointPanel;
 import gui.panels.SubjectCombinationPanel;
 import gui.panels.UserManagementPanel;
 import java.awt.BorderLayout;
@@ -118,12 +121,12 @@ public class MainFrame extends JFrame {
             case "CATALOG": newPanel = new NganhTuyenSinhPanel(); break;
             case "SUBJECT": newPanel = new SubjectCombinationPanel(); break;
             case "MAJOR_SUBJECT": newPanel = new MajorCombinationPanel(); break;
+            case "ASPIRATION": newPanel = new NguyenVongPanel(); break;
+            case "BONUS_POINT": newPanel = new BonusPointPanel(); break;
+            case "CONVERSION": newPanel = new ConversionRulePanel(); break;
             case "USER_MANAGEMENT": newPanel = new UserManagementPanel(); break;
             case "CHANGE_PASSWORD": newPanel = new ChangePasswordPanel(this); break;
             case "EXAM_SCORE":
-            case "BONUS_POINT":
-            case "ASPIRATION":
-            case "CONVERSION":
             case "ADMISSION_RUN":
             case "AUDIT_LOG":
                 showDevelopingMessage();

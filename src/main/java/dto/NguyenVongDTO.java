@@ -1,41 +1,14 @@
-package dal.entities;
+package dto;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
-
-@Entity
-@Table(name = "xt_nguyen_vong")
-public class AspirationEntity {
-
-	@Id
-	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	@Column(name = "id")
+public class NguyenVongDTO {
 	private Integer id;
-
-	@Column(name = "cccd")
 	private String cccd;
-
-	@Column(name = "thutunv")
 	private Integer thuTuNV;
-
-	@Column(name = "matruong")
 	private String maTruong;
-
-	@Column(name = "tentruong")
 	private String tenTruong;
-
-	@Column(name = "maxettuyen")
 	private String maXetTuyen;
-
-	@Column(name = "tenmaxettuyen")
 	private String tenMaXetTuyen;
-
-	@Column(name = "nguyenvongtuyenthang")
-	private String nguyenVongTuyenThang;
+	private String nguyenVongThang;
 
 	public Integer getId() {
 		return id;
@@ -93,11 +66,11 @@ public class AspirationEntity {
 		this.tenMaXetTuyen = tenMaXetTuyen;
 	}
 
-	public String getNguyenVongTuyenThang() {
-		return nguyenVongTuyenThang;
+	public String getNguyenVongThang() {
+		return nguyenVongThang;
 	}
 
-	public void setNguyenVongTuyenThang(String nguyenVongTuyenThang) {
-		this.nguyenVongTuyenThang = nguyenVongTuyenThang;
+	public void setNguyenVongThang(String nguyenVongThang) {
+		this.nguyenVongThang = nguyenVongThang;
 	}
 }

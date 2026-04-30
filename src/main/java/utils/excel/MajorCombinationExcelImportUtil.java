@@ -22,18 +22,27 @@ public final class MajorCombinationExcelImportUtil {
     private MajorCombinationExcelImportUtil() {
     }
 
-    private static final Map<String, String> SUBJECT_CODE_MAP = Map.of(
-            "TO", "Toán",
-            "VA", "Văn",
-            "SI", "Sinh",
-            "LI", "Lý",
-            "HO", "Hóa",
-            "AN", "Anh",
-            "SU", "Sử",
-            "DI", "Địa",
-            "GD", "GDCD",
-            "CN", "Công nghệ"
-    );
+    private static final Map<String, String> SUBJECT_CODE_MAP = new java.util.LinkedHashMap<>();
+    static {
+        // New subject codes from Candidate sheet
+        SUBJECT_CODE_MAP.put("TI", "Tin học");
+        SUBJECT_CODE_MAP.put("KTPL", "Kinh tế Pháp luật");
+        SUBJECT_CODE_MAP.put("CNCN", "Công nghệ công nghiệp");
+        SUBJECT_CODE_MAP.put("CNNN", "Công nghệ nông nghiệp");
+        SUBJECT_CODE_MAP.put("NK", "Năng khiếu");
+        SUBJECT_CODE_MAP.put("N", "Tiếng Anh");
+        // Legacy subject codes (for backward compatibility)
+        SUBJECT_CODE_MAP.put("TO", "Toán");
+        SUBJECT_CODE_MAP.put("VA", "Văn");
+        SUBJECT_CODE_MAP.put("SI", "Sinh");
+        SUBJECT_CODE_MAP.put("LI", "Lý");
+        SUBJECT_CODE_MAP.put("HO", "Hóa");
+        SUBJECT_CODE_MAP.put("AN", "Anh");
+        SUBJECT_CODE_MAP.put("SU", "Sử");
+        SUBJECT_CODE_MAP.put("DI", "Địa");
+        SUBJECT_CODE_MAP.put("GD", "GDCD");
+        SUBJECT_CODE_MAP.put("CN", "Công nghệ");
+    }
 
     public static List<MajorCombinationDTO> importRows(File file) throws IOException {
         try (FileInputStream input = new FileInputStream(file);

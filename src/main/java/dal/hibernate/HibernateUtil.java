@@ -1,6 +1,7 @@
 package dal.hibernate;
 
 import dal.entities.CandidateEntity;
+import dal.entities.AspirationEntity;
 import dal.entities.ExamScoreEntity;
 import dal.entities.NganhEntity;
 import dal.entities.ToHopMon;
@@ -27,6 +28,7 @@ public final class HibernateUtil {
                 // Các entity của hệ thống
                 configuration.addAnnotatedClass(UserEntity.class);
                 configuration.addAnnotatedClass(CandidateEntity.class);
+                configuration.addAnnotatedClass(AspirationEntity.class);
                 configuration.addAnnotatedClass(ExamScoreEntity.class);
                 configuration.addAnnotatedClass(ToHopMon.class);
                 configuration.addAnnotatedClass(NganhEntity.class);
