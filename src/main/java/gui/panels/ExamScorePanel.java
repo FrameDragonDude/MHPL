@@ -26,7 +26,6 @@ public class ExamScorePanel extends JPanel {
     private static final Color COLOR_BLUE = new Color(21, 101, 192);
     private static final Color COLOR_RED = new Color(198, 40, 40);
 
-    // Định nghĩa các cột dựa trên Table xt_diemthixettuyen
     private static final String[] TABLE_COLUMNS = {
             "STT", "ID", "CCCD", "SBD", "Phương thức", "Toán", "Lý", "Hóa", "Sinh", 
             "Sử", "Địa", "Văn", "N1 Thi", "N1 CC", "CNCN", "CNNN", "Tin", 
@@ -366,7 +365,6 @@ public class ExamScorePanel extends JPanel {
         }
 
         try {
-            // 👉 Lấy toàn bộ dữ liệu theo filter hiện tại
             String keyword = txtSearchCccd.getText().trim();
             String filter = cbFilterPhuongThuc.getSelectedItem().toString();
             if (filter.equals("Tất cả")) filter = null;
