@@ -41,6 +41,143 @@ INSERT INTO `xt_staff_accounts` (`username`, `password`, `fullname`, `role`) VAL
 ('thamdinh_02', '$2a$12$AS1bkeWbIDpKAODWaR5U4uYRzk7/rvm8SgZ9QhYVc0ZCvI24npeJa', 'Trần Hoàng Nam', 'NHAN_VIEN'),/*staff_pass_2*/
 ('support_tech', '$2a$12$gFvVlXsw6PCArk9ztmQg0.INhSTRPynXi6lwUnKlWtWjxJHL3C30C', 'Phạm Đức Anh', 'NHAN_VIEN');/*tech_pass_sgu*/
 
+DROP TABLE IF EXISTS `xt_roles`;
+CREATE TABLE `xt_roles` (
+  `id_role` int unsigned NOT NULL AUTO_INCREMENT,
+  `role_name` varchar(50) NOT NULL UNIQUE,
+  `description` text,
+  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id_role`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+INSERT INTO `xt_roles` (`role_name`, `description`) VALUES
+('ADMIN', 'Quản trị viên - toàn quyền'),
+('TRUONG_PHONG', 'Trưởng phòng - quyền cao'),
+('NHAN_VIEN', 'Nhân viên - quyền cơ bản'),
+('NHAPLIEU', 'Chuyên viên nhập liệu'),
+('THAMDINH', 'Chuyên viên thẩm định');
+
+DROP TABLE IF EXISTS `xt_permissions`;
+CREATE TABLE `xt_permissions` (
+  `id_permission` int unsigned NOT NULL AUTO_INCREMENT,
+  `permission_code` varchar(100) NOT NULL UNIQUE,
+  `permission_name` varchar(100) NOT NULL,
+  `description` text,
+  `module` varchar(50),
+  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id_permission`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+INSERT INTO `xt_permissions` (`permission_code`, `permission_name`, `module`, `description`) VALUES
+-- Candidate Module
+('CANDIDATE_VIEW', 'Xem thí sinh', 'CANDIDATE', 'Xem danh sách và chi tiết thí sinh'),
+('CANDIDATE_CREATE', 'Tạo thí sinh', 'CANDIDATE', 'Tạo hồ sơ thí sinh mới'),
+('CANDIDATE_EDIT', 'Sửa thí sinh', 'CANDIDATE', 'Chỉnh sửa thông tin thí sinh'),
+('CANDIDATE_DELETE', 'Xóa thí sinh', 'CANDIDATE', 'Xóa hồ sơ thí sinh'),
+('CANDIDATE_IMPORT', 'Import thí sinh', 'CANDIDATE', 'Nhập dữ liệu thí sinh từ Excel'),
+('CANDIDATE_EXPORT', 'Export thí sinh', 'CANDIDATE', 'Xuất dữ liệu thí sinh ra Excel'),
+
+-- Exam Score Module
+('EXAM_SCORE_VIEW', 'Xem điểm thi', 'EXAM_SCORE', 'Xem danh sách và chi tiết điểm thi'),
+('EXAM_SCORE_CREATE', 'Tạo điểm thi', 'EXAM_SCORE', 'Tạo bản ghi điểm thi mới'),
+('EXAM_SCORE_EDIT', 'Sửa điểm thi', 'EXAM_SCORE', 'Chỉnh sửa điểm thi'),
+('EXAM_SCORE_DELETE', 'Xóa điểm thi', 'EXAM_SCORE', 'Xóa bản ghi điểm thi'),
+('EXAM_SCORE_IMPORT', 'Import điểm thi', 'EXAM_SCORE', 'Nhập điểm thi từ Excel'),
+('EXAM_SCORE_EXPORT', 'Export điểm thi', 'EXAM_SCORE', 'Xuất điểm thi ra Excel'),
+
+-- Bonus Point Module
+('BONUS_POINT_VIEW', 'Xem điểm cộng', 'BONUS_POINT', 'Xem danh sách điểm cộng'),
+('BONUS_POINT_CREATE', 'Tạo điểm cộng', 'BONUS_POINT', 'Tạo bản ghi điểm cộng'),
+('BONUS_POINT_EDIT', 'Sửa điểm cộng', 'BONUS_POINT', 'Chỉnh sửa điểm cộng'),
+('BONUS_POINT_DELETE', 'Xóa điểm cộng', 'BONUS_POINT', 'Xóa bản ghi điểm cộng'),
+('BONUS_POINT_IMPORT', 'Import điểm cộng', 'BONUS_POINT', 'Nhập điểm cộng từ Excel'),
+
+-- Aspiration Module
+('ASPIRATION_VIEW', 'Xem nguyện vọng', 'ASPIRATION', 'Xem danh sách nguyện vọng'),
+('ASPIRATION_CREATE', 'Tạo nguyện vọng', 'ASPIRATION', 'Tạo nguyện vọng mới'),
+('ASPIRATION_EDIT', 'Sửa nguyện vọng', 'ASPIRATION', 'Chỉnh sửa nguyện vọng'),
+('ASPIRATION_DELETE', 'Xóa nguyện vọng', 'ASPIRATION', 'Xóa nguyện vọng'),
+
+-- Admin Module
+('ADMIN_MANAGE_USER', 'Quản lý tài khoản', 'ADMIN', 'Tạo, sửa, xóa tài khoản người dùng'),
+('ADMIN_MANAGE_PERMISSION', 'Quản lý quyền', 'ADMIN', 'Gán/bỏ quyền cho người dùng'),
+('ADMIN_VIEW_AUDIT_LOG', 'Xem Audit Log', 'ADMIN', 'Xem lịch sử hoạt động'),
+('ADMIN_SETTINGS', 'Cài đặt hệ thống', 'ADMIN', 'Cấu hình hệ thống');
+
+DROP TABLE IF EXISTS `xt_role_permissions`;
+CREATE TABLE `xt_role_permissions` (
+  `id_role_permission` int unsigned NOT NULL AUTO_INCREMENT,
+  `id_role` int unsigned NOT NULL,
+  `id_permission` int unsigned NOT NULL,
+  PRIMARY KEY (`id_role_permission`),
+  UNIQUE KEY `unique_role_permission` (`id_role`, `id_permission`),
+  FOREIGN KEY (`id_role`) REFERENCES `xt_roles` (`id_role`) ON DELETE CASCADE,
+  FOREIGN KEY (`id_permission`) REFERENCES `xt_permissions` (`id_permission`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- ADMIN role: ALL permissions
+INSERT INTO `xt_role_permissions` (`id_role`, `id_permission`)
+SELECT 1, `id_permission` FROM `xt_permissions`;
+
+-- TRUONG_PHONG: Most permissions except DELETE, ADMIN settings
+INSERT INTO `xt_role_permissions` (`id_role`, `id_permission`)
+SELECT 2, `id_permission` FROM `xt_permissions`
+WHERE `permission_code` NOT IN ('CANDIDATE_DELETE', 'EXAM_SCORE_DELETE', 'BONUS_POINT_DELETE', 'ASPIRATION_DELETE', 'ADMIN_SETTINGS');
+
+-- NHAN_VIEN: VIEW and basic CRUD (no DELETE, no ADMIN)
+INSERT INTO `xt_role_permissions` (`id_role`, `id_permission`)
+SELECT 3, `id_permission` FROM `xt_permissions`
+WHERE `permission_code` IN ('CANDIDATE_VIEW', 'EXAM_SCORE_VIEW', 'BONUS_POINT_VIEW', 'ASPIRATION_VIEW', 'EXAM_SCORE_EDIT', 'ASPIRATION_EDIT');
+
+-- NHAPLIEU: Import and View only
+INSERT INTO `xt_role_permissions` (`id_role`, `id_permission`)
+SELECT 4, `id_permission` FROM `xt_permissions`
+WHERE `permission_code` IN ('CANDIDATE_VIEW', 'CANDIDATE_IMPORT', 'EXAM_SCORE_VIEW', 'EXAM_SCORE_IMPORT', 'BONUS_POINT_VIEW', 'BONUS_POINT_IMPORT', 'ASPIRATION_VIEW');
+
+-- THAMDINH: View and Edit
+INSERT INTO `xt_role_permissions` (`id_role`, `id_permission`)
+SELECT 5, `id_permission` FROM `xt_permissions`
+WHERE `permission_code` IN ('CANDIDATE_VIEW', 'CANDIDATE_EDIT', 'EXAM_SCORE_VIEW', 'EXAM_SCORE_EDIT', 'BONUS_POINT_VIEW', 'BONUS_POINT_EDIT', 'ASPIRATION_VIEW', 'ASPIRATION_EDIT');
+
+DROP TABLE IF EXISTS `xt_audit_log`;
+CREATE TABLE `xt_audit_log` (
+  `id_log` int unsigned NOT NULL AUTO_INCREMENT,
+  `username` varchar(50),
+  `action` varchar(50),
+  `module` varchar(50),
+  `table_name` varchar(50),
+  `record_id` varchar(100),
+  `record_info` text,
+  `old_value` longtext,
+  `new_value` longtext,
+  `status` varchar(20),
+  `error_msg` text,
+  `ip_address` varchar(45),
+  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id_log`),
+  INDEX `idx_username` (`username`),
+  INDEX `idx_action` (`action`),
+  INDEX `idx_module` (`module`),
+  INDEX `idx_created_at` (`created_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+DROP TABLE IF EXISTS `xt_uutien_xettuyen`;
+CREATE TABLE `xt_uutien_xettuyen` (
+  `id_utxt` int unsigned NOT NULL AUTO_INCREMENT,
+  `ts_cccd` varchar(45) NOT NULL,
+  `cap_quoc_gia` varchar(100),
+  `doi_tuyen` varchar(100),
+  `ma_mon` varchar(50),
+  `loai_giai` varchar(100),
+  `diem_cong_mondatmc` decimal(6,2),
+  `diem_cong_khongmondatmc` decimal(6,2),
+  `co_chung_chi` varchar(1),
+  `ghichu` text,
+  `utxt_keys` varchar(100) UNIQUE NOT NULL,
+  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id_utxt`),
+  INDEX `idx_cccd` (`ts_cccd`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 DROP TABLE IF EXISTS `xt_bangquydoi`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;

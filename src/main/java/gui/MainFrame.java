@@ -15,6 +15,8 @@ import gui.panels.BonusPointPanel;
 import gui.panels.SubjectCombinationPanel;
 import gui.panels.UserManagementPanel;
 import gui.panels.ExamScorePanel;
+import gui.panels.UuTienXetTuyenPanel;
+import gui.panels.AuditLogPanel;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Cursor;
@@ -124,12 +126,13 @@ public class MainFrame extends JFrame {
             case "MAJOR_SUBJECT": newPanel = new MajorCombinationPanel(); break;
             case "ASPIRATION": newPanel = new NguyenVongPanel(); break;
             case "BONUS_POINT": newPanel = new BonusPointPanel(); break;
+            case "PRIORITY_ADMISSION": newPanel = new UuTienXetTuyenPanel(); break;
             case "CONVERSION": newPanel = new ConversionRulePanel(); break;
             case "USER_MANAGEMENT": newPanel = new UserManagementPanel(); break;
             case "CHANGE_PASSWORD": newPanel = new ChangePasswordPanel(this); break;
             case "EXAM_SCORE": newPanel = new ExamScorePanel(this); break;
+            case "AUDIT_LOG": newPanel = new AuditLogPanel(); break;
             case "ADMISSION_RUN":
-            case "AUDIT_LOG":
                 showDevelopingMessage();
                 return;
             default: return;

@@ -6,6 +6,10 @@ import dal.entities.ExamScoreEntity;
 import dal.entities.NganhEntity;
 import dal.entities.ToHopMon;
 import dal.entities.UserEntity;
+import dal.entities.RoleEntity;
+import dal.entities.PermissionEntity;
+import dal.entities.AuditLogEntity;
+import dal.entities.UuTienXetTuyenEntity;
 import org.hibernate.SessionFactory;
 import org.hibernate.boot.registry.StandardServiceRegistry;
 import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
@@ -32,6 +36,10 @@ public final class HibernateUtil {
                 configuration.addAnnotatedClass(ExamScoreEntity.class);
                 configuration.addAnnotatedClass(ToHopMon.class);
                 configuration.addAnnotatedClass(NganhEntity.class);
+                configuration.addAnnotatedClass(RoleEntity.class);
+                configuration.addAnnotatedClass(PermissionEntity.class);
+                configuration.addAnnotatedClass(AuditLogEntity.class);
+                configuration.addAnnotatedClass(UuTienXetTuyenEntity.class);
 
                 registry = new StandardServiceRegistryBuilder()
                         .applySettings(configuration.getProperties())

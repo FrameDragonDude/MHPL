@@ -1,25 +1,55 @@
-package dto;
+package dal.entities;
 
+import javax.persistence.*;
 import java.time.LocalDateTime;
 
-public class AuditLogDTO {
+@Entity
+@Table(name = "xt_audit_log")
+public class AuditLogEntity {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id_log")
     private Integer idLog;
+
+    @Column(name = "username")
     private String username;
+
+    @Column(name = "action")
     private String action;
+
+    @Column(name = "module")
     private String module;
+
+    @Column(name = "table_name")
     private String tableName;
+
+    @Column(name = "record_id")
     private String recordId;
+
+    @Column(name = "record_info", columnDefinition = "TEXT")
     private String recordInfo;
+
+    @Column(name = "old_value", columnDefinition = "LONGTEXT")
     private String oldValue;
+
+    @Column(name = "new_value", columnDefinition = "LONGTEXT")
     private String newValue;
+
+    @Column(name = "status")
     private String status;
+
+    @Column(name = "error_msg", columnDefinition = "TEXT")
     private String errorMsg;
+
+    @Column(name = "ip_address")
     private String ipAddress;
+
+    @Column(name = "created_at")
     private LocalDateTime createdAt;
 
-    public AuditLogDTO() {}
+    public AuditLogEntity() {}
 
-    public AuditLogDTO(String username, String action, String module, String tableName, String recordId, String status) {
+    public AuditLogEntity(String username, String action, String module, String tableName, String recordId, String status) {
         this.username = username;
         this.action = action;
         this.module = module;

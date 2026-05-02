@@ -1,50 +1,54 @@
 package gui.panels;
 
-import bus.AuditLogService;
-import dto.AuditLogDTO;
+import bus.UuTienXetTuyenService;
+import dto.UuTienXetTuyenDTO;
 import java.awt.*;
+import java.io.File;
 import java.sql.SQLException;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
+import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.JTableHeader;
+import utils.excel.UuTienXetTuyenExcelImportUtil;
 
-public class AuditLogPanel extends JPanel {
+public class UuTienXetTuyenPanel extends JPanel {
+    private static final Color COLOR_GREEN = new Color(46, 125, 50);
     private static final Color COLOR_BLUE = new Color(21, 101, 192);
-    private static final int PAGE_SIZE = 50;
+    private static final Color COLOR_RED = new Color(198, 40, 40);
+    private static final int PAGE_SIZE = 20;
 
     private static final String[] TABLE_COLUMNS = {
-            "STT", "Người dùng", "Hành động", "Module", "Bảng", "ID bản ghi", "Trạng thái", "Thời gian"
+            "STT", "CCCD", "Cấp", "Đội Tuyển", "Mã Môn", "Loại Giải", "Điểm Mon Đặt", "Điểm Khác", "C/C", "Thao tác"
     };
 
-    private final AuditLogService service;
+    private final UuTienXetTuyenService service;
     private final DefaultTableModel tableModel;
     private final JTable table;
-    private final JTextField txtUsername;
-    private final JTextField txtAction;
-    private final JComboBox<String> cboModule;
+    private final JTextField txtSearchCccd;
+    private final JTextField txtSearchGiai;
     private final JLabel lblPaging;
+    private final int actionColumnIndex;
     private int currentPage = 1;
     private int totalPages = 1;
+    private List<UuTienXetTuyenDTO> currentRows = new ArrayList<>();
 
-    public AuditLogPanel() {
-        this.service = new AuditLogService();
+    public UuTienXetTuyenPanel() {
+        this.service = new UuTienXetTuyenService();
         this.tableModel = new DefaultTableModel(TABLE_COLUMNS, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
-                return false;
+                return column == actionColumnIndex;
             }
         };
         this.table = new JTable(tableModel);
-        this.txtUsername = new JTextField(12);
-        this.txtAction = new JTextField(12);
-        this.cboModule = new JComboBox<>(new String[]{"-- Tất cả --", "CANDIDATE", "EXAM_SCORE", "BONUS_POINT", "ASPIRATION", "ADMIN"});
-        this.lblPaging = new JLabel("Trang 1/1 (50 dòng/trang)");
+        this.txtSearchCccd = new JTextField(14);
+        this.txtSearchGiai = new JTextField(18);
+        this.lblPaging = new JLabel("Trang 1/1 (20 dòng/trang)");
+        this.actionColumnIndex = tableModel.getColumnCount() - 1;
 
         attachLiveSearch();
 
@@ -64,11 +68,11 @@ public class AuditLogPanel extends JPanel {
         left.setLayout(new BoxLayout(left, BoxLayout.Y_AXIS));
         left.setOpaque(false);
 
-        JLabel title = new JLabel("Audit Log - Lịch sử hoạt động");
+        JLabel title = new JLabel("Quản lý Ưu Tiên Xét Tuyển");
         title.setFont(title.getFont().deriveFont(Font.BOLD, 28f));
         title.setForeground(new Color(17, 24, 39));
 
-        JLabel subtitle = new JLabel("Theo dõi tất cả hành động trong hệ thống");
+        JLabel subtitle = new JLabel("Danh sách ưu tiên xét tuyển thí sinh");
         subtitle.setFont(subtitle.getFont().deriveFont(Font.PLAIN, 13f));
         subtitle.setForeground(new Color(75, 85, 99));
 
@@ -76,7 +80,22 @@ public class AuditLogPanel extends JPanel {
         left.add(Box.createVerticalStrut(4));
         left.add(subtitle);
 
-        wrapper.add(left, BorderLayout.CENTER);
+        JPanel actions = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
+        actions.setOpaque(false);
+        JButton btnImport = new JButton("Import Excel");
+        JButton btnAdd = new JButton("+ Thêm");
+        styleButton(btnImport, COLOR_GREEN);
+        styleButton(btnAdd, COLOR_BLUE);
+        btnImport.setMargin(new Insets(6, 16, 6, 16));
+        btnAdd.setMargin(new Insets(6, 16, 6, 16));
+        actions.add(btnImport);
+        actions.add(btnAdd);
+
+        btnImport.addActionListener(e -> importFromExcel());
+        btnAdd.addActionListener(e -> addRow());
+
+        wrapper.add(left, BorderLayout.WEST);
+        wrapper.add(actions, BorderLayout.EAST);
         return wrapper;
     }
 
@@ -84,7 +103,7 @@ public class AuditLogPanel extends JPanel {
         table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         table.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
         table.getTableHeader().setReorderingAllowed(false);
-        table.setRowHeight(30);
+        table.setRowHeight(34);
         styleTableHeader(table);
         applyColumnWidths();
 
@@ -106,27 +125,21 @@ public class AuditLogPanel extends JPanel {
 
         JPanel searchPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
         searchPanel.setOpaque(false);
-        searchPanel.add(new JLabel("Người dùng:"));
-        searchPanel.add(txtUsername);
-        searchPanel.add(new JLabel("Hành động:"));
-        searchPanel.add(txtAction);
-        searchPanel.add(new JLabel("Module:"));
-        searchPanel.add(cboModule);
+        searchPanel.add(new JLabel("CCCD:"));
+        searchPanel.add(txtSearchCccd);
+        searchPanel.add(new JLabel("Loại Giải:"));
+        searchPanel.add(txtSearchGiai);
         searchCard.add(searchPanel, BorderLayout.CENTER);
 
         JPanel controls = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         JButton btnPrev = new JButton("◀");
         JButton btnNext = new JButton("▶");
-        JButton btnExport = new JButton("📥 Xuất Excel");
         styleButton(btnPrev, COLOR_BLUE);
         styleButton(btnNext, COLOR_BLUE);
-        styleButton(btnExport, COLOR_BLUE);
 
         controls.add(lblPaging);
         controls.add(btnPrev);
         controls.add(btnNext);
-        controls.add(Box.createHorizontalStrut(20));
-        controls.add(btnExport);
 
         btnPrev.addActionListener(e -> {
             if (currentPage > 1) {
@@ -140,15 +153,13 @@ public class AuditLogPanel extends JPanel {
             }
         });
 
-        btnExport.addActionListener(e -> exportToExcel());
-
         wrapper.add(searchCard, BorderLayout.CENTER);
         wrapper.add(controls, BorderLayout.SOUTH);
         return wrapper;
     }
 
     private void applyColumnWidths() {
-        int[] widths = {40, 100, 100, 100, 100, 80, 80, 150};
+        int[] widths = {50, 120, 100, 120, 100, 100, 100, 100, 50, 80};
         for (int i = 0; i < widths.length && i < table.getColumnModel().getColumnCount(); i++) {
             table.getColumnModel().getColumn(i).setPreferredWidth(widths[i]);
         }
@@ -163,51 +174,74 @@ public class AuditLogPanel extends JPanel {
             @Override
             public void changedUpdate(DocumentEvent e) { loadPage(1); }
         };
-        txtUsername.getDocument().addDocumentListener(listener);
-        txtAction.getDocument().addDocumentListener(listener);
-        
-        cboModule.addActionListener(e -> loadPage(1));
+        txtSearchCccd.getDocument().addDocumentListener(listener);
+        txtSearchGiai.getDocument().addDocumentListener(listener);
     }
 
     private void loadPage(int page) {
         try {
-            String username = txtUsername.getText();
-            String action = txtAction.getText();
-            String module = (String) cboModule.getSelectedItem();
-            if (module.equals("-- Tất cả --")) module = "";
-
-            totalPages = service.countPages(username, action, module);
-            List<AuditLogDTO> rows = service.getRows(username, action, module, page);
+            String cccd = txtSearchCccd.getText();
+            String giai = txtSearchGiai.getText();
+            totalPages = service.countPages(cccd, giai);
+            currentRows = service.getRows(cccd, giai, page);
 
             tableModel.setRowCount(0);
-            DateTimeFormatter fmt = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");
-            for (int i = 0; i < rows.size(); i++) {
-                AuditLogDTO row = rows.get(i);
+            for (int i = 0; i < currentRows.size(); i++) {
+                UuTienXetTuyenDTO row = currentRows.get(i);
                 tableModel.addRow(new Object[]{
                         (page - 1) * PAGE_SIZE + i + 1,
-                        row.getUsername(),
-                        row.getAction(),
-                        row.getModule(),
-                        row.getTableName(),
-                        row.getRecordId(),
-                        row.getStatus(),
-                        row.getCreatedAt() != null ? row.getCreatedAt().format(fmt) : ""
+                        row.getTsCccd(),
+                        row.getCapQuocGia(),
+                        row.getDoiTuyen(),
+                        row.getMaMon(),
+                        row.getLoaiGiai(),
+                        row.getDiemCongMonDatMc(),
+                        row.getDiemCongKhongMonDatMc(),
+                        row.getCoChungChi(),
+                        ""
                 });
             }
 
             currentPage = page;
-            lblPaging.setText("Trang " + currentPage + "/" + (totalPages == 0 ? 1 : totalPages));
+            lblPaging.setText("Trang " + currentPage + "/" + totalPages);
         } catch (SQLException ex) {
             JOptionPane.showMessageDialog(this, "Lỗi: " + ex.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
         }
     }
 
-    private void exportToExcel() {
+    private void addRow() {
+        JOptionPane.showMessageDialog(this, "Tính năng đang phát triển", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
+    }
+
+    private void importFromExcel() {
+        JFileChooser chooser = new JFileChooser();
+        chooser.setDialogTitle("Chọn file Excel ưu tiên xét tuyển");
+        chooser.setFileFilter(new FileNameExtensionFilter("Excel files (*.xlsx)", "xlsx"));
+
+        if (chooser.showOpenDialog(this) != JFileChooser.APPROVE_OPTION) {
+            return;
+        }
+
+        File file = chooser.getSelectedFile();
         try {
-            List<AuditLogDTO> allLogs = service.getAllLogs();
-            JOptionPane.showMessageDialog(this, "Export: " + allLogs.size() + " bản ghi\n(Tính năng đang phát triển)", 
-                    "Thông báo", JOptionPane.INFORMATION_MESSAGE);
-        } catch (SQLException ex) {
+            List<UuTienXetTuyenDTO> imported = UuTienXetTuyenExcelImportUtil.importRows(file);
+            if (imported.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Không có dữ liệu hợp lệ", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
+                return;
+            }
+
+            int success = 0, fail = 0;
+            for (UuTienXetTuyenDTO row : imported) {
+                if (service.upsertByKey(row)) {
+                    success++;
+                } else {
+                    fail++;
+                }
+            }
+
+            JOptionPane.showMessageDialog(this, "Import: " + success + " thành công, " + fail + " lỗi", "Kết quả", JOptionPane.INFORMATION_MESSAGE);
+            loadPage(1);
+        } catch (Exception ex) {
             JOptionPane.showMessageDialog(this, "Lỗi: " + ex.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
         }
     }
