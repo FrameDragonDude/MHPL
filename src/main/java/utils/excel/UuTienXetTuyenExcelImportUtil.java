@@ -22,14 +22,14 @@ public class UuTienXetTuyenExcelImportUtil {
         }
 
         Row header = sheet.getRow(headerRow);
-        int colCccd = findColumn(header, "cccd");
-        int colCapQuocGia = findColumn(header, "cấp|cap");
-        int colDoiTuyen = findColumn(header, "đội|doi");
-        int colMaMon = findColumn(header, "mã môn|ma mon");
-        int colLoaiGiai = findColumn(header, "loại giải|loai giai");
-        int colDiemMonDat = findColumn(header, "điểm.*môn đặt|diem.*mon dat");
-        int colDiemKhongMon = findColumn(header, "thpt.*không|thpt.*khong");
-        int colCoChungChi = findColumn(header, "c/c|chứng chỉ");
+        int colCccd = findColumnByKeywords(header, "cccd");
+        int colCapQuocGia = findColumnByKeywords(header, "cap", "quoc gia");
+        int colDoiTuyen = findColumnByKeywords(header, "doi tuyen", "dt");
+        int colMaMon = findColumnByKeywords(header, "ma mon");
+        int colLoaiGiai = findColumnByKeywords(header, "loai giai");
+        int colDiemMonDat = findColumnByKeywords(header, "diem cong cho mon dat giai", "diem cong mon dat giai", "mon dat giai", "diem mon dat giai");
+        int colDiemKhongMon = findColumnByKeywords(header, "diem cong cho thpt", "diem cong thpt", "thpt khong co mon dat giai", "khong co mon dat giai", "khong mon dat giai");
+        int colCoChungChi = findColumnByKeywords(header, "co c c", "cc", "chung chi");
 
         if (colCccd < 0) {
             throw new Exception("Không tìm thấy cột CCCD");
@@ -89,15 +89,17 @@ public class UuTienXetTuyenExcelImportUtil {
         return hasCccd && hasOther;
     }
 
-    private static int findColumn(Row header, String pattern) {
+    private static int findColumnByKeywords(Row header, String... keywords) {
         if (header == null) return -1;
-        String normalizedPattern = normalize(pattern);
         DataFormatter fmt = new DataFormatter();
         for (Cell cell : header) {
             String raw = fmt.formatCellValue(cell);
             String val = normalize(raw);
-            if (val.matches(".*" + normalizedPattern.replace("|", ".*|.*") + ".*")) {
-                return cell.getColumnIndex();
+            for (String keyword : keywords) {
+                String key = normalize(keyword);
+                if (!key.isEmpty() && val.contains(key)) {
+                    return cell.getColumnIndex();
+                }
             }
         }
         return -1;
@@ -130,15 +132,34 @@ public class UuTienXetTuyenExcelImportUtil {
 
     private static String buildKey(UuTienXetTuyenDTO dto) {
         StringBuilder sb = new StringBuilder();
-        if (dto.getTsCccd() != null) sb.append(dto.getTsCccd()).append("_");
-        if (dto.getLoaiGiai() != null) sb.append(dto.getLoaiGiai()).append("_");
-        if (dto.getMaMon() != null) sb.append(dto.getMaMon());
-        
+        appendKeyPart(sb, dto.getTsCccd());
+        appendKeyPart(sb, dto.getCapQuocGia());
+        appendKeyPart(sb, dto.getDoiTuyen());
+        appendKeyPart(sb, dto.getMaMon());
+        appendKeyPart(sb, dto.getLoaiGiai());
+        appendKeyPart(sb, dto.getCoChungChi());
+
         String key = sb.toString().replaceAll("_$", "");
         if (key.length() > 100) {
             return "utxt_" + hashString(key);
         }
         return key.isEmpty() ? "utxt_empty_" + System.nanoTime() : key;
+    }
+
+    private static void appendKeyPart(StringBuilder sb, String value) {
+        String part = normalizeKeyPart(value);
+        if (!part.isEmpty()) {
+            sb.append(part).append("_");
+        }
+    }
+
+    private static String normalizeKeyPart(String value) {
+        if (value == null) {
+            return "";
+        }
+        return Normalizer.normalize(value.trim().toLowerCase(), Normalizer.Form.NFD)
+                .replaceAll("\\p{M}", "")
+                .replaceAll("[^a-z0-9]", "");
     }
 
     private static String hashString(String input) {
@@ -156,8 +177,12 @@ public class UuTienXetTuyenExcelImportUtil {
     }
 
     private static String normalize(String input) {
+        if (input == null) {
+            return "";
+        }
         return Normalizer.normalize(input.toLowerCase(), Normalizer.Form.NFD)
                 .replaceAll("\\p{M}", "")
-                .replaceAll("[^a-z0-9|]", "");
+                .replace('đ', 'd')
+                .replaceAll("[^a-z0-9]", "");
     }
 }

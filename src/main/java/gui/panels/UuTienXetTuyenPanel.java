@@ -1,7 +1,10 @@
 package gui.panels;
 
 import bus.UuTienXetTuyenService;
+import bus.AuditLogService;
 import dto.UuTienXetTuyenDTO;
+import dto.AuditLogDTO;
+import gui.SessionManager;
 import java.awt.*;
 import java.io.File;
 import java.sql.SQLException;
@@ -26,6 +29,7 @@ public class UuTienXetTuyenPanel extends JPanel {
     };
 
     private final UuTienXetTuyenService service;
+    private final AuditLogService auditLogService;
     private final DefaultTableModel tableModel;
     private final JTable table;
     private final JTextField txtSearchCccd;
@@ -38,6 +42,7 @@ public class UuTienXetTuyenPanel extends JPanel {
 
     public UuTienXetTuyenPanel() {
         this.service = new UuTienXetTuyenService();
+        this.auditLogService = new AuditLogService();
         this.tableModel = new DefaultTableModel(TABLE_COLUMNS, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
@@ -239,10 +244,54 @@ public class UuTienXetTuyenPanel extends JPanel {
                 }
             }
 
+            logImportResult(file.getName(), success, fail);
+
             JOptionPane.showMessageDialog(this, "Import: " + success + " thành công, " + fail + " lỗi", "Kết quả", JOptionPane.INFORMATION_MESSAGE);
             loadPage(1);
         } catch (Exception ex) {
+            logImportFailure(file.getName(), ex.getMessage());
             JOptionPane.showMessageDialog(this, "Lỗi: " + ex.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private void logImportResult(String fileName, int success, int fail) {
+        try {
+            String username = SessionManager.getCurrentUsername();
+            if (username == null || username.trim().isEmpty()) {
+                username = "unknown";
+            }
+
+            AuditLogDTO dto = new AuditLogDTO();
+            dto.setUsername(username);
+            dto.setAction("IMPORT");
+            dto.setModule("PRIORITY_ADMISSION");
+            dto.setTableName("xt_uutien_xettuyen");
+            dto.setRecordId(fileName);
+            dto.setRecordInfo("Import Excel file=" + fileName + ", success=" + success + ", fail=" + fail);
+            dto.setStatus(fail == 0 ? "SUCCESS" : "PARTIAL_SUCCESS");
+            auditLogService.logAction(dto);
+        } catch (Exception ignore) {
+        }
+    }
+
+    private void logImportFailure(String fileName, String errorMessage) {
+        try {
+            String username = SessionManager.getCurrentUsername();
+            if (username == null || username.trim().isEmpty()) {
+                username = "unknown";
+            }
+
+            AuditLogDTO dto = new AuditLogDTO();
+            dto.setUsername(username);
+            dto.setAction("IMPORT");
+            dto.setModule("PRIORITY_ADMISSION");
+            dto.setTableName("xt_uutien_xettuyen");
+            dto.setRecordId(fileName);
+            dto.setRecordInfo("Import failed for file=" + fileName);
+            dto.setStatus("FAILED");
+            dto.setErrorMsg(errorMessage);
+            auditLogService.logAction(dto);
+        } catch (Exception ignore) {
         }
     }
 

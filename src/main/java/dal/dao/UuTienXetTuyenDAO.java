@@ -5,6 +5,7 @@ import dal.hibernate.HibernateUtil;
 import org.hibernate.Session;
 import org.hibernate.query.Query;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 public class UuTienXetTuyenDAO {
@@ -12,6 +13,9 @@ public class UuTienXetTuyenDAO {
 
     public boolean create(UuTienXetTuyenEntity entity) {
         try (Session session = HibernateUtil.getSessionFactory().openSession()) {
+            if (entity.getCreatedAt() == null) {
+                entity.setCreatedAt(LocalDateTime.now());
+            }
             session.beginTransaction();
             session.save(entity);
             session.getTransaction().commit();
@@ -27,12 +31,12 @@ public class UuTienXetTuyenDAO {
             StringBuilder hql = new StringBuilder("FROM UuTienXetTuyenEntity WHERE 1=1");
             
             if (searchCccd != null && !searchCccd.isEmpty()) {
-                hql.append(" AND ts_cccd LIKE :cccd");
+                hql.append(" AND tsCccd LIKE :cccd");
             }
             if (searchGiai != null && !searchGiai.isEmpty()) {
-                hql.append(" AND loai_giai LIKE :giai");
+                hql.append(" AND loaiGiai LIKE :giai");
             }
-            hql.append(" ORDER BY created_at DESC");
+            hql.append(" ORDER BY createdAt DESC");
             
             Query<UuTienXetTuyenEntity> query = session.createQuery(hql.toString(), UuTienXetTuyenEntity.class);
             if (searchCccd != null && !searchCccd.isEmpty()) {
@@ -55,10 +59,10 @@ public class UuTienXetTuyenDAO {
             StringBuilder hql = new StringBuilder("SELECT COUNT(*) FROM UuTienXetTuyenEntity WHERE 1=1");
             
             if (searchCccd != null && !searchCccd.isEmpty()) {
-                hql.append(" AND ts_cccd LIKE :cccd");
+                hql.append(" AND tsCccd LIKE :cccd");
             }
             if (searchGiai != null && !searchGiai.isEmpty()) {
-                hql.append(" AND loai_giai LIKE :giai");
+                hql.append(" AND loaiGiai LIKE :giai");
             }
             
             Query<Long> query = session.createQuery(hql.toString(), Long.class);
@@ -105,8 +109,11 @@ public class UuTienXetTuyenDAO {
 
     public boolean upsertByKey(UuTienXetTuyenEntity entity) {
         try (Session session = HibernateUtil.getSessionFactory().openSession()) {
+            if (entity.getCreatedAt() == null) {
+                entity.setCreatedAt(LocalDateTime.now());
+            }
             session.beginTransaction();
-            String hql = "FROM UuTienXetTuyenEntity WHERE utxt_keys = :key";
+            String hql = "FROM UuTienXetTuyenEntity WHERE utxtKeys = :key";
             Query<UuTienXetTuyenEntity> query = session.createQuery(hql, UuTienXetTuyenEntity.class);
             query.setParameter("key", entity.getUtxtKeys());
             UuTienXetTuyenEntity existing = query.uniqueResult();

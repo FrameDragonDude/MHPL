@@ -13,6 +13,9 @@ public class AuditLogDAO {
 
     public boolean logAction(AuditLogEntity entity) {
         try (Session session = HibernateUtil.getSessionFactory().openSession()) {
+            if (entity.getCreatedAt() == null) {
+                entity.setCreatedAt(LocalDateTime.now());
+            }
             session.beginTransaction();
             session.save(entity);
             session.getTransaction().commit();
@@ -36,7 +39,7 @@ public class AuditLogDAO {
             if (module != null && !module.isEmpty()) {
                 hql.append(" AND module LIKE :module");
             }
-            hql.append(" ORDER BY created_at DESC");
+            hql.append(" ORDER BY createdAt DESC");
             
             Query<AuditLogEntity> query = session.createQuery(hql.toString(), AuditLogEntity.class);
             if (username != null && !username.isEmpty()) {
@@ -59,7 +62,7 @@ public class AuditLogDAO {
 
     public List<AuditLogEntity> findByDateRange(LocalDateTime start, LocalDateTime end, int page) {
         try (Session session = HibernateUtil.getSessionFactory().openSession()) {
-            String hql = "FROM AuditLogEntity WHERE created_at >= :start AND created_at <= :end ORDER BY created_at DESC";
+            String hql = "FROM AuditLogEntity WHERE createdAt >= :start AND createdAt <= :end ORDER BY createdAt DESC";
             Query<AuditLogEntity> query = session.createQuery(hql, AuditLogEntity.class);
             query.setParameter("start", start);
             query.setParameter("end", end);
@@ -105,7 +108,7 @@ public class AuditLogDAO {
 
     public List<AuditLogEntity> getAllLogs() {
         try (Session session = HibernateUtil.getSessionFactory().openSession()) {
-            String hql = "FROM AuditLogEntity ORDER BY created_at DESC";
+            String hql = "FROM AuditLogEntity ORDER BY createdAt DESC";
             return session.createQuery(hql, AuditLogEntity.class).list();
         } catch (Exception ex) {
             System.err.println("Lỗi lấy tất cả audit log: " + ex.getMessage());
