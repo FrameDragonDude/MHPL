@@ -1,6 +1,9 @@
 package gui.panels;
 
 import bus.CandidateService;
+import bus.MajorCombinationService;
+import bus.NganhTuyenSinhService;
+import bus.UserService;
 import gui.SessionManager;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -10,6 +13,9 @@ import java.awt.geom.RoundRectangle2D;
 public class DashboardPanel extends JPanel {
 
     private final CandidateService candidateService;
+    private final NganhTuyenSinhService nganhTuyenSinhService;
+    private final MajorCombinationService majorCombinationService;
+    private final UserService userService;
     private final Color MAIN_BG = new Color(223, 234, 252);
     private final Color CARD_COLOR = Color.WHITE;
     private final Color TEXT_PRIMARY = new Color(30, 41, 59);
@@ -18,6 +24,9 @@ public class DashboardPanel extends JPanel {
 
     public DashboardPanel() {
         this.candidateService = new CandidateService();
+        this.nganhTuyenSinhService = new NganhTuyenSinhService();
+        this.majorCombinationService = new MajorCombinationService();
+        this.userService = new UserService();
         setupPanel();
     }
 
@@ -39,9 +48,9 @@ public class DashboardPanel extends JPanel {
         JPanel statsContainer = new JPanel(new GridLayout(1, 4, 25, 0));
         statsContainer.setOpaque(false);
         statsContainer.add(createStatCard("Thí sinh", getCandidateCount(), "icons8-student-16.png", new Color(230, 240, 255)));
-        statsContainer.add(createStatCard("Ngành học", "05", "icons8-catalog-16.png", new Color(240, 255, 240)));
-        statsContainer.add(createStatCard("Tổ hợp môn", "04", "icons8-list-16.png", new Color(255, 250, 240)));
-        statsContainer.add(createStatCard("Người dùng", "03", "icons8-user-16.png", new Color(255, 240, 240)));
+        statsContainer.add(createStatCard("Ngành học", getMajorCount(), "icons8-catalog-16.png", new Color(240, 255, 240)));
+        statsContainer.add(createStatCard("Tổ hợp môn", getCombinationCount(), "icons8-list-16.png", new Color(255, 250, 240)));
+        statsContainer.add(createStatCard("Người dùng", getUserCount(), "icons8-user-16.png", new Color(255, 240, 240)));
 
         gbc.gridy = 0; gbc.weighty = 0.2;
         mainContent.add(statsContainer, gbc);
@@ -132,6 +141,21 @@ public class DashboardPanel extends JPanel {
 
     private String getCandidateCount() {
         try { return String.format("%02d", candidateService.countRows("", "")); }
+        catch (Exception e) { return "00"; }
+    }
+
+    private String getMajorCount() {
+        try { return String.format("%02d", nganhTuyenSinhService.countRows("", "")); }
+        catch (Exception e) { return "00"; }
+    }
+
+    private String getCombinationCount() {
+        try { return String.format("%02d", majorCombinationService.countRows("", "")); }
+        catch (Exception e) { return "00"; }
+    }
+
+    private String getUserCount() {
+        try { return String.format("%02d", userService.countUsers()); }
         catch (Exception e) { return "00"; }
     }
 

@@ -22,14 +22,48 @@ public class UuTienXetTuyenExcelImportUtil {
         }
 
         Row header = sheet.getRow(headerRow);
-        int colCccd = findColumnByKeywords(header, "cccd");
-        int colCapQuocGia = findColumnByKeywords(header, "cap", "quoc gia");
-        int colDoiTuyen = findColumnByKeywords(header, "doi tuyen", "dt");
-        int colMaMon = findColumnByKeywords(header, "ma mon");
-        int colLoaiGiai = findColumnByKeywords(header, "loai giai");
-        int colDiemMonDat = findColumnByKeywords(header, "diem cong cho mon dat giai", "diem cong mon dat giai", "mon dat giai", "diem mon dat giai");
-        int colDiemKhongMon = findColumnByKeywords(header, "diem cong cho thpt", "diem cong thpt", "thpt khong co mon dat giai", "khong co mon dat giai", "khong mon dat giai");
-        int colCoChungChi = findColumnByKeywords(header, "co c c", "cc", "chung chi");
+        int colCccd = findColumnByKeywords(header,
+            new String[]{"cccd"},
+            new String[]{});
+
+        int colCapQuocGia = findColumnByKeywords(header,
+            new String[]{"capquocgia", "cap", "quocgia"},
+            new String[]{});
+
+        int colDoiTuyen = findColumnByKeywords(header,
+            new String[]{"doituyen", "dt"},
+            new String[]{"diem", "mon", "giai"});
+
+        int colMaMon = findColumnByKeywords(header,
+            new String[]{"mamon", "mamonhoc"},
+            new String[]{"diem"});
+
+        int colLoaiGiai = findColumnByKeywords(header,
+            new String[]{"loaigiai"},
+            new String[]{});
+
+        int colDiemMonDat = findColumnByKeywords(header,
+            new String[]{
+                "diemcongchomondatgiai",
+                "diemcongmondatgiai",
+                "diemmondatgiai"
+            },
+            new String[]{"khong", "ko", "thxt", "thpt"});
+
+        int colDiemKhongMon = findColumnByKeywords(header,
+            new String[]{
+                "diemcongchothxtkocomondatgiai",
+                "diemcongchothxtkhongcomondatgiai",
+                "diemcongchothptkocomondatgiai",
+                "diemcongchothptkhongcomondatgiai",
+                "khongcomondatgiai",
+                "kocomondatgiai"
+            },
+            new String[]{});
+
+        int colCoChungChi = findColumnByKeywords(header,
+            new String[]{"coc", "cochungchi", "chungchi"},
+            new String[]{});
 
         if (colCccd < 0) {
             throw new Exception("Không tìm thấy cột CCCD");
@@ -89,20 +123,55 @@ public class UuTienXetTuyenExcelImportUtil {
         return hasCccd && hasOther;
     }
 
-    private static int findColumnByKeywords(Row header, String... keywords) {
+    private static int findColumnByKeywords(Row header, String[] includeKeywords, String[] excludeKeywords) {
         if (header == null) return -1;
+
         DataFormatter fmt = new DataFormatter();
+        int bestCol = -1;
+        int bestScore = -1;
+
         for (Cell cell : header) {
             String raw = fmt.formatCellValue(cell);
             String val = normalize(raw);
-            for (String keyword : keywords) {
+
+            if (val.isEmpty()) {
+                continue;
+            }
+
+            boolean excluded = false;
+            for (String keyword : excludeKeywords) {
                 String key = normalize(keyword);
-                if (!key.isEmpty() && val.contains(key)) {
-                    return cell.getColumnIndex();
+                if (!key.isEmpty() && containsKeyword(val, key)) {
+                    excluded = true;
+                    break;
                 }
             }
+            if (excluded) {
+                continue;
+            }
+
+            int score = 0;
+            for (String keyword : includeKeywords) {
+                String key = normalize(keyword);
+                if (!key.isEmpty() && containsKeyword(val, key)) {
+                    score += 10 + key.length();
+                }
+            }
+
+            if (score > bestScore) {
+                bestScore = score;
+                bestCol = cell.getColumnIndex();
+            }
         }
-        return -1;
+
+        return bestScore > 0 ? bestCol : -1;
+    }
+
+    private static boolean containsKeyword(String value, String keyword) {
+        if (keyword.length() <= 2) {
+            return value.equals(keyword);
+        }
+        return value.contains(keyword);
     }
 
     private static String getCellValue(Row row, int col, DataFormatter formatter, FormulaEvaluator evaluator) {
@@ -123,8 +192,29 @@ public class UuTienXetTuyenExcelImportUtil {
     private static BigDecimal parseDecimal(String value) {
         if (value == null || value.trim().isEmpty()) return null;
         try {
-            value = value.replaceAll("[^0-9.-]", "");
-            return new BigDecimal(value);
+            String raw = value.trim().replace(" ", "");
+
+            int lastComma = raw.lastIndexOf(',');
+            int lastDot = raw.lastIndexOf('.');
+
+            if (lastComma >= 0 && lastDot >= 0) {
+                // If both separators exist, keep the right-most separator as decimal point.
+                if (lastComma > lastDot) {
+                    raw = raw.replace(".", "");
+                    raw = raw.replace(',', '.');
+                } else {
+                    raw = raw.replace(",", "");
+                }
+            } else if (lastComma >= 0) {
+                raw = raw.replace(',', '.');
+            }
+
+            raw = raw.replaceAll("[^0-9.-]", "");
+            if (raw.isEmpty() || raw.equals("-") || raw.equals(".")) {
+                return null;
+            }
+
+            return new BigDecimal(raw);
         } catch (Exception e) {
             return null;
         }

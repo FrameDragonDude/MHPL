@@ -51,6 +51,10 @@ public class UuTienXetTuyenService {
         return dao.upsertByKey(entity);
     }
 
+    public boolean deleteAll() throws SQLException {
+        return dao.deleteAll();
+    }
+
     private UuTienXetTuyenDTO entityToDto(UuTienXetTuyenEntity entity) {
         UuTienXetTuyenDTO dto = new UuTienXetTuyenDTO();
         dto.setIdUtxt(entity.getIdUtxt());

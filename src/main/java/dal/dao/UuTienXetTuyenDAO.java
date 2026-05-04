@@ -138,4 +138,16 @@ public class UuTienXetTuyenDAO {
             return false;
         }
     }
+
+    public boolean deleteAll() {
+        try (Session session = HibernateUtil.getSessionFactory().openSession()) {
+            session.beginTransaction();
+            session.createQuery("DELETE FROM UuTienXetTuyenEntity").executeUpdate();
+            session.getTransaction().commit();
+            return true;
+        } catch (Exception ex) {
+            System.err.println("Lỗi xóa toàn bộ ưu tiên xét tuyển: " + ex.getMessage());
+            return false;
+        }
+    }
 }
