@@ -47,49 +47,24 @@ public class CandidatePanel extends JPanel {
 	private static final int PAGE_SIZE = 20;
 
 	private static final String[] TABLE_COLUMNS = {
-			"STT", "CCCD", "Họ Tên", "Ngày sinh", "Giới tính", "ĐTƯT", "KVƯT",
-			"TO", "VA", "LI", "HO", "SI", "SU", "DI", "GDCD", "NN", "Mã môn NN", "KTPL", "TI", "CNCN", "CNNN",
-			"Chương trình", "NK1", "NK2", "NK3", "NK4", "NK5", "NK6", "NK7", "NK8", "NK9", "NK10",
-			"Điểm xét tốt nghiệp", "Dân tộc", "Mã dân tộc", "Nơi sinh", "Thao tác"
+			"STT", "CCCD", "Số báo danh", "Họ Tên", "Ngày sinh", "Điện thoại", "Giới tính", "Email", "Nơi sinh", "Đối tượng", "Khu vực", "Chương trình", "Dân tộc", "Mã dân tộc", "Thao tác"
 	};
 
 	private static final int COL_STT = 0;
 	private static final int COL_CCCD = 1;
-	private static final int COL_HO_TEN = 2;
-	private static final int COL_NGAY_SINH = 3;
-	private static final int COL_GIOI_TINH = 4;
-	private static final int COL_DTUT = 5;
-	private static final int COL_KVUT = 6;
-	private static final int COL_TO = 7;
-	private static final int COL_VA = 8;
-	private static final int COL_LI = 9;
-	private static final int COL_HO = 10;
-	private static final int COL_SI = 11;
-	private static final int COL_SU = 12;
-	private static final int COL_DI = 13;
-	private static final int COL_GDCD = 14;
-	private static final int COL_NN = 15;
-	private static final int COL_MA_MON_NN = 16;
-	private static final int COL_KTPL = 17;
-	private static final int COL_TI = 18;
-	private static final int COL_CNCN = 19;
-	private static final int COL_CNNN = 20;
-	private static final int COL_CHUONG_TRINH = 21;
-	private static final int COL_NK1 = 22;
-	private static final int COL_NK2 = 23;
-	private static final int COL_NK3 = 24;
-	private static final int COL_NK4 = 25;
-	private static final int COL_NK5 = 26;
-	private static final int COL_NK6 = 27;
-	private static final int COL_NK7 = 28;
-	private static final int COL_NK8 = 29;
-	private static final int COL_NK9 = 30;
-	private static final int COL_NK10 = 31;
-	private static final int COL_DIEM_XET = 32;
-	private static final int COL_DAN_TOC = 33;
-	private static final int COL_MA_DAN_TOC = 34;
-	private static final int COL_NOI_SINH = 35;
-	private static final int COL_ACTION = 36;
+	private static final int COL_SO_BAO_DANH = 2;
+	private static final int COL_HO_TEN = 3;
+	private static final int COL_NGAY_SINH = 4;
+	private static final int COL_DIEN_THOAI = 5;
+	private static final int COL_GIOI_TINH = 6;
+	private static final int COL_EMAIL = 7;
+	private static final int COL_NOI_SINH = 8;
+	private static final int COL_DOI_TUONG = 9;
+	private static final int COL_KHU_VUC = 10;
+	private static final int COL_CHUONG_TRINH = 11;
+	private static final int COL_DAN_TOC = 12;
+	private static final int COL_MA_DAN_TOC = 13;
+	private static final int COL_ACTION = 14;
 
 	private final CandidateService candidateService;
 	private final DefaultTableModel tableModel;
@@ -200,8 +175,18 @@ public class CandidatePanel extends JPanel {
 
 		applyFixedColumnWidths();
 
-		// Main table scrolls horizontally; action column is removed from this view.
-		table.removeColumn(table.getColumnModel().getColumn(actionColumnIndex));
+		// Main table scrolls horizontally; remove the action column from the main table view
+		// by finding the column whose model index matches `actionColumnIndex`.
+		int actionViewIndex = -1;
+		for (int i = 0; i < table.getColumnModel().getColumnCount(); i++) {
+			if (table.getColumnModel().getColumn(i).getModelIndex() == actionColumnIndex) {
+				actionViewIndex = i;
+				break;
+			}
+		}
+		if (actionViewIndex >= 0) {
+			table.removeColumn(table.getColumnModel().getColumn(actionViewIndex));
+		}
 
 		// Fixed table keeps only the action column and remains visible.
 		for (int i = fixedActionTable.getColumnModel().getColumnCount() - 1; i >= 0; i--) {
@@ -239,12 +224,7 @@ public class CandidatePanel extends JPanel {
 	}
 
 	private void applyFixedColumnWidths() {
-		int[] widths = {
-				70, 150, 210, 110, 90, 80, 80,
-				70, 70, 70, 70, 70, 70, 70, 70, 70, 95, 80, 70, 85, 85,
-				110, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70,
-				170, 100, 110, 140, 130, 96
-		};
+		int[] widths = {70, 150, 120, 200, 100, 100, 80, 180, 140, 90, 90, 110, 100, 90, 96};
 		for (int i = 0; i < widths.length && i < table.getColumnModel().getColumnCount(); i++) {
 			table.getColumnModel().getColumn(i).setPreferredWidth(widths[i]);
 			table.getColumnModel().getColumn(i).setMinWidth(widths[i]);
@@ -344,40 +324,18 @@ public class CandidatePanel extends JPanel {
 				tableModel.addRow(new Object[]{
 						stt,
 						c.getCccd(),
+						c.getSoBaoDanh(),
 						c.getHoTen(),
 						c.getNgaySinh(),
+						c.getDienThoai(),
 						c.getGioiTinh(),
+						c.getEmail(),
+						c.getNoiSinh(),
 						emptyIfNull(c.getDoiTuong()),
 						emptyIfNull(c.getKhuVuc()),
-						formatNumber(c.getDiemTo()),
-						formatNumber(c.getDiemVa()),
-						formatNumber(c.getDiemLi()),
-						formatNumber(c.getDiemHo()),
-						formatNumber(c.getDiemSi()),
-						formatNumber(c.getDiemSu()),
-						formatNumber(c.getDiemDi()),
-						formatNumber(c.getDiemGdcd()),
-						formatNumber(c.getDiemNn()),
-						emptyIfNull(c.getMaMonNn()),
-						formatNumber(c.getDiemKtpl()),
-						formatNumber(c.getDiemTi()),
-						formatNumber(c.getDiemCncn()),
-						formatNumber(c.getDiemCnnn()),
-						emptyIfNull(c.getChuongTrinh()),
-						formatNumber(c.getDiemNk1()),
-						formatNumber(c.getDiemNk2()),
-						formatNumber(c.getDiemNk3()),
-						formatNumber(c.getDiemNk4()),
-						formatNumber(c.getDiemNk5()),
-						formatNumber(c.getDiemNk6()),
-						formatNumber(c.getDiemNk7()),
-						formatNumber(c.getDiemNk8()),
-						formatNumber(c.getDiemNk9()),
-						formatNumber(c.getDiemNk10()),
-						formatNumber(c.getDiemXetTotNghiep()),
+						c.getChuongTrinh(),
 						emptyIfNull(c.getDanToc()),
 						emptyIfNull(c.getMaDanToc()),
-						emptyIfNull(c.getNoiSinh()),
 						""
 				});
 			}
@@ -399,43 +357,21 @@ public class CandidatePanel extends JPanel {
 			return;
 		}
 		candidate.setIdThisinh(idThisinh);
-		String[] split = splitFullName(stringValueAt(row, COL_HO_TEN));
 		candidate.setCccd(stringValueAt(row, COL_CCCD));
-		candidate.setHo(split[0]);
-		candidate.setTen(split[1]);
+		candidate.setSoBaoDanh(stringValueAt(row, COL_SO_BAO_DANH));
+		String[] nameParts = splitFullName(stringValueAt(row, COL_HO_TEN));
+		candidate.setHo(nameParts[0]);
+		candidate.setTen(nameParts[1]);
 		candidate.setNgaySinh(stringValueAt(row, COL_NGAY_SINH));
+		candidate.setDienThoai(stringValueAt(row, COL_DIEN_THOAI));
 		candidate.setGioiTinh(stringValueAt(row, COL_GIOI_TINH));
-		candidate.setDoiTuong(stringValueAt(row, COL_DTUT));
-		candidate.setKhuVuc(stringValueAt(row, COL_KVUT));
-		candidate.setDiemTo(parseDoubleOrNull(stringValueAt(row, COL_TO)));
-		candidate.setDiemVa(parseDoubleOrNull(stringValueAt(row, COL_VA)));
-		candidate.setDiemLi(parseDoubleOrNull(stringValueAt(row, COL_LI)));
-		candidate.setDiemHo(parseDoubleOrNull(stringValueAt(row, COL_HO)));
-		candidate.setDiemSi(parseDoubleOrNull(stringValueAt(row, COL_SI)));
-		candidate.setDiemSu(parseDoubleOrNull(stringValueAt(row, COL_SU)));
-		candidate.setDiemDi(parseDoubleOrNull(stringValueAt(row, COL_DI)));
-		candidate.setDiemGdcd(parseDoubleOrNull(stringValueAt(row, COL_GDCD)));
-		candidate.setDiemNn(parseDoubleOrNull(stringValueAt(row, COL_NN)));
-		candidate.setMaMonNn(stringValueAt(row, COL_MA_MON_NN));
-		candidate.setDiemKtpl(parseDoubleOrNull(stringValueAt(row, COL_KTPL)));
-		candidate.setDiemTi(parseDoubleOrNull(stringValueAt(row, COL_TI)));
-		candidate.setDiemCncn(parseDoubleOrNull(stringValueAt(row, COL_CNCN)));
-		candidate.setDiemCnnn(parseDoubleOrNull(stringValueAt(row, COL_CNNN)));
+		candidate.setEmail(stringValueAt(row, COL_EMAIL));
+		candidate.setNoiSinh(stringValueAt(row, COL_NOI_SINH));
+		candidate.setDoiTuong(stringValueAt(row, COL_DOI_TUONG));
+		candidate.setKhuVuc(stringValueAt(row, COL_KHU_VUC));
 		candidate.setChuongTrinh(stringValueAt(row, COL_CHUONG_TRINH));
-		candidate.setDiemNk1(parseDoubleOrNull(stringValueAt(row, COL_NK1)));
-		candidate.setDiemNk2(parseDoubleOrNull(stringValueAt(row, COL_NK2)));
-		candidate.setDiemNk3(parseDoubleOrNull(stringValueAt(row, COL_NK3)));
-		candidate.setDiemNk4(parseDoubleOrNull(stringValueAt(row, COL_NK4)));
-		candidate.setDiemNk5(parseDoubleOrNull(stringValueAt(row, COL_NK5)));
-		candidate.setDiemNk6(parseDoubleOrNull(stringValueAt(row, COL_NK6)));
-		candidate.setDiemNk7(parseDoubleOrNull(stringValueAt(row, COL_NK7)));
-		candidate.setDiemNk8(parseDoubleOrNull(stringValueAt(row, COL_NK8)));
-		candidate.setDiemNk9(parseDoubleOrNull(stringValueAt(row, COL_NK9)));
-		candidate.setDiemNk10(parseDoubleOrNull(stringValueAt(row, COL_NK10)));
-		candidate.setDiemXetTotNghiep(parseDoubleOrNull(stringValueAt(row, COL_DIEM_XET)));
 		candidate.setDanToc(stringValueAt(row, COL_DAN_TOC));
 		candidate.setMaDanToc(stringValueAt(row, COL_MA_DAN_TOC));
-		candidate.setNoiSinh(stringValueAt(row, COL_NOI_SINH));
 
 		CandidateDTO edited = CandidateFormDialog.showDialog(this, candidate, true);
 		if (edited == null) {
