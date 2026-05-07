@@ -10,6 +10,7 @@ import gui.panels.ChangePasswordPanel;
 import gui.panels.NganhTuyenSinhPanel;
 import gui.panels.MajorCombinationPanel;
 import gui.panels.NguyenVongPanel;
+import gui.panels.NguyenvongXetTuyenPanel;
 import gui.panels.ConversionRulePanel;
 import gui.panels.BonusPointPanel;
 import gui.panels.SubjectCombinationPanel;
@@ -125,6 +126,7 @@ public class MainFrame extends JFrame {
             case "SUBJECT": newPanel = new SubjectCombinationPanel(); break;
             case "MAJOR_SUBJECT": newPanel = new MajorCombinationPanel(); break;
             case "ASPIRATION": newPanel = new NguyenVongPanel(); break;
+            case "ADMISSION_WISH_SCORES": newPanel = new NguyenvongXetTuyenPanel(); break;
             case "BONUS_POINT": newPanel = new BonusPointPanel(); break;
             case "PRIORITY_ADMISSION": newPanel = new UuTienXetTuyenPanel(); break;
             case "CONVERSION": newPanel = new ConversionRulePanel(); break;

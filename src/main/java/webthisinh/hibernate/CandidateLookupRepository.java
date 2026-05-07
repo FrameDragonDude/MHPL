@@ -1,6 +1,8 @@
 package webthisinh.hibernate;
 
 import dal.entities.CandidateEntity;
+import dal.entities.NganhEntity;
+import dal.entities.NguyenVongXetTuyenEntity;
 import dal.hibernate.HibernateUtil;
 import java.math.BigDecimal;
 import java.sql.Date;
@@ -65,24 +67,27 @@ public class CandidateLookupRepository {
 			return List.of();
 		}
 
-		String sql = """
-			select nv.nv_manganh,
-			       ng.tennganh,
-			       nv.diem_xettuyen,
-			       nv.tt_thm,
-			       nv.tt_phuongthuc,
-			       nv.nv_ketqua,
-			       nv.nv_tt
-			from xt_nguyenvongxettuyen nv
-			left join xt_nganh ng on binary ng.manganh = binary nv.nv_manganh
-			where binary nv.nn_cccd = binary :cccd
-			order by nv.nv_tt asc, nv.diem_xettuyen desc
-			""";
-
 		try (Session session = HibernateUtil.getSessionFactory().openSession()) {
-			NativeQuery<Object[]> query = session.createNativeQuery(sql, Object[].class);
-			query.setParameter("cccd", cccd.trim());
-			List<Object[]> rows = query.getResultList();
+			// Use Hibernate query with entity relationship instead of native SQL JOIN
+			// This avoids collation mismatch issues
+			String hql = """
+				select nv.nvManganh,
+				       ng.tennganh,
+				       nv.diemXettuyen,
+				       nv.ttThm,
+				       nv.ttPhuongthuc,
+				       nv.nvKetqua,
+				       nv.nvTt
+				from NguyenVongXetTuyenEntity nv
+				left join fetch nv.nganh ng
+				where nv.nnCccd = :cccd
+				order by nv.nvTt asc, nv.diemXettuyen desc
+				""";
+
+			List<Object[]> rows = session.createQuery(hql, Object[].class)
+					.setParameter("cccd", cccd.trim())
+					.getResultList();
+
 			List<AdmissionRow> results = new ArrayList<>();
 			for (Object[] row : rows) {
 				results.add(mapAdmissionRow(row));

@@ -48,6 +48,7 @@ public class LeftSidebar extends JPanel {
         panel.add(createMenuButton("Điểm cộng", "icons8-grades-16.png", "BONUS_POINT"));
         panel.add(createMenuButton("Ưu tiên xét tuyển", "icons8-admission-16.png", "PRIORITY_ADMISSION"));
         panel.add(createMenuButton("Nguyện vọng", "icons8-employee-16.png", "ASPIRATION"));
+        panel.add(createMenuButton("Nguyện vọng xét tuyển", "icons8-employee-16.png", "ADMISSION_WISH_SCORES"));
         panel.add(createMenuButton("Bảng quy đổi", "icons8-conversion-16.png", "CONVERSION"));
 
         if (SessionManager.isAdmin()) {

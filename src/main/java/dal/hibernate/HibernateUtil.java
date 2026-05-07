@@ -10,6 +10,7 @@ import dal.entities.RoleEntity;
 import dal.entities.PermissionEntity;
 import dal.entities.AuditLogEntity;
 import dal.entities.UuTienXetTuyenEntity;
+import dal.entities.NguyenVongXetTuyenEntity;
 import org.hibernate.SessionFactory;
 import org.hibernate.boot.registry.StandardServiceRegistry;
 import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
@@ -40,6 +41,7 @@ public final class HibernateUtil {
                 configuration.addAnnotatedClass(PermissionEntity.class);
                 configuration.addAnnotatedClass(AuditLogEntity.class);
                 configuration.addAnnotatedClass(UuTienXetTuyenEntity.class);
+                configuration.addAnnotatedClass(NguyenVongXetTuyenEntity.class);
 
                 registry = new StandardServiceRegistryBuilder()
                         .applySettings(configuration.getProperties())
