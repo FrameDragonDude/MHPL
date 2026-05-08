@@ -20,7 +20,7 @@ public class NganhEntity implements Serializable {
     @Column(name="idnganh")
     private int idnganh;
     
-    @Column(name="manganh")
+    @Column(name="manganh", unique = true)
     private String manganh;
     
     @Column(name="tennganh")

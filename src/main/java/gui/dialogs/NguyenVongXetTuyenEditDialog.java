@@ -1,13 +1,19 @@
 package gui.dialogs;
 
 import dto.NguyenVongXetTuyenDTO;
+import dto.NganhTuyenSinhDTO;
+import dal.dao.NganhTuyenSinhDAO;
 import java.awt.BorderLayout;
 import java.awt.FlowLayout;
 import java.awt.Insets;
 import java.math.BigDecimal;
 import java.text.DecimalFormat;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
+import javax.swing.JComboBox;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -19,7 +25,7 @@ public class NguyenVongXetTuyenEditDialog {
 	private JDialog dialog;
 	private JTextField txtIdnv;
 	private JTextField txtCccd;
-	private JTextField txtManganh;
+	private JComboBox<NganhOption> cboManganh;
 	private JTextField txtTt;
 	private JTextField txtDiemThxt;
 	private JTextField txtDiemUtqd;
@@ -30,6 +36,7 @@ public class NguyenVongXetTuyenEditDialog {
 	private JTextField txtPhuongthuc;
 	private JTextField txtThm;
 	private boolean accepted = false;
+	private final List<NganhOption> nganhOptions = new ArrayList<>();
 
 	public NguyenVongXetTuyenEditDialog(JFrame parent, NguyenVongXetTuyenDTO dto) {
 		dialog = new JDialog(parent, "Nguyện vọng xét tuyển", true);
@@ -56,7 +63,11 @@ public class NguyenVongXetTuyenEditDialog {
 
 		txtIdnv = createTextField(dto == null ? null : dto.getIdnv() != null ? dto.getIdnv().toString() : null, true);
 		txtCccd = createTextField(dto == null ? null : dto.getNnCccd(), false);
-		txtManganh = createTextField(dto == null ? null : dto.getNvManganh(), false);
+		cboManganh = new JComboBox<>();
+		loadMajorOptions();
+		if (dto != null && dto.getNvManganh() != null) {
+			selectMajor(dto.getNvManganh());
+		}
 		txtTt = createTextField(dto == null ? null : dto.getNvTt() != null ? dto.getNvTt().toString() : null, false);
 		txtDiemThxt = createTextField(dto == null ? null : formatDecimal(dto.getDiemThxt()), false);
 		txtDiemUtqd = createTextField(dto == null ? null : formatDecimal(dto.getDiemUtqd()), false);
@@ -69,7 +80,7 @@ public class NguyenVongXetTuyenEditDialog {
 
 		addRow(panel, "IDNV:", txtIdnv);
 		addRow(panel, "CCCD:", txtCccd);
-		addRow(panel, "Mã ngành:", txtManganh);
+		addRow(panel, "Mã ngành:", cboManganh);
 		addRow(panel, "Thứ tự NV:", txtTt);
 		addRow(panel, "Điểm THXT:", txtDiemThxt);
 		addRow(panel, "Điểm UTQD:", txtDiemUtqd);
@@ -116,6 +127,44 @@ public class NguyenVongXetTuyenEditDialog {
 		panel.add(javax.swing.Box.createVerticalStrut(6));
 	}
 
+	private void addRow(JPanel panel, String label, JComboBox<NganhOption> field) {
+		JPanel row = new JPanel(new BorderLayout(8, 0));
+		JLabel lbl = new JLabel(label);
+		lbl.setPreferredSize(new java.awt.Dimension(120, 24));
+		row.add(lbl, BorderLayout.WEST);
+		row.add(field, BorderLayout.CENTER);
+		row.setMaximumSize(new java.awt.Dimension(Integer.MAX_VALUE, 32));
+		panel.add(row);
+		panel.add(javax.swing.Box.createVerticalStrut(6));
+	}
+
+	private void loadMajorOptions() {
+		try {
+			NganhTuyenSinhDAO dao = new NganhTuyenSinhDAO();
+			int totalRows = Math.max(dao.countRows("", ""), 0);
+			List<NganhTuyenSinhDTO> rows = dao.findRows("", "", 1, Math.max(totalRows, 1));
+			cboManganh.removeAllItems();
+			for (NganhTuyenSinhDTO row : rows) {
+				NganhOption option = new NganhOption(row.getMaXetTuyen(), row.getTenNganh());
+				nganhOptions.add(option);
+				cboManganh.addItem(option);
+			}
+		} catch (SQLException ex) {
+			cboManganh.removeAllItems();
+			cboManganh.addItem(new NganhOption(null, "Không tải được danh sách ngành"));
+		}
+	}
+
+	private void selectMajor(String maNganh) {
+		for (int i = 0; i < cboManganh.getItemCount(); i++) {
+			NganhOption option = cboManganh.getItemAt(i);
+			if (option != null && maNganh.equals(option.code)) {
+				cboManganh.setSelectedIndex(i);
+				return;
+			}
+		}
+	}
+
 	private JTextField createTextField(String value, boolean readOnly) {
 		JTextField field = new JTextField(value == null ? "" : value);
 		field.setEditable(!readOnly);
@@ -144,7 +193,8 @@ public class NguyenVongXetTuyenEditDialog {
 		}
 
 		result.setNnCccd(emptyToNull(txtCccd.getText()));
-		result.setNvManganh(emptyToNull(txtManganh.getText()));
+		NganhOption selectedMajor = (NganhOption) cboManganh.getSelectedItem();
+		result.setNvManganh(selectedMajor == null ? null : emptyToNull(selectedMajor.code));
 
 		try {
 			String ttStr = txtTt.getText().trim();
@@ -180,6 +230,27 @@ public class NguyenVongXetTuyenEditDialog {
 			return new BigDecimal(cleaned);
 		} catch (Exception e) {
 			return null;
+		}
+	}
+
+	private static final class NganhOption {
+		private final String code;
+		private final String name;
+
+		private NganhOption(String code, String name) {
+			this.code = code;
+			this.name = name == null ? "" : name;
+		}
+
+		@Override
+		public String toString() {
+			if (code == null || code.trim().isEmpty()) {
+				return name;
+			}
+			if (name == null || name.trim().isEmpty()) {
+				return code;
+			}
+			return code + " - " + name;
 		}
 	}
 }

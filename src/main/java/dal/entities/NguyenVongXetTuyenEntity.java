@@ -60,7 +60,7 @@ public class NguyenVongXetTuyenEntity implements Serializable {
 
 	// Association to NganhEntity (lazy loaded)
 	@ManyToOne
-	@JoinColumn(name = "nv_manganh", insertable = false, updatable = false)
+	@JoinColumn(name = "nv_manganh", referencedColumnName = "manganh", insertable = false, updatable = false)
 	private NganhEntity nganh;
 
 	// Constructors

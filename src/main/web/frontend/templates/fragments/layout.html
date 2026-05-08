@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+	<meta charset="UTF-8"/>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+	<title>Hệ thống tra cứu xét tuyển</title>
+	<link rel="stylesheet" th:href="@{/css/student-portal.css}"/>
+	<script defer th:src="@{/js/layout.js}"></script>
+</head>
+<body class="portal-body portal-layout-page">
+<header class="portal-topbar">
+	<div class="portal-topbar-inner">
+		<div class="portal-brand">Hệ thống tra cứu xét tuyển</div>
+		<nav class="portal-tabs" aria-label="Chuyển trang tra cứu">
+			<button type="button" class="portal-tab-btn active" data-tab="lookup">Tra cứu kết quả</button>
+			<button type="button" class="portal-tab-btn" data-tab="dgnl">Tính điểm ĐGNL</button>
+			<button type="button" class="portal-tab-btn" data-tab="vsat">Tính điểm VSAT/THPT</button>
+		</nav>
+	</div>
+</header>
+
+<main class="portal-shell portal-layout-shell">
+	<section class="tab-panel is-active" data-tab-panel="lookup">
+		<section class="hero-card">
+			<div>
+				<p class="eyebrow">Tra cứu kết quả xét tuyển</p>
+				<h1>Thí sinh</h1>
+				<p class="hero-note">Nhập CCCD làm tên đăng nhập và 8 số ngày sinh làm mật khẩu.</p>
+			</div>
+		</section>
+
+		<section class="lookup-grid">
+			<article class="panel form-panel">
+				<h2>Thông tin đăng nhập</h2>
+				<form class="lookup-form" th:action="@{/lookup}" method="post">
+					<label>
+						<span>Username / CCCD</span>
+						<input type="text" name="username" placeholder="Ví dụ: 079200001234" autocomplete="off"/>
+					</label>
+					<label>
+						<span>Password / Ngày sinh (ddMMyyyy)</span>
+						<input type="password" name="password" placeholder="Ví dụ: 25072007" autocomplete="off"/>
+					</label>
+					<button type="submit" class="primary-btn">Tra cứu</button>
+				</form>
+			</article>
+
+			<article class="panel result-panel">
+				<h2>Kết quả</h2>
+				<div class="hint-box">
+					Nhập CCCD và 8 số ngày sinh, sau đó bấm <strong>Tra cứu</strong> để xem kết quả.
+				</div>
+				<div class="empty-state">
+					Khu vực này sẽ hiển thị kết quả trúng tuyển sau khi tra cứu ở trang riêng.
+				</div>
+			</article>
+		</section>
+	</section>
+
+	<section class="tab-panel" data-tab-panel="dgnl" hidden>
+		<section class="panel dgnl-card">
+			<h2>Công cụ tham khảo tính điểm xét tuyển</h2>
+			<div class="dgnl-alert">Điểm thi DGNL giả định lúc cao nhất</div>
+			<p class="dgnl-note">Môn thi không có điểm: nhập 0.</p>
+
+			<form id="dgnlForm" class="dgnl-form-grid">
+				<label>
+					<span>Chọn ngành:</span>
+					<select id="dgnlMajor" data-api-url="/api/majors" required>
+						<option value="">-- Chọn ngành --</option>
+					</select>
+				</label>
+
+				<label>
+					<span>Điểm thi:</span>
+					<input id="dgnlScore" type="number" min="0" max="1200" step="0.01" placeholder="Nhập điểm thi DGNL (0-1200)" required/>
+				</label>
+
+				<label>
+					<span>Điểm cộng (&lt;=3.0):</span>
+					<input id="dgnlBonus" type="number" min="0" max="3" step="0.1" value="0.0"/>
+				</label>
+
+				<label>
+					<span>Khu vực ưu tiên:</span>
+					<select id="dgnlArea">
+						<option value="0">Không có</option>
+						<option value="0.75">Khu vực 1</option>
+						<option value="0.5">Khu vực 2NT</option>
+						<option value="0.25">Khu vực 2</option>
+					</select>
+				</label>
+
+				<label class="span-2">
+					<span>Đối tượng ưu tiên:</span>
+					<select id="dgnlObject">
+						<option value="0">Không đối tượng</option>
+						<option value="2.0">Đối tượng 1</option>
+						<option value="1.0">Đối tượng 2</option>
+						<option value="0.5">Đối tượng 3</option>
+					</select>
+				</label>
+
+				<div class="span-2 dgnl-submit-wrap">
+					<button type="submit" class="primary-btn dgnl-btn">Tính điểm</button>
+				</div>
+			</form>
+		</section>
+
+		<section id="dgnlResultCard" class="panel dgnl-result-card" hidden>
+			<h2 id="dgnlResultTitle">Tính quy đổi điểm xét tuyển DGNL</h2>
+			<div class="dgnl-info-line">
+				Tổ hợp quy đổi ưu tiên cao nhất <strong id="dgnlCombo">D01</strong>, ngưỡng đầu vào. <a href="#" id="dgnlReset">Quay lại</a>
+			</div>
+
+			<div class="details-table-wrap">
+				<div class="details-table">
+					<div class="details-row details-head">
+						<span>Nội dung</span>
+						<span>Chi tiết điểm</span>
+					</div>
+					<div class="details-row">
+						<span>Điểm thi DGNL</span>
+						<span id="dgnlInputScore">0.00</span>
+					</div>
+					<div class="details-row">
+						<span>Công thức quy đổi về thang 30 (THPT gốc-DH1)</span>
+						<span id="dgnlFormula">0 × 30 / 1200 = 0.00</span>
+					</div>
+					<div class="details-row">
+						<span>Điểm thi quy đổi</span>
+						<span id="dgnlConverted">0.00</span>
+					</div>
+					<div class="details-row">
+						<span>Điểm cộng</span>
+						<span id="dgnlBonusOut">0.00</span>
+					</div>
+					<div class="details-row">
+						<span>Điểm ưu tiên quy đổi</span>
+						<span id="dgnlPriority">0.00</span>
+					</div>
+					<div class="details-row highlight-row">
+						<span>Điểm xét tuyển = điểm thi quy đổi + điểm cộng + điểm ưu tiên</span>
+						<span><strong id="dgnlTotal">0.00</strong></span>
+					</div>
+				</div>
+			</div>
+
+			<div id="dgnlThresholdStatus" class="dgnl-status danger">X So với điểm ngưỡng: CHƯA ĐẠT</div>
+			<div id="dgnlAdmissionStatus" class="dgnl-status warning">! So với điểm trúng tuyển: CHƯA ĐẠT</div>
+		</section>
+	</section>
+
+	<section class="tab-panel" data-tab-panel="vsat" hidden>
+		<section class="panel vsat-card">
+			<h2>Công cụ tham khảo tính điểm xét tuyển</h2>
+			<div id="vsatTypeAlert" class="dgnl-alert">Điểm thi VSAT (thang điểm 150)</div>
+			<p class="dgnl-note">Môn thi không có điểm: nhập 0.</p>
+
+			<form id="vsatForm" class="vsat-form-grid">
+				<div class="span-3 vsat-type-row">
+					<span>Loại điểm thi:</span>
+					<label class="radio-chip"><input type="radio" name="examType" value="VSAT" checked/> VSAT (thang 150)</label>
+					<label class="radio-chip"><input type="radio" name="examType" value="THPT"/> THPT (thang 10)</label>
+				</div>
+
+				<label class="span-3">
+					<span>Chọn ngành:</span>
+					<select id="vsatMajor" required>
+						<option value="">-- Chọn ngành --</option>
+					</select>
+				</label>
+
+				<label><span>Điểm môn Ngữ văn:</span><input id="vVan" type="number" step="0.01" value="0"/></label>
+				<label><span>Điểm môn Vật lý:</span><input id="vLy" type="number" step="0.01" value="0"/></label>
+
+				<label><span>Điểm môn Hóa học:</span><input id="vHoa" type="number" step="0.01" value="0"/></label>
+				<label><span>Điểm môn Sinh học:</span><input id="vSinh" type="number" step="0.01" value="0"/></label>
+				<label><span>Điểm môn Tiếng Anh:</span><input id="vAnh" type="number" step="0.01" value="0"/></label>
+
+				<label><span>Điểm môn Lịch sử:</span><input id="vSu" type="number" step="0.01" value="0"/></label>
+				<label><span>Điểm môn Địa lý:</span><input id="vDia" type="number" step="0.01" value="0"/></label>
+				<label><span>Điểm môn KHXH:</span><input id="vKhxh" type="number" step="0.01" value="0"/></label>
+
+				<label><span>Điểm môn KHTN:</span><input id="vKhtn" type="number" step="0.01" value="0"/></label>
+				<label>
+					<span>Khu vực ưu tiên:</span>
+					<select id="vsatArea">
+						<option value="0">Không có</option>
+						<option value="0.75">Khu vực 1</option>
+						<option value="0.5">Khu vực 2NT</option>
+						<option value="0.25">Khu vực 2</option>
+					</select>
+				</label>
+				<label>
+					<span>Đối tượng ưu tiên:</span>
+					<select id="vsatObject">
+						<option value="0">Không đối tượng</option>
+						<option value="2.0">Đối tượng 1</option>
+						<option value="1.0">Đối tượng 6</option>
+						<option value="0.5">Đối tượng 7</option>
+					</select>
+				</label>
+
+				<label><span>Môn có điểm cộng:</span>
+					<select id="vsatBonusSubject">
+						<option value="">Không có</option>
+						<option value="Toán">Toán</option>
+						<option value="Ngữ văn">Ngữ văn</option>
+						<option value="Tiếng Anh">Tiếng Anh</option>
+						<option value="Hóa học">Hóa học</option>
+					</select>
+				</label>
+				<label><span>Mức điểm cộng:</span><input id="vsatBonus" type="number" step="0.1" min="0" max="3" value="0"/></label>
+
+				<div class="span-3 dgnl-submit-wrap">
+					<button type="submit" class="primary-btn dgnl-btn">Tính điểm</button>
+				</div>
+			</form>
+		</section>
+
+		<section id="vsatResultCard" class="panel dgnl-result-card" hidden>
+			<h2 id="vsatResultTitle">Tính điểm vào ngành xét tuyển</h2>
+			<div class="dgnl-info-line">Tổ hợp có điểm xét tuyển cao nhất <strong id="vsatBestCombo">B03</strong>, ngưỡng đầu vào. <a href="#" id="vsatReset">Quay lại</a></div>
+
+			<div class="details-table-wrap">
+				<div class="details-table">
+					<div class="details-row details-head"><span>Nội dung</span><span>Chi tiết điểm</span></div>
+					<div class="details-row"><span>Khu vực ưu tiên</span><span id="vsatAreaOut">0.00</span></div>
+					<div class="details-row"><span>Đối tượng ưu tiên</span><span id="vsatObjectOut">0.00</span></div>
+					<div class="details-row"><span>Điểm cộng (&lt;=3)</span><span id="vsatBonusOut">0.00</span></div>
+					<div class="section-row"><span id="vsatCombo1Title">1) Tổ hợp B03 - Toán, Sinh học, Ngữ văn</span></div>
+					<div class="details-row"><span id="vsatCombo1Detail">Xét ngưỡng = Tổng điểm 3 môn + điểm ưu tiên</span><span id="vsatCombo1Value">0.00</span></div>
+					<div class="details-row highlight-row"><span>Điểm xét tuyển tổ hợp 1</span><span><strong id="vsatCombo1Dx">0.00</strong></span></div>
+					<div class="section-row"><span id="vsatCombo2Title">2) Tổ hợp C01 - Ngữ văn, Toán, Vật lý</span></div>
+					<div class="details-row"><span id="vsatCombo2Detail">Xét ngưỡng = Tổng điểm 3 môn + điểm ưu tiên</span><span id="vsatCombo2Value">0.00</span></div>
+					<div class="details-row highlight-row"><span>Điểm xét tuyển tổ hợp 2</span><span><strong id="vsatCombo2Dx">0.00</strong></span></div>
+					<div class="details-row"><span>Điểm quy đổi về thang 10 (nếu VSAT)</span><span id="vsatConverted">0.00</span></div>
+				</div>
+			</div>
+
+			<div id="vsatThresholdStatus" class="dgnl-status danger">X So với điểm ngưỡng: CHƯA ĐẠT</div>
+			<div id="vsatAdmissionStatus" class="dgnl-status warning">! So với điểm trúng tuyển: CHƯA ĐẠT</div>
+		</section>
+	</section>
+</main>
+</body>
+</html>
