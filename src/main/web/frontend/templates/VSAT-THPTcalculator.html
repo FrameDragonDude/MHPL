@@ -3,255 +3,355 @@
 <head>
 	<meta charset="UTF-8"/>
 	<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-	<title>Công cụ tham khảo tính điểm xét tuyển</title>
+	<title>Tính điểm VSAT/THPT</title>
 	<link rel="stylesheet" th:href="@{/css/student-portal.css}"/>
-	<script defer th:src="@{/js/VSAT-THPTcalculator.js}"></script>
+	<script defer th:src="@{/js/layout.js(v=2)}"></script>
+	<style>
+		body {
+			background-color: #f5f7fa;
+			margin: 0;
+			font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+		}
+		
+		.header-bar {
+			background-color: #ffffff;
+			border-bottom: 1px solid #e0e0e0;
+			padding: 0 40px;
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+			height: 70px;
+		}
+		
+		.header-left {
+			font-size: 18px;
+			font-weight: 500;
+			color: #0066cc;
+		}
+		
+		.nav-buttons {
+			display: flex;
+			gap: 12px;
+		}
+		
+		.nav-btn {
+			padding: 8px 20px;
+			border: none;
+			border-radius: 4px;
+			background-color: #f0f0f0;
+			cursor: pointer;
+			font-size: 14px;
+			font-weight: 500;
+			color: #333;
+			text-decoration: none;
+			transition: all 0.3s;
+		}
+		
+		.nav-btn:hover {
+			background-color: #e0e0e0;
+		}
+		
+		.nav-btn.active {
+			background-color: #0066cc;
+			color: #fff;
+		}
+		
+		.main-container {
+			max-width: 1100px;
+			margin: 40px auto;
+			padding: 0 20px;
+		}
+		
+		.form-card {
+			background-color: #fff;
+			border-radius: 8px;
+			padding: 40px;
+			box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+			margin-bottom: 30px;
+		}
+		
+		.form-title {
+			font-size: 28px;
+			color: #0066cc;
+			margin: 0 0 10px 0;
+			font-weight: 600;
+		}
+		
+		.alert-box {
+			background-color: #ffe6e6;
+			border: 1px solid #ffcccc;
+			border-radius: 4px;
+			padding: 15px;
+			margin-bottom: 20px;
+			color: #cc0000;
+			font-size: 14px;
+		}
+		
+		.note-text {
+			color: #666;
+			font-size: 14px;
+			margin: 10px 0 20px 0;
+		}
+		
+		.form-grid {
+			display: grid;
+			grid-template-columns: 1fr 1fr;
+			gap: 20px;
+			margin-bottom: 20px;
+		}
+		
+		.form-grid.three-col {
+			grid-template-columns: 1fr 1fr 1fr;
+		}
+		
+		.form-group {
+			display: flex;
+			flex-direction: column;
+		}
+		
+		.form-group label {
+			font-weight: 500;
+			color: #333;
+			margin-bottom: 8px;
+			font-size: 14px;
+		}
+		
+		.form-group input,
+		.form-group select {
+			padding: 10px 12px;
+			border: 1px solid #ddd;
+			border-radius: 4px;
+			font-size: 14px;
+			font-family: inherit;
+		}
+		
+		.form-group input:focus,
+		.form-group select:focus {
+			outline: none;
+			border-color: #0066cc;
+			box-shadow: 0 0 0 2px rgba(0,102,204,0.1);
+		}
+		
+		.button-group {
+			display: flex;
+			gap: 12px;
+			margin-top: 30px;
+		}
+		
+		.btn {
+			padding: 12px 24px;
+			border: none;
+			border-radius: 4px;
+			font-size: 14px;
+			font-weight: 600;
+			cursor: pointer;
+			transition: all 0.3s;
+		}
+		
+		.btn-primary {
+			background-color: #0066cc;
+			color: #fff;
+		}
+		
+		.btn-primary:hover {
+			background-color: #0052a3;
+		}
+		
+		.btn-secondary {
+			background-color: #f0f0f0;
+			color: #333;
+		}
+		
+		.btn-secondary:hover {
+			background-color: #e0e0e0;
+		}
+		
+		.results-card {
+			background-color: #fff;
+			border-radius: 8px;
+			padding: 40px;
+			box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+			display: none;
+		}
+		
+		.results-card.show {
+			display: block;
+		}
+		
+		.results-title {
+			font-size: 18px;
+			color: #333;
+			margin: 0 0 20px 0;
+			font-weight: 600;
+		}
+	</style>
 </head>
-<body class="portal-body calculator-body">
-<main class="portal-shell calculator-shell">
-	<section class="hero-card calculator-hero">
-		<div class="hero-copy">
-			<p class="eyebrow">Công cụ tham khảo tính điểm xét tuyển</p>
-			<h1>VSAT / THPT</h1>
-			<p class="hero-note">Nhập điểm theo từng môn, chọn ngành xét tuyển và xem bảng chi tiết theo từng tổ hợp tương ứng.</p>
-		</div>
-		<div class="hero-score-card accent-card">
-			<span class="mini-label">Phương thức</span>
-			<strong>VSAT</strong>
-			<p>Hiển thị điểm quy đổi về thang 10 nếu là VSAT.</p>
-		</div>
-	</section>
-
-	<section class="mode-switcher">
-		<button type="button" class="mode-pill active">THPT</button>
-		<button type="button" class="mode-pill">VSAT</button>
-		<button type="button" class="mode-pill">Tổ hợp</button>
-	</section>
-
-	<section class="calculator-grid vsat-grid">
-		<article class="panel form-panel prominent-panel">
-			<div class="panel-heading">
-				<div>
-					<p class="panel-kicker">Điểm thi VSAT (thang điểm 150)</p>
-					<h2>Công cụ tham khảo tính điểm xét tuyển</h2>
-					<p class="panel-subtitle">Môn thi không có điểm: nhập 0.</p>
-				</div>
-				<span class="panel-badge">Bản xem trước</span>
+<body>
+	<header class="portal-topbar">
+		<div class="portal-topbar-inner">
+			<div class="portal-brand">
+				<a th:href="@{/}" style="color: inherit; text-decoration: none;">Hệ thống tra cứu xét tuyển</a>
 			</div>
+			<nav class="portal-tabs" aria-label="Chuyển trang tra cứu">
+				<a class="portal-tab-btn" href="/">Tra cứu kết quả</a>
+				<a class="portal-tab-btn" href="/calculator/dgnl">Tính điểm ĐGNL</a>
+				<a class="portal-tab-btn" href="/calculator/vsat-thpt">Tính điểm VSAT/THPT</a>
+			</nav>
+		</div>
+	</header>
 
-			<form class="calculator-form">
-				<div class="field-row three-col top-controls-grid">
-					<label>
-						<span>Chọn ngành:</span>
-						<select>
-							<option>Quản lý giáo dục</option>
-							<option>Công nghệ thông tin</option>
-							<option>Quản trị kinh doanh</option>
-							<option>Kế toán</option>
-						</select>
-					</label>
-					<label>
-						<span>Điểm cộng (<=3.0):</span>
-						<input type="number" min="0" max="3" step="0.1" placeholder="1.5"/>
-					</label>
-					<label>
-						<span>Khu vực ưu tiên:</span>
-						<select>
-							<option>Khu vực 2NT</option>
-							<option>Khu vực 1</option>
-							<option>Khu vực 2</option>
-							<option>Khu vực 3</option>
-						</select>
-					</label>
-				</div>
-
-				<div class="field-row three-col">
-					<label>
-						<span>Đối tượng ưu tiên</span>
-						<select>
-							<option>Đối tượng 6</option>
-							<option>Đối tượng 1</option>
-							<option>Đối tượng 2</option>
-							<option>Đối tượng 3</option>
-						</select>
-					</label>
-					<label>
-						<span>Chọn môn có điểm cộng:</span>
-						<select>
-							<option>Hóa học</option>
-							<option>Toán</option>
-							<option>Ngữ văn</option>
-							<option>Tiếng Anh</option>
-						</select>
-					</label>
-					<label>
-						<span>Mức điểm cộng tương ứng:</span>
-						<select>
-							<option>1.5</option>
-							<option>1.0</option>
-							<option>0.5</option>
-							<option>0.0</option>
-						</select>
-					</label>
-				</div>
-
-				<div class="score-band">
-					<p class="score-band-title">Nhập điểm từng môn (thang 10, nếu là VSAT hệ thống sẽ quy đổi về thang 10)</p>
+	<div class="main-container">
+		<!-- Input Form -->
+		<div class="form-card">
+			<h1 class="form-title">Công cụ tham khảo tính điểm xét tuyển</h1>
+			
+			<div class="alert-box" id="vsatTypeAlert">
+				Điểm thi VSAT/THPT giả định lúc cao nhất
 			</div>
-
-				<div class="field-row three-col score-input-grid">
-					<label><span>Điểm môn Toán:</span><input type="number" min="0" max="10" step="0.01" placeholder="7.00"/></label>
-					<label><span>Điểm môn Ngữ văn:</span><input type="number" min="0" max="10" step="0.01" placeholder="6.50"/></label>
-					<label><span>Điểm môn Vật lý:</span><input type="number" min="0" max="10" step="0.01" placeholder="0"/></label>
+			
+			<p class="note-text">Môn thi không có điểm: nhập 0.</p>
+			
+			<form id="vsatForm">
+				<div class="form-grid">
+					<div class="form-group">
+						<label>Chọn ngành:</label>
+						<select id="majorSelect" th:attr="data-api-url=@{/api/majors}" required>
+							<option value="">-- Chọn ngành --</option>
+						</select>
+					</div>
+					
+					<div class="form-group">
+						<label>Loại điểm thi:</label>
+						<select id="examType">
+							<option value="vsat">VSAT (thang 150)</option>
+							<option value="thpt">THPT (thang 30)</option>
+						</select>
+					</div>
 				</div>
-
-				<div class="field-row three-col score-input-grid">
-					<label><span>Điểm môn Hóa học:</span><input type="number" min="0" max="10" step="0.01" placeholder="0"/></label>
-					<label><span>Điểm môn Sinh học:</span><input type="number" min="0" max="10" step="0.01" placeholder="0"/></label>
-					<label><span>Điểm môn Lịch sử:</span><input type="number" min="0" max="10" step="0.01" placeholder="0"/></label>
+				
+				<div class="form-grid three-col">
+					<div class="form-group">
+						<label>Điểm cộng (≤3.0):</label>
+						<input type="number" id="bonusScore" min="0" max="3" step="0.01" value="0.0"/>
+					</div>
+					
+					<div class="form-group">
+						<label>Khu vực ưu tiên:</label>
+						<select id="areaPreference">
+							<option value="">Không có</option>
+							<option value="kv1">KV1</option>
+							<option value="kv2nt">KV2-NT</option>
+							<option value="kv2">KV2</option>
+							<option value="kv3">KV3</option>
+						</select>
+					</div>
+					
+					<div class="form-group">
+						<label>Đối tượng ưu tiên:</label>
+						<select id="objectPreference">
+							<option value="">Không đối tượng</option>
+							<option value="ut1">UT1</option>
+							<option value="ut2">UT2</option>
+							<option value="ut3">UT3</option>
+							<option value="ut6">UT6</option>
+						</select>
+					</div>
 				</div>
-
-				<div class="field-row three-col score-input-grid">
-					<label><span>Điểm môn Địa lý:</span><input type="number" min="0" max="10" step="0.01" placeholder="0"/></label>
-					<label><span>Điểm môn Tiếng Anh:</span><input type="number" min="0" max="10" step="0.01" placeholder="9.0"/></label>
-					<label><span>Quy đổi tiếng Anh (nếu có):</span><input type="number" min="0" max="10" step="0.01" placeholder="9.0"/></label>
+				
+				<div class="score-section">
+					<h3 style="font-size: 16px; margin: 20px 0 15px 0;">Nhập điểm từng môn (thang 10 hoặc thang điểm tương ứng)</h3>
 				</div>
-
-				<div class="field-note-inline">Môn thi không có điểm: nhập 0.</div>
-
-				<div class="form-actions align-right">
-					<button type="button" class="primary-btn">Tính điểm</button>
+				
+				<div class="form-grid three-col">
+					<div class="form-group">
+						<label>Điểm môn Toán:</label>
+						<input type="number" id="mathScore" min="0" max="10" step="0.01" value="0" placeholder="0.00"/>
+					</div>
+					
+					<div class="form-group">
+						<label>Điểm môn Ngữ văn:</label>
+						<input type="number" id="literatureScore" min="0" max="10" step="0.01" value="0" placeholder="0.00"/>
+					</div>
+					
+					<div class="form-group">
+						<label>Điểm môn Tiếng Anh:</label>
+						<input type="number" id="englishScore" min="0" max="10" step="0.01" value="0" placeholder="0.00"/>
+					</div>
+				</div>
+				
+				<div class="form-grid three-col">
+					<div class="form-group">
+						<label>Điểm môn Vật lý:</label>
+						<input type="number" id="physicsScore" min="0" max="10" step="0.01" value="0" placeholder="0.00"/>
+					</div>
+					
+					<div class="form-group">
+						<label>Điểm môn Hóa học:</label>
+						<input type="number" id="chemistryScore" min="0" max="10" step="0.01" value="0" placeholder="0.00"/>
+					</div>
+					
+					<div class="form-group">
+						<label>Điểm môn Sinh học:</label>
+						<input type="number" id="biologyScore" min="0" max="10" step="0.01" value="0" placeholder="0.00"/>
+					</div>
+				</div>
+				
+				<div class="form-grid three-col">
+					<div class="form-group">
+						<label>Điểm môn Lịch sử:</label>
+						<input type="number" id="historyScore" min="0" max="10" step="0.01" value="0" placeholder="0.00"/>
+					</div>
+					
+					<div class="form-group">
+						<label>Điểm môn Địa lý:</label>
+						<input type="number" id="geographyScore" min="0" max="10" step="0.01" value="0" placeholder="0.00"/>
+					</div>
+				</div>
+				
+				<div class="button-group">
+					<button type="submit" class="btn btn-primary">Tính điểm</button>
+					<button type="reset" class="btn btn-secondary">Nhập lại</button>
 				</div>
 			</form>
-		</article>
+		</div>
 
-		<aside class="panel result-panel calculator-preview-panel">
-			<div class="panel-heading">
-				<div>
-					<p class="panel-kicker">Tính điểm vào ngành xét tuyển</p>
-					<h2>Quản lý giáo dục (7140114)</h2>
-					<p class="panel-subtitle">Tổ hợp có điểm xét tuyển cao nhất: D01, 22.83 điểm. Tổ hợp có <span class="badge-inline">B03</span> ngưỡng đầu vào.</p>
-				</div>
-				<span class="panel-badge muted">Đã mô phỏng</span>
-			</div>
-
-			<div class="result-summary-banner">
-				<div>
-					<span class="mini-label">Ngưỡng xét tuyển cao nhất</span>
-					<strong>19.77</strong>
-				</div>
-				<div>
-					<span class="mini-label">Trạng thái</span>
-					<strong class="status-inline success">Đạt</strong>
-				</div>
+		<!-- Results Panel (initially hidden) -->
+		<div class="results-card" id="resultsCard">
+			<h2 class="results-title" id="resultTitle">Tính điểm vào ngành xét tuyển</h2>
+			<div class="dgnl-info-line">
+				Tổ hợp có điểm xét tuyển cao nhất <strong id="resultBestCombo">B03</strong>, ngưỡng đầu vào. <a href="#" id="resultReset">Quay lại</a>
 			</div>
 
 			<div class="details-table-wrap">
 				<div class="details-table">
-					<div class="details-row details-head">
-						<span>Nội dung</span>
-						<span>Chi tiết điểm</span>
-					</div>
-					<div class="details-row">
-						<span>Khu vực ưu tiên: 2NT</span>
-						<span>0.50</span>
-					</div>
-					<div class="details-row">
-						<span>Đối tượng ưu tiên: 06</span>
-						<span>1.00</span>
-					</div>
-					<div class="details-row">
-						<span>Điểm cộng (<=3)</span>
-						<span>1.50</span>
-					</div>
+					<div class="details-row details-head"><span>Nội dung</span><span>Chi tiết điểm</span></div>
+					<div class="section-row"><span>1) Điểm từng môn đã nhập</span></div>
+					<div class="details-row"><span>Toán</span><span id="subjectMath">0.00</span></div>
+					<div class="details-row"><span>Ngữ văn</span><span id="subjectLiterature">0.00</span></div>
+					<div class="details-row"><span>Vật lý</span><span id="subjectPhysics">0.00</span></div>
+					<div class="details-row"><span>Hóa học</span><span id="subjectChemistry">0.00</span></div>
+					<div class="details-row"><span>Sinh học</span><span id="subjectBiology">0.00</span></div>
+					<div class="details-row"><span>Tiếng Anh</span><span id="subjectEnglish">0.00</span></div>
+					<div class="details-row"><span>Lịch sử</span><span id="subjectHistory">0.00</span></div>
+					<div class="details-row"><span>Địa lý</span><span id="subjectGeography">0.00</span></div>
+					<div class="details-row"><span>KHXH</span><span id="subjectKhxh">0.00</span></div>
+					<div class="details-row"><span>KHTN</span><span id="subjectKhtn">0.00</span></div>
 
-					<div class="section-row">
-						<span>1) Tổ hợp B03 - Toán, Sinh học, Ngữ văn</span>
-					</div>
-					<div class="details-row">
-						<span>Điểm môn Toán</span>
-						<span>7.00</span>
-					</div>
-					<div class="details-row">
-						<span>Điểm môn Ngữ văn</span>
-						<span>8.50</span>
-					</div>
-					<div class="details-row">
-						<span>Điểm môn Sinh học</span>
-						<span>7.76</span>
-					</div>
-					<div class="details-row">
-						<span>Xét ngưỡng = Tổng 3 môn + điểm ưu tiên</span>
-						<span><strong>17.76</strong></span>
-					</div>
-					<div class="details-row highlight-row">
-						<span>Điểm xét tuyển (ĐXT)</span>
-						<span><strong>19.77</strong></span>
-					</div>
-
-					<div class="section-row">
-						<span>2) Tổ hợp C01 - Ngữ văn, Toán, Vật lý</span>
-					</div>
-					<div class="details-row">
-						<span>Điểm môn Toán</span>
-						<span>7.00</span>
-					</div>
-					<div class="details-row">
-						<span>Điểm môn Vật lý</span>
-						<span>0.00</span>
-					</div>
-					<div class="details-row">
-						<span>Điểm môn Ngữ văn</span>
-						<span>8.50</span>
-					</div>
-					<div class="details-row highlight-row">
-						<span>Điểm xét tuyển</span>
-						<span><strong>15.50</strong></span>
-					</div>
-
-					<div class="section-row">
-						<span>3) Tổ hợp D01 - Ngữ văn, Toán, Tiếng Anh</span>
-					</div>
-					<div class="details-row">
-						<span>Điểm môn Tiếng Anh / Quy đổi</span>
-						<span>9.00</span>
-					</div>
-					<div class="details-row highlight-row">
-						<span>Điểm xét tuyển</span>
-						<span><strong>22.83</strong></span>
-					</div>
+					<div class="section-row"><span>2) Tất cả tổ hợp xét tuyển</span></div>
+					<div class="details-row"><span>Khu vực ưu tiên</span><span id="resultAreaPreference">0.00</span></div>
+					<div class="details-row"><span>Đối tượng ưu tiên</span><span id="resultObjectPreference">0.00</span></div>
+					<div class="details-row"><span>Mức điểm cộng</span><span id="resultBonus">0.00</span></div>
+					<div id="comboResultsBody"></div>
+					<div class="details-row"><span>Điểm quy đổi về thang 10 (nếu VSAT)</span><span id="resultConvertedScore">0.00</span></div>
+					<div class="details-row highlight-row"><span>Tổng điểm xét tuyển cao nhất</span><span><strong id="resultTotal">0.00</strong></span></div>
 				</div>
-			</div>
-		</aside>
-	</section>
-
-	<section class="panel info-panel">
-		<div class="panel-heading compact-heading">
-			<div>
-				<p class="panel-kicker">Kết quả hiển thị</p>
-				<h2>Điểm quy đổi về thang 10</h2>
-			</div>
-			<span class="panel-badge">VSAT / THPT</span>
 		</div>
 
-		<div class="score-matrix">
-			<div class="score-matrix-card">
-				<span>VSAT</span>
-				<strong>8.62</strong>
-				<p>Quy đổi từ thang 150 về thang 10.</p>
-			</div>
-			<div class="score-matrix-card">
-				<span>THPT</span>
-				<strong>24.50</strong>
-				<p>Tổng điểm theo tổ hợp môn đã chọn.</p>
-			</div>
-			<div class="score-matrix-card">
-				<span>Điểm cộng</span>
-				<strong>1.50</strong>
-				<p>Mức cộng đã bổ sung theo môn có điểm cộng.</p>
-			</div>
-		</div>
-	</section>
-</main>
+		<div id="resultThresholdStatus" class="dgnl-status danger">X So với điểm ngưỡng: CHƯA ĐẠT</div>
+		<div id="resultAdmissionStatus" class="dgnl-status warning">! So với điểm trúng tuyển: CHƯA ĐẠT</div>
+	</div>
+	</div>
+
+	<script th:src="@{/js/VSAT-THPTcalculator.js(v=2)}"></script>
 </body>
 </html>

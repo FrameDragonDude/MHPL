@@ -5,200 +5,341 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 	<title>Tính điểm ĐGNL</title>
 	<link rel="stylesheet" th:href="@{/css/student-portal.css}"/>
-	<script defer th:src="@{/js/DGNLcalculator.js}"></script>
+	<script defer th:src="@{/js/layout.js(v=2)}"></script>
+	<style>
+		body {
+			background-color: #f5f7fa;
+			margin: 0;
+			font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+		}
+		
+		.header-bar {
+			background-color: #ffffff;
+			border-bottom: 1px solid #e0e0e0;
+			padding: 0 40px;
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+			height: 70px;
+		}
+		
+		.header-left {
+			font-size: 18px;
+			font-weight: 500;
+			color: #0066cc;
+		}
+		
+		.nav-buttons {
+			display: flex;
+			gap: 12px;
+		}
+		
+		.nav-btn {
+			padding: 8px 20px;
+			border: none;
+			border-radius: 4px;
+			background-color: #f0f0f0;
+			cursor: pointer;
+			font-size: 14px;
+			font-weight: 500;
+			color: #333;
+			text-decoration: none;
+			transition: all 0.3s;
+		}
+		
+		.nav-btn:hover {
+			background-color: #e0e0e0;
+		}
+		
+		.nav-btn.active {
+			background-color: #0066cc;
+			color: #fff;
+		}
+		
+		.main-container {
+			max-width: 1100px;
+			margin: 40px auto;
+			padding: 0 20px;
+		}
+		
+		.form-card {
+			background-color: #fff;
+			border-radius: 8px;
+			padding: 40px;
+			box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+			margin-bottom: 30px;
+		}
+		
+		.form-title {
+			font-size: 28px;
+			color: #0066cc;
+			margin: 0 0 10px 0;
+			font-weight: 600;
+		}
+		
+		.alert-box {
+			background-color: #ffe6e6;
+			border: 1px solid #ffcccc;
+			border-radius: 4px;
+			padding: 15px;
+			margin-bottom: 20px;
+			color: #cc0000;
+			font-size: 14px;
+		}
+		
+		.note-text {
+			color: #666;
+			font-size: 14px;
+			margin: 10px 0 20px 0;
+		}
+		
+		.form-grid {
+			display: grid;
+			grid-template-columns: 1fr 1fr;
+			gap: 20px;
+			margin-bottom: 20px;
+		}
+		
+		.form-group {
+			display: flex;
+			flex-direction: column;
+		}
+		
+		.form-group label {
+			font-weight: 500;
+			color: #333;
+			margin-bottom: 8px;
+			font-size: 14px;
+		}
+		
+		.form-group input,
+		.form-group select {
+			padding: 10px 12px;
+			border: 1px solid #ddd;
+			border-radius: 4px;
+			font-size: 14px;
+			font-family: inherit;
+		}
+		
+		.form-group input:focus,
+		.form-group select:focus {
+			outline: none;
+			border-color: #0066cc;
+			box-shadow: 0 0 0 2px rgba(0,102,204,0.1);
+		}
+		
+		.button-group {
+			display: flex;
+			gap: 12px;
+			margin-top: 30px;
+		}
+		
+		.btn {
+			padding: 12px 24px;
+			border: none;
+			border-radius: 4px;
+			font-size: 14px;
+			font-weight: 600;
+			cursor: pointer;
+			transition: all 0.3s;
+		}
+		
+		.btn-primary {
+			background-color: #0066cc;
+			color: #fff;
+		}
+		
+		.btn-primary:hover {
+			background-color: #0052a3;
+		}
+		
+		.btn-secondary {
+			background-color: #f0f0f0;
+			color: #333;
+		}
+		
+		.btn-secondary:hover {
+			background-color: #e0e0e0;
+		}
+		
+		.results-card {
+			background-color: #fff;
+			border-radius: 8px;
+			padding: 40px;
+			box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+			display: none;
+		}
+		
+		.results-card.show {
+			display: block;
+		}
+		
+		.results-title {
+			font-size: 18px;
+			color: #333;
+			margin: 0 0 20px 0;
+			font-weight: 600;
+		}
+		
+		.results-grid {
+			display: grid;
+			grid-template-columns: 1fr 1fr;
+			gap: 30px;
+		}
+		
+		.results-column h3 {
+			font-size: 14px;
+			color: #666;
+			margin: 0 0 15px 0;
+			font-weight: 600;
+		}
+		
+		.result-row {
+			display: flex;
+			justify-content: space-between;
+			padding: 12px 0;
+			border-bottom: 1px solid #f0f0f0;
+			font-size: 14px;
+		}
+		
+		.result-row:last-child {
+			border-bottom: none;
+		}
+		
+		.result-label {
+			color: #666;
+		}
+		
+		.result-value {
+			font-weight: 600;
+			color: #333;
+		}
+	</style>
 </head>
-<body class="portal-body calculator-body">
-<main class="portal-shell calculator-shell">
-	<section class="hero-card calculator-hero">
-		<div class="hero-copy">
-			<p class="eyebrow">Công cụ xét tuyển</p>
-			<h1>Tính điểm ĐGNL</h1>
-			<p class="hero-note">Nhập điểm thi thang 1200, chọn ngành xét tuyển và các yếu tố ưu tiên để xem bản xem trước kết quả.</p>
-		</div>
-		<div class="hero-score-card">
-			<span class="mini-label">Thang quy đổi</span>
-			<strong>30 điểm</strong>
-			<p>Hiển thị điểm quy đổi tương ứng với từng nguyện vọng.</p>
-		</div>
-	</section>
-
-	<section class="calculator-toolbar">
-		<div class="toolbar-chip active">ĐGNL</div>
-		<div class="toolbar-chip">So sánh ngưỡng</div>
-		<div class="toolbar-chip">Điểm trúng tuyển</div>
-		<div class="toolbar-chip">Ưu tiên</div>
-	</section>
-
-	<section class="calculator-grid dgnl-grid">
-		<article class="panel form-panel prominent-panel">
-			<div class="panel-heading">
-				<div>
-					<p class="panel-kicker">Bước 1</p>
-					<h2>Nhập thông tin xét tuyển</h2>
-				</div>
-				<span class="panel-badge">UI preview</span>
+<body>
+	<header class="portal-topbar">
+		<div class="portal-topbar-inner">
+			<div class="portal-brand">
+				<a th:href="@{/}" style="color: inherit; text-decoration: none;">Hệ thống tra cứu xét tuyển</a>
 			</div>
+			<nav class="portal-tabs" aria-label="Chuyển trang tra cứu">
+				<a class="portal-tab-btn" href="/">Tra cứu kết quả</a>
+				<a class="portal-tab-btn" href="/calculator/dgnl">Tính điểm ĐGNL</a>
+				<a class="portal-tab-btn" href="/calculator/vsat-thpt">Tính điểm VSAT/THPT</a>
+			</nav>
+		</div>
+	</header>
 
-			<form class="calculator-form">
-				<div class="field-row two-col">
-					<label>
-						<span>Điểm thi ĐGNL</span>
-						<input type="number" min="0" max="1200" step="0.1" placeholder="Ví dụ: 925.5"/>
-					</label>
-					<label>
-						<span>Ngành xét tuyển</span>
-						<select id="majorSelect" data-api-url="/api/majors">
+	<div class="main-container">
+		<!-- Input Form -->
+		<div class="form-card">
+			<h1 class="form-title">Công cụ tham khảo tính điểm xét tuyển</h1>
+			
+			<div class="alert-box">
+				Điểm thi DGNL giả định lúc cao nhất
+			</div>
+			
+			<p class="note-text">Môn thi không có điểm: nhập 0.</p>
+			
+			<form id="dgnlForm">
+				<div class="form-grid">
+					<div class="form-group">
+						<label>Chọn ngành:</label>
+						<select id="majorSelect" required>
 							<option value="">-- Chọn ngành --</option>
 						</select>
-					</label>
+					</div>
+					
+					<div class="form-group">
+						<label>Điểm thi:</label>
+						<input type="number" id="testScore" min="0" max="1200" step="0.01" placeholder="Nhập điểm thi DGNL (0-1200)" required/>
+					</div>
 				</div>
-
-				<div class="field-row two-col">
-					<label>
-						<span>Đối tượng ưu tiên</span>
-						<select>
-							<option>Không ưu tiên</option>
-							<option>UT1</option>
-							<option>UT2</option>
-							<option>UT3</option>
+				
+				<div class="form-grid">
+					<div class="form-group">
+						<label>Điểm cộng (<=3.0):</label>
+						<input type="number" id="bonusScore" min="0" max="3" step="0.01" value="0.0"/>
+					</div>
+					
+					<div class="form-group">
+						<label>Khu vực ưu tiên:</label>
+						<select id="areaPreference">
+							<option value="">Không có</option>
+							<option value="kv1">KV1</option>
+							<option value="kv2">KV2-NT</option>
+							<option value="kv3">KV2</option>
 						</select>
-					</label>
-					<label>
-						<span>Khu vực ưu tiên</span>
-						<select>
-							<option>Không khu vực</option>
-							<option>KV1</option>
-							<option>KV2-NT</option>
-							<option>KV2</option>
+					</div>
+				</div>
+				
+				<div class="form-grid">
+					<div class="form-group">
+						<label>Đối tượng ưu tiên:</label>
+						<select id="objectPreference">
+							<option value="">Không đối lượng</option>
+							<option value="ut1">UT1</option>
+							<option value="ut2">UT2</option>
+							<option value="ut3">UT3</option>
 						</select>
-					</label>
+					</div>
 				</div>
-
-				<div class="field-row two-col">
-					<label>
-						<span>Điểm cộng (nếu có)</span>
-						<input type="number" min="0" step="0.1" placeholder="Ví dụ: 1.5"/>
-					</label>
-					<label>
-						<span>Tổ hợp gốc</span>
-						<select>
-							<option>A00</option>
-							<option>A01</option>
-							<option>B00</option>
-							<option>C00</option>
-						</select>
-					</label>
-				</div>
-
-				<div class="form-note-box">
-					<strong>Gợi ý:</strong> hệ thống sẽ quy đổi từ thang 1200 về thang 30 và hiển thị trạng thái đạt/không đạt theo ngưỡng.
-				</div>
-
-				<div class="form-actions">
-					<button type="button" class="primary-btn">Xem kết quả</button>
-					<button type="button" class="secondary-btn">Nhập lại</button>
+				
+				<div class="button-group">
+					<button type="submit" class="btn btn-primary">Tính điểm</button>
+					<button type="reset" class="btn btn-secondary">Nhập lại</button>
 				</div>
 			</form>
-		</article>
-
-		<aside class="panel result-panel calculator-preview-panel">
-			<div class="panel-heading">
-				<div>
-					<p class="panel-kicker">Bước 2</p>
-					<h2>Khung kết quả</h2>
-				</div>
-				<span class="panel-badge muted">Chưa tính</span>
-			</div>
-
-			<div class="score-hero">
-				<div>
-					<span class="mini-label">Quy đổi hiện tại</span>
-					<strong>0.00 / 30</strong>
-				</div>
-				<div class="score-ring">30</div>
-			</div>
-
-			<div class="result-stack">
-				<div class="result-card success-card">
-					<span>So với điểm ngưỡng</span>
-					<strong>Đạt</strong>
-					<p>Điểm hiện tại đang cao hơn ngưỡng của ngành.</p>
-				</div>
-				<div class="result-card info-card">
-					<span>So với điểm trúng tuyển</span>
-					<strong>Đạt</strong>
-					<p>Chỉ hiển thị khi ngành có điểm trúng tuyển đã công bố.</p>
-				</div>
-			</div>
-
-			<div class="result-meta-grid">
-				<div>
-					<span>Ngành</span>
-					<strong>Công nghệ thông tin</strong>
-				</div>
-				<div>
-					<span>Tổ hợp gốc</span>
-					<strong>A00</strong>
-				</div>
-				<div>
-					<span>Ưu tiên</span>
-					<strong>1.25</strong>
-				</div>
-				<div>
-					<span>Điểm cộng</span>
-					<strong>1.50</strong>
-				</div>
-			</div>
-		</aside>
-	</section>
-
-	<section class="panel info-panel">
-		<div class="panel-heading compact-heading">
-			<div>
-				<p class="panel-kicker">Bước 3</p>
-				<h2>Bảng xem trước cho từng nguyện vọng</h2>
-			</div>
-			<span class="panel-badge">4 ví dụ</span>
 		</div>
 
-		<div class="preview-table">
-			<div class="preview-row preview-head">
-				<span>Ngành</span>
-				<span>Tổ hợp gốc</span>
-				<span>Ngưỡng</span>
-				<span>Điểm trúng tuyển</span>
-				<span>Trạng thái</span>
-			</div>
-			<div class="preview-row">
-				<span>Kỹ thuật phần mềm</span>
-				<span>A00</span>
-				<span>22.50</span>
-				<span>25.10</span>
-				<span class="status-pill success">Đạt</span>
-			</div>
-			<div class="preview-row">
-				<span>Quản trị kinh doanh</span>
-				<span>A01</span>
-				<span>21.00</span>
-				<span>23.40</span>
-				<span class="status-pill success">Đạt</span>
-			</div>
-			<div class="preview-row">
-				<span>Luật</span>
-				<span>C00</span>
-				<span>20.00</span>
-				<span>22.60</span>
-				<span class="status-pill warning">Gần đạt</span>
-			</div>
-			<div class="preview-row">
-				<span>Kế toán</span>
-				<span>B00</span>
-				<span>19.50</span>
-				<span>21.80</span>
-				<span class="status-pill neutral">Chưa có dữ liệu</span>
+		<!-- Results Panel (initially hidden) -->
+		<div class="results-card" id="resultsCard">
+			<h2 class="results-title" id="resultsTitle">Tính quỹ đối điểm xét tuyển DGNL</h2>
+			
+			<div class="results-grid">
+				<div class="results-column">
+					<h3>NHI DÙNG</h3>
+					<div class="result-row">
+						<span class="result-label">Điểm thi DGNL</span>
+						<span class="result-value" id="resultTestScore">0.00</span>
+					</div>
+					<div class="result-row">
+						<span class="result-label">Công thức: quỹ đối viết khác (chi tiết ghi ghi...)</span>
+						<span class="result-value">-</span>
+					</div>
+					<div class="result-row">
+						<span class="result-label">Điểm thi quy đối</span>
+						<span class="result-value" id="resultConvertedScore">0.00</span>
+					</div>
+					<div class="result-row">
+						<span class="result-label">Điểm cộng</span>
+						<span class="result-value" id="resultBonus">0.00</span>
+					</div>
+					<div class="result-row">
+						<span class="result-label">Điểm các tiên quy đối</span>
+						<span class="result-value" id="resultPreference">0.00</span>
+					</div>
+					<div class="result-row">
+						<span class="result-label">Điểm xét tuyển = điểm thi quy đối + điểm cộng + điểm các tiên quy đối</span>
+						<span class="result-value" id="resultFinal">0.00</span>
+					</div>
+				</div>
+				
+				<div class="results-column">
+					<h3>CHỈ TIÊU ĐIỂM</h3>
+					<div class="result-row">
+						<span class="result-label">Điểm quy đổi</span>
+						<span class="result-value" id="resultScore">0.00</span>
+					</div>
+					<div class="result-row">
+						<span class="result-label">Công thức tính</span>
+						<span class="result-value" id="resultFormula">-</span>
+					</div>
+				</div>
 			</div>
 		</div>
-	</section>
-</main>
+	</div>
+
+	<script th:src="@{/js/DGNLcalculator.js(v=2)}"></script>
 </body>
 </html>

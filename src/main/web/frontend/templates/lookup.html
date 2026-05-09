@@ -5,7 +5,7 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 	<title>Tra cứu kết quả xét tuyển</title>
 	<link rel="stylesheet" th:href="@{/css/student-portal.css}"/>
-	<script defer th:src="@{/js/layout.js}"></script>
+	<script defer th:src="@{/js/layout.js(v=2)}"></script>
 </head>
 <body class="portal-body">
 <header class="portal-topbar">
@@ -14,9 +14,9 @@
 			<a th:href="@{/}" style="color: inherit; text-decoration: none;">Hệ thống tra cứu xét tuyển</a>
 		</div>
 		<nav class="portal-tabs" aria-label="Chuyển trang tra cứu">
-			<a class="portal-tab-btn active" href="/lookup">Tra cứu kết quả</a>
-			<a class="portal-tab-btn" href="/#dgnl">Tính điểm ĐGNL</a>
-			<a class="portal-tab-btn" href="/#vsat">Tính điểm VSAT/THPT</a>
+			<a class="portal-tab-btn active" href="/">Tra cứu kết quả</a>
+			<a class="portal-tab-btn" href="/calculator/dgnl">Tính điểm ĐGNL</a>
+			<a class="portal-tab-btn" href="/calculator/vsat-thpt">Tính điểm VSAT/THPT</a>
 		</nav>
 	</div>
 </header>
