@@ -22,7 +22,8 @@ public class MajorLookupRepository {
 
 			List<MajorOptionDTO> results = new ArrayList<>();
 			for (NganhEntity row : rows) {
-				results.add(new MajorOptionDTO(row.getManganh(), row.getTennganh()));
+				Double threshold = row.getN_diemsan() != null ? row.getN_diemsan().doubleValue() : null;
+				results.add(new MajorOptionDTO(row.getManganh(), row.getTennganh(), threshold));
 			}
 			return results;
 		} catch (Exception ex) {

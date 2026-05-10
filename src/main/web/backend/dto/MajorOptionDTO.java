@@ -5,6 +5,7 @@ public class MajorOptionDTO {
 	private String code;
 	private String name;
 	private String label;
+	private Double threshold;
 
 	public MajorOptionDTO() {
 	}
@@ -13,6 +14,13 @@ public class MajorOptionDTO {
 		this.code = code;
 		this.name = name;
 		this.label = buildLabel(code, name);
+	}
+
+	public MajorOptionDTO(String code, String name, Double threshold) {
+		this.code = code;
+		this.name = name;
+		this.label = buildLabel(code, name);
+		this.threshold = threshold;
 	}
 
 	public String getCode() {
@@ -39,6 +47,14 @@ public class MajorOptionDTO {
 
 	public void setLabel(String label) {
 		this.label = label;
+	}
+
+	public Double getThreshold() {
+		return threshold;
+	}
+
+	public void setThreshold(Double threshold) {
+		this.threshold = threshold;
 	}
 
 	private String buildLabel(String code, String name) {
