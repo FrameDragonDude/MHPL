@@ -3,7 +3,9 @@ package backend.hibernate;
 import dal.hibernate.HibernateUtil;
 import dto.MajorCombinationDTO;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import org.hibernate.Session;
 import org.springframework.stereotype.Repository;
 
@@ -16,49 +18,46 @@ public class MajorCombinationRepository {
 			return List.of();
 		}
 
-		String sql = """
-			select nt.id,
-			       coalesce(nullif(nt.manganh, ''), substring_index(nt.tb_keys, '_', 1)),
-			       coalesce(n.tennganh, ''),
-			       case
-				   when locate('(', nt.matohop) > 0 then trim(substring(nt.matohop, 1, locate('(', nt.matohop) - 1))
-				   else nt.matohop
-			       end,
-			       coalesce(tm.mon1, ''),
-			       coalesce(tm.mon2, ''),
-			       coalesce(tm.mon3, ''),
-			       coalesce(n.n_tohopgoc, ''),
-			       nt.dolech
-			from xt_nganh_tohop nt
-			left join xt_nganh n on n.manganh = coalesce(nullif(nt.manganh, ''), substring_index(nt.tb_keys, '_', 1))
-			left join xt_tohop_monthi tm on tm.matohop = (
-				case
-					when locate('(', nt.matohop) > 0 then trim(substring(nt.matohop, 1, locate('(', nt.matohop) - 1))
-					else nt.matohop
-				end
-			)
-			where coalesce(nullif(nt.manganh, ''), substring_index(nt.tb_keys, '_', 1)) = :majorCode
-			order by nt.id asc
-			""";
-
 		try (Session session = HibernateUtil.getSessionFactory().openSession()) {
+			String sql = """
+				select nt.id,
+				       coalesce(nullif(nt.manganh, ''), substring_index(nt.tb_keys, '_', 1)),
+				       nt.matohop,
+				       nt.dolech
+				from xt_nganh_tohop nt
+				where coalesce(nullif(nt.manganh, ''), substring_index(nt.tb_keys, '_', 1)) = :majorCode
+				order by nt.id asc
+				""";
+
 			@SuppressWarnings("unchecked")
 			List<Object[]> rows = session.createNativeQuery(sql)
 					.setParameter("majorCode", safeMajorCode)
 					.list();
 
+			if (rows.isEmpty()) {
+				return List.of();
+			}
+
+			Map<String, String[]> majorMap = loadMajorMap(session);
+			Map<String, String[]> subjectMap = loadSubjectMap(session);
+
 			List<MajorCombinationDTO> results = new ArrayList<>();
 			for (Object[] row : rows) {
+				String majorCodeValue = toStr(row[1]);
+				String normalizedToHop = normalizeToHopCode(toStr(row[2]));
+				String[] majorInfo = majorMap.getOrDefault(majorCodeValue, new String[]{"", ""});
+				String[] subjects = subjectMap.getOrDefault(normalizedToHop, new String[]{"", "", ""});
+
 				MajorCombinationDTO dto = new MajorCombinationDTO();
 				dto.setId(toInt(row[0]));
-				dto.setManganh(toStr(row[1]));
-				dto.setTenNganhChuan(toStr(row[2]));
-				dto.setMaToHop(toStr(row[3]));
-				dto.setMon1(toStr(row[4]));
-				dto.setMon2(toStr(row[5]));
-				dto.setMon3(toStr(row[6]));
-				dto.setGoc(toStr(row[7]));
-				dto.setDoLech(toDouble(row[8]));
+				dto.setManganh(majorCodeValue);
+				dto.setTenNganhChuan(majorInfo[0]);
+				dto.setMaToHop(normalizedToHop);
+				dto.setMon1(subjects[0]);
+				dto.setMon2(subjects[1]);
+				dto.setMon3(subjects[2]);
+				dto.setGoc(majorInfo[1]);
+				dto.setDoLech(toDouble(row[3]));
 				dto.setTenToHop(buildTenToHop(dto));
 				results.add(dto);
 			}
@@ -66,6 +65,37 @@ public class MajorCombinationRepository {
 		} catch (Exception ex) {
 			throw new RuntimeException("Khong the tai danh sach to hop theo nganh", ex);
 		}
+	}
+
+	private Map<String, String[]> loadMajorMap(Session session) {
+		String sql = "select manganh, coalesce(tennganh, ''), coalesce(n_tohopgoc, '') from xt_nganh";
+		@SuppressWarnings("unchecked")
+		List<Object[]> rows = session.createNativeQuery(sql).list();
+		Map<String, String[]> result = new HashMap<>();
+		for (Object[] row : rows) {
+			result.put(toStr(row[0]), new String[]{toStr(row[1]), toStr(row[2])});
+		}
+		return result;
+	}
+
+	private Map<String, String[]> loadSubjectMap(Session session) {
+		String sql = "select matohop, coalesce(mon1, ''), coalesce(mon2, ''), coalesce(mon3, '') from xt_tohop_monthi";
+		@SuppressWarnings("unchecked")
+		List<Object[]> rows = session.createNativeQuery(sql).list();
+		Map<String, String[]> result = new HashMap<>();
+		for (Object[] row : rows) {
+			result.put(normalizeToHopCode(toStr(row[0])), new String[]{toStr(row[1]), toStr(row[2]), toStr(row[3])});
+		}
+		return result;
+	}
+
+	private String normalizeToHopCode(String rawCode) {
+		String value = rawCode == null ? "" : rawCode.trim();
+		int bracketIndex = value.indexOf('(');
+		if (bracketIndex > 0) {
+			return value.substring(0, bracketIndex).trim();
+		}
+		return value;
 	}
 
 	private Integer toInt(Object value) {

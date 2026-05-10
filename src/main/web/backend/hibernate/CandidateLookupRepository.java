@@ -67,26 +67,48 @@ public class CandidateLookupRepository {
 			return List.of();
 		}
 
+		String normalizedCccd = cccd.trim();
+		String cccdDigits = normalizedCccd.replaceAll("\\D", "");
+
 		try (Session session = HibernateUtil.getSessionFactory().openSession()) {
-			// Use Hibernate query with entity relationship instead of native SQL JOIN
-			// This avoids collation mismatch issues
-			String hql = """
-				select nv.nvManganh,
-				       ng.tennganh,
-				       nv.diemXettuyen,
-				       nv.ttThm,
-				       nv.ttPhuongthuc,
-				       nv.nvKetqua,
-				       nv.nvTt
-				from NguyenVongXetTuyenEntity nv
-				left join fetch nv.nganh ng
-				where nv.nnCccd = :cccd
-				order by nv.nvTt asc, nv.diemXettuyen desc
+			String sql = """
+				select nv.nv_manganh,
+				       '' as tennganh,
+				       nv.diem_xettuyen,
+				       nv.tt_thm,
+				       nv.tt_phuongthuc,
+				       nv.nv_ketqua,
+				       nv.nv_tt
+				from xt_nguyenvongxettuyen nv
+				where nv.nn_cccd collate utf8mb3_general_ci = cast(:cccd as char) collate utf8mb3_general_ci
+				order by nv.nv_tt asc, nv.diem_xettuyen desc
 				""";
 
-			List<Object[]> rows = session.createQuery(hql, Object[].class)
-					.setParameter("cccd", cccd.trim())
+			@SuppressWarnings("unchecked")
+			List<Object[]> rows = session.createNativeQuery(sql)
+					.setParameter("cccd", normalizedCccd)
 					.getResultList();
+
+			if (rows.isEmpty() && !cccdDigits.isEmpty()) {
+				String sqlByDigits = """
+					select nv.nv_manganh,
+					       '' as tennganh,
+					       nv.diem_xettuyen,
+					       nv.tt_thm,
+					       nv.tt_phuongthuc,
+					       nv.nv_ketqua,
+					       nv.nv_tt
+					from xt_nguyenvongxettuyen nv
+					where replace(replace(replace(nv.nn_cccd, '.', ''), '-', ''), ' ', '') collate utf8mb3_general_ci = cast(:cccdDigits as char) collate utf8mb3_general_ci
+					order by nv.nv_tt asc, nv.diem_xettuyen desc
+					""";
+
+				@SuppressWarnings("unchecked")
+				List<Object[]> byDigits = session.createNativeQuery(sqlByDigits)
+						.setParameter("cccdDigits", cccdDigits)
+						.getResultList();
+				rows = byDigits;
+			}
 
 			List<AdmissionRow> results = new ArrayList<>();
 			for (Object[] row : rows) {
@@ -94,7 +116,8 @@ public class CandidateLookupRepository {
 			}
 			return results;
 		} catch (Exception ex) {
-			throw new RuntimeException("Khong the truy van nguyen vong xet tuyen", ex);
+			String detail = ex.getMessage() == null ? ex.getClass().getSimpleName() : ex.getMessage();
+			throw new RuntimeException("Khong the truy van nguyen vong xet tuyen: " + detail, ex);
 		}
 	}
 

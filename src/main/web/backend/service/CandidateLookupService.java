@@ -1,6 +1,7 @@
 package backend.service;
 
 import dal.entities.CandidateEntity;
+import java.text.Normalizer;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -62,10 +63,11 @@ public class CandidateLookupService {
 
 		List<CandidateLookupRepository.AdmissionRow> admissions;
 		try {
-			admissions = candidateLookupRepository.findAdmissionsByCccd(username);
+			admissions = candidateLookupRepository.findAdmissionsByCccd(candidate.getCccd());
 		} catch (RuntimeException ex) {
 			candidateWebMapper.markNotAdmitted(viewModel);
-			viewModel.setMessage("Tìm thấy thông tin thí sinh, nhưng chưa đọc được dữ liệu nguyện vọng.");
+			String detail = ex.getMessage() == null ? ex.getClass().getSimpleName() : ex.getMessage();
+			viewModel.setMessage("Tìm thấy thông tin thí sinh, nhưng chưa đọc được dữ liệu nguyện vọng. [" + detail + "]");
 			return viewModel;
 		}
 
@@ -162,8 +164,8 @@ public class CandidateLookupService {
 		if (resultLabel == null) {
 			return false;
 		}
-		String normalized = resultLabel.toLowerCase(Locale.ROOT)
-				.replace('đ', 'd')
+		String lower = resultLabel.toLowerCase(Locale.ROOT).trim().replace('đ', 'd');
+		String normalized = Normalizer.normalize(lower, Normalizer.Form.NFD)
 				.replaceAll("\\p{M}+", "")
 				.replaceAll("[^a-z0-9]", "");
 		return normalized.contains("trungtuyen")
