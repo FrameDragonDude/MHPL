@@ -73,14 +73,19 @@ public class CandidateLookupRepository {
 		try (Session session = HibernateUtil.getSessionFactory().openSession()) {
 			String sql = """
 				select nv.nv_manganh,
-				       '' as tennganh,
+				       coalesce(ng.tennganh, '') as tennganh,
 				       nv.diem_xettuyen,
 				       nv.tt_thm,
 				       nv.tt_phuongthuc,
 				       nv.nv_ketqua,
-				       nv.nv_tt
+				       nv.nv_tt,
+				       coalesce(nv.diem_thxt, 0) as diem_thxt,
+				       coalesce(nv.diem_utqd, 0) as diem_utqd,
+				       coalesce(nv.diem_cong, 0) as diem_cong,
+				       coalesce(ng.n_diemsan, 0) as diem_san
 				from xt_nguyenvongxettuyen nv
-				where nv.nn_cccd collate utf8mb3_general_ci = cast(:cccd as char) collate utf8mb3_general_ci
+				left join xt_nganh ng on ng.manganh = nv.nv_manganh
+				where nv.nn_cccd = :cccd
 				order by nv.nv_tt asc, nv.diem_xettuyen desc
 				""";
 
@@ -92,14 +97,19 @@ public class CandidateLookupRepository {
 			if (rows.isEmpty() && !cccdDigits.isEmpty()) {
 				String sqlByDigits = """
 					select nv.nv_manganh,
-					       '' as tennganh,
+					       coalesce(ng.tennganh, '') as tennganh,
 					       nv.diem_xettuyen,
 					       nv.tt_thm,
 					       nv.tt_phuongthuc,
 					       nv.nv_ketqua,
-					       nv.nv_tt
+					       nv.nv_tt,
+					       coalesce(nv.diem_thxt, 0) as diem_thxt,
+					       coalesce(nv.diem_utqd, 0) as diem_utqd,
+					       coalesce(nv.diem_cong, 0) as diem_cong,
+					       coalesce(ng.n_diemsan, 0) as diem_san
 					from xt_nguyenvongxettuyen nv
-					where replace(replace(replace(nv.nn_cccd, '.', ''), '-', ''), ' ', '') collate utf8mb3_general_ci = cast(:cccdDigits as char) collate utf8mb3_general_ci
+					left join xt_nganh ng on ng.manganh = nv.nv_manganh
+					where replace(replace(replace(nv.nn_cccd, '.', ''), '-', ''), ' ', '') = :cccdDigits
 					order by nv.nv_tt asc, nv.diem_xettuyen desc
 					""";
 
@@ -129,7 +139,12 @@ public class CandidateLookupRepository {
 		String method = asString(row, 4);
 		String resultLabel = asString(row, 5);
 		Integer priority = asInteger(row, 6);
-		return new AdmissionRow(majorCode, majorName, score, combination, method, resultLabel, priority);
+		String diemThxt = formatNumber(row, 7);
+		String diemUtqd = formatNumber(row, 8);
+		String diemCong = formatNumber(row, 9);
+		String diemSan = formatNumber(row, 10);
+		return new AdmissionRow(majorCode, majorName, score, combination, method, resultLabel, priority, 
+				diemThxt, diemUtqd, diemCong, diemSan);
 	}
 
 	private boolean isPositiveResult(String resultLabel) {
@@ -201,8 +216,13 @@ public class CandidateLookupRepository {
 		private final String method;
 		private final String resultLabel;
 		private final Integer priority;
+		private final String diemThxt;
+		private final String diemUtqd;
+		private final String diemCong;
+		private final String diemSan;
 
-		public AdmissionRow(String majorCode, String majorName, String score, String combination, String method, String resultLabel, Integer priority) {
+		public AdmissionRow(String majorCode, String majorName, String score, String combination, String method, 
+				String resultLabel, Integer priority, String diemThxt, String diemUtqd, String diemCong, String diemSan) {
 			this.majorCode = majorCode;
 			this.majorName = majorName;
 			this.score = score;
@@ -210,6 +230,10 @@ public class CandidateLookupRepository {
 			this.method = method;
 			this.resultLabel = resultLabel;
 			this.priority = priority;
+			this.diemThxt = diemThxt;
+			this.diemUtqd = diemUtqd;
+			this.diemCong = diemCong;
+			this.diemSan = diemSan;
 		}
 
 		public String getMajorCode() {
@@ -238,6 +262,22 @@ public class CandidateLookupRepository {
 
 		public Integer getPriority() {
 			return priority;
+		}
+
+		public String getDiemThxt() {
+			return diemThxt;
+		}
+
+		public String getDiemUtqd() {
+			return diemUtqd;
+		}
+
+		public String getDiemCong() {
+			return diemCong;
+		}
+
+		public String getDiemSan() {
+			return diemSan;
 		}
 	}
 }

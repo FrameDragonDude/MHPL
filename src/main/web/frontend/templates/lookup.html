@@ -67,24 +67,40 @@
 						<dt>Ngày sinh</dt>
 						<dd th:text="${result.ngaySinh}">--</dd>
 					</div>
-					<div th:if="${result.admitted}">
+					<div th:if="${result.admitted}" style="border-top: 1px solid #e5e7eb; padding-top: 12px; margin-top: 12px;">
 						<dt>Ngành trúng tuyển</dt>
 						<dd>
-							<span th:text="${result.majorCode}">--</span>
+							<strong th:text="${result.majorCode}">--</strong>
 							<span th:if="${result.majorName != null and !result.majorName.isEmpty()}" th:text="' - ' + ${result.majorName}"></span>
 						</dd>
 					</div>
 					<div th:if="${result.admitted}">
-						<dt>Điểm</dt>
-						<dd th:text="${result.score}">--</dd>
-					</div>
-					<div th:if="${result.admitted}">
-						<dt>Tổ hợp</dt>
-						<dd th:text="${result.combination}">--</dd>
-					</div>
-					<div th:if="${result.admitted}">
 						<dt>Phương thức</dt>
 						<dd th:text="${result.method}">--</dd>
+					</div>
+					<div th:if="${result.admitted}">
+						<dt>Tổ hợp môn</dt>
+						<dd th:text="${result.combination}">--</dd>
+					</div>
+					<div th:if="${result.admitted}" style="border-top: 1px solid #e5e7eb; padding-top: 12px; margin-top: 12px;">
+						<dt>Điểm thi</dt>
+						<dd th:text="${result.diemThxt}">--</dd>
+					</div>
+					<div th:if="${result.admitted}">
+						<dt>Điểm ưu tiên</dt>
+						<dd th:text="${result.diemUtqd}">--</dd>
+					</div>
+					<div th:if="${result.admitted}">
+						<dt>Điểm cộng</dt>
+						<dd th:text="${result.diemCong}">--</dd>
+					</div>
+					<div th:if="${result.admitted}">
+						<dt>Điểm xét tuyển</dt>
+						<dd><strong th:text="${result.diemXettuyen}">--</strong></dd>
+					</div>
+					<div th:if="${result.admitted}">
+						<dt>Điểm sàn</dt>
+						<dd th:text="${result.diemSan}">--</dd>
 					</div>
 				</dl>
 			</div>

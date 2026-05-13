@@ -35,6 +35,11 @@ public class CandidateWebMapper {
 		viewModel.setCombination(admissionRow.getCombination());
 		viewModel.setMethod(admissionRow.getMethod());
 		viewModel.setResultLabel(admissionRow.getResultLabel());
+		viewModel.setDiemThxt(admissionRow.getDiemThxt());
+		viewModel.setDiemUtqd(admissionRow.getDiemUtqd());
+		viewModel.setDiemCong(admissionRow.getDiemCong());
+		viewModel.setDiemXettuyen(admissionRow.getScore());
+		viewModel.setDiemSan(admissionRow.getDiemSan());
 	}
 
 	public void markNotAdmitted(CandidateLookupViewModel viewModel) {

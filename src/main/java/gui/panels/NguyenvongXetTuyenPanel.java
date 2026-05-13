@@ -64,6 +64,7 @@ public class NguyenvongXetTuyenPanel extends JPanel {
 	private final JTextField txtSearchMaNganh;
 	private final JLabel lblPaging;
 	private final JLabel lblRows;
+	private final JButton btnGenerate;
 	private final int actionColumnIndex;
 	private int currentPage = 1;
 	private int totalPages = 1;
@@ -83,6 +84,7 @@ public class NguyenvongXetTuyenPanel extends JPanel {
 		this.txtSearchMaNganh = new JTextField(16);
 		this.lblPaging = new JLabel("Trang 1/1 (20 dòng/trang)");
 		this.lblRows = new JLabel("Tổng dòng: 0");
+		this.btnGenerate = new JButton("Sinh dữ liệu từ DB");
 		this.actionColumnIndex = tableModel.getColumnCount() - 1;
 
 		attachLiveSearch();
@@ -120,9 +122,13 @@ public class NguyenvongXetTuyenPanel extends JPanel {
 		JButton btnAdd = new JButton("+ Thêm nguyện vọng");
 		styleButton(btnAdd, COLOR_BLUE);
 		btnAdd.setMargin(new Insets(6, 16, 6, 16));
+		styleButton(btnGenerate, COLOR_GREEN);
+		btnGenerate.setMargin(new Insets(6, 16, 6, 16));
 		actions.add(btnAdd);
+		actions.add(btnGenerate);
 
 		btnAdd.addActionListener(e -> addRow());
+		btnGenerate.addActionListener(e -> generateFromDatabase());
 
 		wrapper.add(left, BorderLayout.WEST);
 		wrapper.add(actions, BorderLayout.EAST);
@@ -375,6 +381,26 @@ public class NguyenvongXetTuyenPanel extends JPanel {
 			}
 		} catch (SQLException ex) {
 			showError("Không thể xóa nguyện vọng xét tuyển", ex);
+		}
+	}
+
+	private void generateFromDatabase() {
+		int confirm = JOptionPane.showConfirmDialog(
+				this,
+				"Sinh lại dữ liệu nguyện vọng xét tuyển từ toàn bộ dữ liệu trong DB?",
+				"Xác nhận sinh dữ liệu",
+				JOptionPane.YES_NO_OPTION
+		);
+		if (confirm != JOptionPane.YES_OPTION) {
+			return;
+		}
+
+		try {
+			NguyenVongXetTuyenService.GenerationResult result = service.generateFromDatabase(true);
+			JOptionPane.showMessageDialog(this, result.getMessage(), "Thành công", JOptionPane.INFORMATION_MESSAGE);
+			loadPage(1);
+		} catch (SQLException ex) {
+			showError("Không thể sinh dữ liệu nguyện vọng xét tuyển", ex);
 		}
 	}
 

@@ -16,6 +16,12 @@ public class CandidateLookupViewModel {
 	private String combination;
 	private String method;
 	private String resultLabel;
+	// Điểm chi tiết
+	private String diemThxt;
+	private String diemUtqd;
+	private String diemCong;
+	private String diemXettuyen;
+	private String diemSan;
 
 	public String getUsername() {
 		return username;
@@ -135,5 +141,45 @@ public class CandidateLookupViewModel {
 
 	public void setResultLabel(String resultLabel) {
 		this.resultLabel = resultLabel;
+	}
+
+	public String getDiemThxt() {
+		return diemThxt;
+	}
+
+	public void setDiemThxt(String diemThxt) {
+		this.diemThxt = diemThxt;
+	}
+
+	public String getDiemUtqd() {
+		return diemUtqd;
+	}
+
+	public void setDiemUtqd(String diemUtqd) {
+		this.diemUtqd = diemUtqd;
+	}
+
+	public String getDiemCong() {
+		return diemCong;
+	}
+
+	public void setDiemCong(String diemCong) {
+		this.diemCong = diemCong;
+	}
+
+	public String getDiemXettuyen() {
+		return diemXettuyen;
+	}
+
+	public void setDiemXettuyen(String diemXettuyen) {
+		this.diemXettuyen = diemXettuyen;
+	}
+
+	public String getDiemSan() {
+		return diemSan;
+	}
+
+	public void setDiemSan(String diemSan) {
+		this.diemSan = diemSan;
 	}
 }
