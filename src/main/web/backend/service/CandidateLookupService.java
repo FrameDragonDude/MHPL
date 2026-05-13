@@ -61,7 +61,7 @@ public class CandidateLookupService {
 		viewModel = candidateWebMapper.toViewModel(candidate);
 		viewModel.setMessage("Tìm thấy.");
 
-		List<CandidateLookupRepository.AdmissionRow> admissions;
+		java.util.List<CandidateLookupRepository.AdmissionRow> admissions;
 		try {
 			admissions = candidateLookupRepository.findAdmissionsByCccd(candidate.getCccd());
 		} catch (RuntimeException ex) {
@@ -71,15 +71,13 @@ public class CandidateLookupService {
 			return viewModel;
 		}
 
-		Optional<CandidateLookupRepository.AdmissionRow> winning = admissions.stream()
-				.filter(row -> isPositiveResult(row.getResultLabel()))
-				.findFirst();
-
-		if (winning.isPresent()) {
-			candidateWebMapper.applyAdmission(viewModel, winning.get());
+		// Always expose full list of aspirations (nguyện vọng) to the UI, even if none is admitted
+		candidateWebMapper.applyAdmissionsList(viewModel, admissions);
+		if (admissions == null || admissions.isEmpty()) {
+			viewModel.setMessage("Tìm thấy nhưng chưa có nguyện vọng.");
+		} else if (viewModel.isAdmitted()) {
 			viewModel.setMessage("Tìm thấy.");
 		} else {
-			candidateWebMapper.markNotAdmitted(viewModel);
 			viewModel.setMessage("Tìm thấy nhưng không trúng tuyển.");
 		}
 

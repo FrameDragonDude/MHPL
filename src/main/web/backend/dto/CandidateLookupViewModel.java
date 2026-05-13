@@ -9,6 +9,7 @@ public class CandidateLookupViewModel {
 	private boolean found;
 	private boolean authenticated;
 	private boolean admitted;
+	private java.util.List<AdmissionDto> admissions;
 	private String message;
 	private String majorCode;
 	private String majorName;
@@ -86,6 +87,9 @@ public class CandidateLookupViewModel {
 	public void setAdmitted(boolean admitted) {
 		this.admitted = admitted;
 	}
+
+	public java.util.List<AdmissionDto> getAdmissions() { return admissions; }
+	public void setAdmissions(java.util.List<AdmissionDto> admissions) { this.admissions = admissions; }
 
 	public String getMessage() {
 		return message;

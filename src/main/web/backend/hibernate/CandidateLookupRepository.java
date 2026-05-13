@@ -71,23 +71,24 @@ public class CandidateLookupRepository {
 		String cccdDigits = normalizedCccd.replaceAll("\\D", "");
 
 		try (Session session = HibernateUtil.getSessionFactory().openSession()) {
+			// load major names separately to avoid cross-table collation issues in JOIN
+			java.util.Map<String,String> majorNames = loadMajorNames(session);
+
 			String sql = """
-				select nv.nv_manganh,
-				       coalesce(ng.tennganh, '') as tennganh,
-				       nv.diem_xettuyen,
-				       nv.tt_thm,
-				       nv.tt_phuongthuc,
-				       nv.nv_ketqua,
-				       nv.nv_tt,
-				       coalesce(nv.diem_thxt, 0) as diem_thxt,
-				       coalesce(nv.diem_utqd, 0) as diem_utqd,
-				       coalesce(nv.diem_cong, 0) as diem_cong,
-				       coalesce(ng.n_diemsan, 0) as diem_san
-				from xt_nguyenvongxettuyen nv
-				left join xt_nganh ng on ng.manganh = nv.nv_manganh
-				where nv.nn_cccd = :cccd
-				order by nv.nv_tt asc, nv.diem_xettuyen desc
-				""";
+			select nv.nv_manganh,
+			       nv.diem_xettuyen,
+			       nv.tt_thm,
+			       nv.tt_phuongthuc,
+			       nv.nv_ketqua,
+			       nv.nv_tt,
+			       coalesce(nv.diem_thxt, 0) as diem_thxt,
+			       coalesce(nv.diem_utqd, 0) as diem_utqd,
+			       coalesce(nv.diem_cong, 0) as diem_cong,
+			       coalesce(nv.diem_xettuyen, 0) as diem_xettuyen
+			from xt_nguyenvongxettuyen nv
+			where nv.nn_cccd = :cccd
+			order by nv.nv_tt asc, nv.diem_xettuyen desc
+			""";
 
 			@SuppressWarnings("unchecked")
 			List<Object[]> rows = session.createNativeQuery(sql)
@@ -96,22 +97,20 @@ public class CandidateLookupRepository {
 
 			if (rows.isEmpty() && !cccdDigits.isEmpty()) {
 				String sqlByDigits = """
-					select nv.nv_manganh,
-					       coalesce(ng.tennganh, '') as tennganh,
-					       nv.diem_xettuyen,
-					       nv.tt_thm,
-					       nv.tt_phuongthuc,
-					       nv.nv_ketqua,
-					       nv.nv_tt,
-					       coalesce(nv.diem_thxt, 0) as diem_thxt,
-					       coalesce(nv.diem_utqd, 0) as diem_utqd,
-					       coalesce(nv.diem_cong, 0) as diem_cong,
-					       coalesce(ng.n_diemsan, 0) as diem_san
-					from xt_nguyenvongxettuyen nv
-					left join xt_nganh ng on ng.manganh = nv.nv_manganh
-					where replace(replace(replace(nv.nn_cccd, '.', ''), '-', ''), ' ', '') = :cccdDigits
-					order by nv.nv_tt asc, nv.diem_xettuyen desc
-					""";
+				select nv.nv_manganh,
+				       nv.diem_xettuyen,
+				       nv.tt_thm,
+				       nv.tt_phuongthuc,
+				       nv.nv_ketqua,
+				       nv.nv_tt,
+				       coalesce(nv.diem_thxt, 0) as diem_thxt,
+				       coalesce(nv.diem_utqd, 0) as diem_utqd,
+				       coalesce(nv.diem_cong, 0) as diem_cong,
+				       coalesce(nv.diem_xettuyen, 0) as diem_xettuyen
+				from xt_nguyenvongxettuyen nv
+				where replace(replace(replace(nv.nn_cccd, '.', ''), '-', ''), ' ', '') = :cccdDigits
+				order by nv.nv_tt asc, nv.diem_xettuyen desc
+				""";
 
 				@SuppressWarnings("unchecked")
 				List<Object[]> byDigits = session.createNativeQuery(sqlByDigits)
@@ -122,7 +121,7 @@ public class CandidateLookupRepository {
 
 			List<AdmissionRow> results = new ArrayList<>();
 			for (Object[] row : rows) {
-				results.add(mapAdmissionRow(row));
+				results.add(mapAdmissionRow(row, majorNames));
 			}
 			return results;
 		} catch (Exception ex) {
@@ -131,20 +130,32 @@ public class CandidateLookupRepository {
 		}
 	}
 
-	private AdmissionRow mapAdmissionRow(Object[] row) {
+	private AdmissionRow mapAdmissionRow(Object[] row, java.util.Map<String,String> majorNames) {
 		String majorCode = asString(row, 0);
-		String majorName = asString(row, 1);
-		String score = formatNumber(row, 2);
-		String combination = asString(row, 3);
-		String method = asString(row, 4);
-		String resultLabel = asString(row, 5);
-		Integer priority = asInteger(row, 6);
-		String diemThxt = formatNumber(row, 7);
-		String diemUtqd = formatNumber(row, 8);
-		String diemCong = formatNumber(row, 9);
-		String diemSan = formatNumber(row, 10);
-		return new AdmissionRow(majorCode, majorName, score, combination, method, resultLabel, priority, 
-				diemThxt, diemUtqd, diemCong, diemSan);
+		String majorName = majorNames.getOrDefault(majorCode, "");
+		String score = formatNumber(row, 1);
+		String combination = asString(row, 2);
+		String method = asString(row, 3);
+		String resultLabel = asString(row, 4);
+		Integer priority = asInteger(row, 5);
+		String diemThxt = formatNumber(row, 6);
+		String diemUtqd = formatNumber(row, 7);
+		String diemCong = formatNumber(row, 8);
+		String diemSan = formatNumber(row, 9);
+		return new AdmissionRow(majorCode, majorName, score, combination, method, resultLabel, priority,
+					diemThxt, diemUtqd, diemCong, diemSan);
+	}
+
+	private java.util.Map<String,String> loadMajorNames(Session session) {
+		@SuppressWarnings("unchecked")
+		java.util.List<Object[]> rows = session.createNativeQuery("select manganh, coalesce(tennganh,'') from xt_nganh").getResultList();
+		java.util.Map<String,String> map = new java.util.HashMap<>();
+		for (Object[] r : rows) {
+			String key = r == null || r[0] == null ? "" : r[0].toString().trim();
+			String val = r == null || r[1] == null ? "" : r[1].toString().trim();
+			if (!key.isEmpty()) map.put(key, val);
+		}
+		return map;
 	}
 
 	private boolean isPositiveResult(String resultLabel) {

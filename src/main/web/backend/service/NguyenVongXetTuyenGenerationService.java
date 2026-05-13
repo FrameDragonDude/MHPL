@@ -58,10 +58,12 @@ public class NguyenVongXetTuyenGenerationService {
                         continue;
                     }
 
-                    if (!candidateCcds.contains(cccd)) {
+                    String matchedCccd = findMatchingCandidateNormalized(session, cccd, candidateCcds);
+                    if (matchedCccd == null) {
                         skippedCount++;
                         continue;
                     }
+                    cccd = matchedCccd;
 
                     ExamScoreData exam = examScoresByCccd.get(cccd);
                     if (exam == null) {
@@ -169,6 +171,46 @@ public class NguyenVongXetTuyenGenerationService {
             }
         }
         return results;
+    }
+
+    private String findMatchingCandidateNormalized(Session session, String normalizedCccd, Set<String> candidateCcds) {
+        if (normalizedCccd == null || normalizedCccd.isEmpty()) return null;
+
+        // Direct hit
+        if (candidateCcds.contains(normalizedCccd)) return normalizedCccd;
+
+        // Try variants: with/without 'ts' prefix, padded numbers
+        String work = normalizedCccd;
+        String noPrefix = work.startsWith("ts") ? work.substring(2) : work;
+
+        List<String> variants = new ArrayList<>();
+        variants.add(work);
+        variants.add(noPrefix);
+        if (!noPrefix.isEmpty()) {
+            // Try padded numeric forms if possible
+            try {
+                int n = Integer.parseInt(noPrefix);
+                variants.add("ts" + String.format("%04d", n));
+                variants.add(String.format("%04d", n));
+            } catch (NumberFormatException ignored) {
+            }
+        }
+
+        for (String v : variants) {
+            if (v != null && candidateCcds.contains(v)) return v;
+        }
+
+        // Last resort: query DB comparing ccid after removing common separators
+        // Normalize in SQL by removing '_' '-' and spaces and lowercasing
+        String sql = "select c.cccd from xt_thisinhxettuyen25 c where lower(replace(replace(replace(c.cccd,'_',''),'-',''),' ','')) = :norm limit 1";
+        @SuppressWarnings("unchecked")
+        List<String> rows = session.createNativeQuery(sql).setParameter("norm", normalizedCccd).getResultList();
+        if (!rows.isEmpty()) {
+            String found = normalize(rows.get(0));
+            if (!found.isEmpty()) return found;
+        }
+
+        return null;
     }
 
     private Map<String, ExamScoreData> loadExamScores(Session session) {

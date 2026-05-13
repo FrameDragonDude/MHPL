@@ -46,7 +46,36 @@ public class CandidateWebMapper {
 		if (viewModel == null) {
 			return;
 		}
+
 		viewModel.setAdmitted(false);
 		viewModel.setResultLabel("Không trúng tuyển");
+	}
+
+	public void applyAdmissionsList(CandidateLookupViewModel viewModel, java.util.List<CandidateLookupRepository.AdmissionRow> rows) {
+		if (viewModel == null) return;
+		java.util.List<backend.dto.AdmissionDto> list = new java.util.ArrayList<>();
+		boolean anyPositive = false;
+		for (CandidateLookupRepository.AdmissionRow r : rows) {
+			backend.dto.AdmissionDto dto = new backend.dto.AdmissionDto();
+			dto.setMajorCode(r.getMajorCode());
+			dto.setMajorName(r.getMajorName());
+			dto.setScore(r.getScore());
+			dto.setCombination(r.getCombination());
+			dto.setMethod(r.getMethod());
+			dto.setResultLabel(r.getResultLabel());
+			dto.setPriority(r.getPriority());
+			dto.setDiemThxt(r.getDiemThxt());
+			dto.setDiemUtqd(r.getDiemUtqd());
+			dto.setDiemCong(r.getDiemCong());
+			dto.setDiemXettuyen(r.getScore());
+			dto.setDiemSan(r.getDiemSan());
+			list.add(dto);
+			String norm = r.getResultLabel() == null ? "" : r.getResultLabel().toLowerCase(java.util.Locale.ROOT);
+			if (norm.contains("trungtuyen") || norm.contains("dat") || norm.contains("dau") || norm.contains("pass") || norm.contains("accepted")) {
+				anyPositive = true;
+			}
+		}
+		viewModel.setAdmissions(list);
+		viewModel.setAdmitted(anyPositive);
 	}
 }
