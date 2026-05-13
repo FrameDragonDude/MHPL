@@ -260,14 +260,14 @@ public class NguyenVongXetTuyenService {
 		Map<String, List<ComboData>> result = new HashMap<>();
 		@SuppressWarnings("unchecked")
 		List<Object[]> rows = session.createNativeQuery("""
-				select coalesce(nullif(nt.manganh, ''), substring_index(nt.tb_keys, '_', 1)), nt.matohop, coalesce(nt.dolech, 0),
-				       coalesce(nt.th_mon1, ''), coalesce(nt.th_mon2, ''), coalesce(nt.th_mon3, '')
+				select coalesce(nullif(nt.manganh, ''), substring_index(nt.tb_keys, '_', 1)), nt.matohop, coalesce(nt.dolech, 0)
 				from xt_nganh_tohop nt
 				""").list();
 		System.out.println("[DEBUG] loadCombinations: loaded " + rows.size() + " rows from xt_nganh_tohop");
 		for (Object[] row : rows) {
-			System.out.println("[DEBUG] Processing row: manganh=" + toStr(row[0]) + ", matohop=" + toStr(row[1]) + ", mon1=" + toStr(row[3]) + ", mon2=" + toStr(row[4]) + ", mon3=" + toStr(row[5]));
-			addCombo(result, toStr(row[0]), toStr(row[1]), toBigDecimal(row[2]), toStr(row[3]), toStr(row[4]), toStr(row[5]));
+			String comboCode = toStr(row[1]);
+			System.out.println("[DEBUG] Processing row: manganh=" + toStr(row[0]) + ", matohop=" + comboCode);
+			addComboFromCode(result, toStr(row[0]), comboCode, toBigDecimal(row[2]));
 		}
 		System.out.println("[DEBUG] After main query: result size = " + result.size());
 
@@ -284,12 +284,78 @@ public class NguyenVongXetTuyenService {
 		return result;
 	}
 
+	private void addComboFromCode(Map<String, List<ComboData>> result, String majorCode, String comboCode, BigDecimal doLech) {
+		// Map combo codes to subjects based on Vietnamese standard
+		Map<String, String[]> comboMap = new HashMap<>();
+		// Khối A: Toán, Lý, Hóa
+		for (String code : new String[]{"A00", "A01", "A02", "A03", "A04", "A05", "A06", "A07"}) {
+			comboMap.put(code, new String[]{"TO", "LI", "HO"});
+		}
+		// Khối B: Toán, Hóa, Sinh
+		for (String code : new String[]{"B00", "B01", "B02", "B03", "B08"}) {
+			comboMap.put(code, new String[]{"TO", "HO", "SI"});
+		}
+		// Khối C: Toán, Văn, Anh
+		for (String code : new String[]{"C01", "C02", "C03", "C04"}) {
+			comboMap.put(code, new String[]{"TO", "VA", "N1_THI"});
+		}
+		// Khối D: Toán, Văn, Anh (hoặc D01, D07, D09, D10, D11, D12, D13, D14, D15)
+		for (String code : new String[]{"D01", "D07", "D09", "D10", "D11", "D12", "D13", "D14", "D15"}) {
+			comboMap.put(code, new String[]{"TO", "VA", "N1_THI"});
+		}
+		// Khối X: varied combinations
+		comboMap.put("X01", new String[]{"TO", "VA", "SU"});
+		comboMap.put("X02", new String[]{"TO", "VA", "DI"});
+		comboMap.put("X03", new String[]{"TO", "VA", "KHAC"});
+		comboMap.put("X04", new String[]{"LI", "HO", "SI"});
+		comboMap.put("X05", new String[]{"LI", "HO", "SI"});
+		comboMap.put("X06", new String[]{"LI", "HO", "DI"});
+		comboMap.put("X07", new String[]{"LI", "HO", "VA"});
+		comboMap.put("X08", new String[]{"HO", "SI", "VA"});
+		comboMap.put("X09", new String[]{"LI", "SI", "VA"});
+		comboMap.put("X10", new String[]{"LI", "HO", "VA"});
+		comboMap.put("X11", new String[]{"TO", "SU", "DI"});
+		comboMap.put("X12", new String[]{"TO", "SU", "VA"});
+		comboMap.put("X13", new String[]{"TO", "SI", "VA"});
+		comboMap.put("X14", new String[]{"TO", "SI", "VA"});
+		comboMap.put("X15", new String[]{"TO", "SI", "VA"});
+		comboMap.put("X16", new String[]{"TO", "SI", "VA"});
+		comboMap.put("X17", new String[]{"TO", "SU", "DI"});
+		comboMap.put("X18", new String[]{"TO", "SU", "VA"});
+		comboMap.put("X19", new String[]{"TO", "DI", "VA"});
+		comboMap.put("X20", new String[]{"TO", "DI", "SU"});
+		comboMap.put("X21", new String[]{"TO", "DI", "SU"});
+		comboMap.put("X22", new String[]{"TO", "DI", "SU"});
+		comboMap.put("X23", new String[]{"TO", "DI", "SU"});
+		comboMap.put("X24", new String[]{"TO", "DI", "SU"});
+		comboMap.put("X25", new String[]{"N1_THI", "LI", "HO"});
+		comboMap.put("X26", new String[]{"N1_THI", "LI", "HO"});
+		comboMap.put("X27", new String[]{"N1_THI", "LI", "HO"});
+		comboMap.put("X28", new String[]{"N1_THI", "LI", "HO"});
+		comboMap.put("X53", new String[]{"TO", "VA", "SU"});
+		comboMap.put("X54", new String[]{"TO", "VA", "DI"});
+		comboMap.put("X55", new String[]{"TO", "VA", "SU"});
+		comboMap.put("X56", new String[]{"TO", "VA", "DI"});
+		comboMap.put("X57", new String[]{"TO", "VA", "SU"});
+		comboMap.put("X78", new String[]{"N1_THI", "LI", "HO"});
+		comboMap.put("X79", new String[]{"N1_THI", "LI", "HO"});
+		comboMap.put("X80", new String[]{"N1_THI", "LI", "HO"});
+		comboMap.put("X81", new String[]{"N1_THI", "LI", "HO"});
+
+		String[] subjects = comboMap.get(comboCode);
+		if (subjects != null && subjects.length >= 3) {
+			addCombo(result, majorCode, comboCode, doLech, subjects[0], subjects[1], subjects[2]);
+		} else {
+			System.out.println("[DEBUG] Unknown combo code: " + comboCode + ", skipping");
+		}
+	}
+
 	private void addCombo(Map<String, List<ComboData>> result, String majorCode, String comboCode, BigDecimal doLech,
 			String mon1, String mon2, String mon3) {
 		String normalizedMajor = normalize(majorCode);
 		String normalizedCombo = normalizeToHopCode(comboCode);
 		System.out.println("[DEBUG] addCombo: majorCode=" + majorCode + ", normalized=" + normalizedMajor + ", comboCode=" + comboCode + 
-			", rawMon1=" + mon1 + ", rawMon2=" + mon2 + ", rawMon3=" + mon3);
+			", mon1=" + mon1 + ", mon2=" + mon2 + ", mon3=" + mon3);
 		if (normalizedMajor.isEmpty() || normalizedCombo.isEmpty()) {
 			System.out.println("[DEBUG]   -> Skipped: empty normalized values");
 			return;
@@ -298,22 +364,9 @@ public class NguyenVongXetTuyenService {
 		combo.majorCode = normalizedMajor;
 		combo.code = normalizedCombo;
 		combo.doLech = scale(doLech, 2);
-		combo.mon1 = scoreFieldForSubject(mon1);
-		combo.mon2 = scoreFieldForSubject(mon2);
-		combo.mon3 = scoreFieldForSubject(mon3);
-		System.out.println("[DEBUG]   -> After scoreFieldForSubject: mon1=" + combo.mon1 + ", mon2=" + combo.mon2 + ", mon3=" + combo.mon3);
-		if (combo.mon1 == null || combo.mon2 == null || combo.mon3 == null) {
-			String rawSubjects = extractSubjectsText(comboCode);
-			String[] parsed = parseSubjectCodes(rawSubjects);
-			System.out.println("[DEBUG]   -> Parsing from comboCode: rawSubjects=" + rawSubjects + ", parsed=" + java.util.Arrays.toString(parsed));
-			if (combo.mon1 == null && parsed.length > 0) combo.mon1 = parsed[0];
-			if (combo.mon2 == null && parsed.length > 1) combo.mon2 = parsed[1];
-			if (combo.mon3 == null && parsed.length > 2) combo.mon3 = parsed[2];
-		}
-		if (combo.mon1 == null || combo.mon2 == null || combo.mon3 == null) {
-			System.out.println("[DEBUG]   -> Skipped: null subjects: mon1=" + combo.mon1 + ", mon2=" + combo.mon2 + ", mon3=" + combo.mon3);
-			return;
-		}
+		combo.mon1 = mon1;
+		combo.mon2 = mon2;
+		combo.mon3 = mon3;
 		System.out.println("[DEBUG]   -> Added: mon1=" + combo.mon1 + ", mon2=" + combo.mon2 + ", mon3=" + combo.mon3);
 		result.computeIfAbsent(normalizedMajor, key -> new ArrayList<>()).add(combo);
 	}
