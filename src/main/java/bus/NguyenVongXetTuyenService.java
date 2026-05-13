@@ -288,7 +288,8 @@ public class NguyenVongXetTuyenService {
 			String mon1, String mon2, String mon3) {
 		String normalizedMajor = normalize(majorCode);
 		String normalizedCombo = normalizeToHopCode(comboCode);
-		System.out.println("[DEBUG] addCombo: majorCode=" + majorCode + ", normalized=" + normalizedMajor + ", comboCode=" + comboCode + ", normalized=" + normalizedCombo);
+		System.out.println("[DEBUG] addCombo: majorCode=" + majorCode + ", normalized=" + normalizedMajor + ", comboCode=" + comboCode + 
+			", rawMon1=" + mon1 + ", rawMon2=" + mon2 + ", rawMon3=" + mon3);
 		if (normalizedMajor.isEmpty() || normalizedCombo.isEmpty()) {
 			System.out.println("[DEBUG]   -> Skipped: empty normalized values");
 			return;
@@ -300,6 +301,7 @@ public class NguyenVongXetTuyenService {
 		combo.mon1 = scoreFieldForSubject(mon1);
 		combo.mon2 = scoreFieldForSubject(mon2);
 		combo.mon3 = scoreFieldForSubject(mon3);
+		System.out.println("[DEBUG]   -> After scoreFieldForSubject: mon1=" + combo.mon1 + ", mon2=" + combo.mon2 + ", mon3=" + combo.mon3);
 		if (combo.mon1 == null || combo.mon2 == null || combo.mon3 == null) {
 			String rawSubjects = extractSubjectsText(comboCode);
 			String[] parsed = parseSubjectCodes(rawSubjects);
