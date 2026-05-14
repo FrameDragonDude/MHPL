@@ -16,6 +16,7 @@ import gui.panels.BonusPointPanel;
 import gui.panels.SubjectCombinationPanel;
 import gui.panels.UserManagementPanel;
 import gui.panels.ExamScorePanel;
+import gui.panels.ScoreStatisticsPanel;
 import gui.panels.UuTienXetTuyenPanel;
 import gui.panels.AuditLogPanel;
 import java.awt.BorderLayout;
@@ -133,6 +134,7 @@ public class MainFrame extends JFrame {
             case "USER_MANAGEMENT": newPanel = new UserManagementPanel(); break;
             case "CHANGE_PASSWORD": newPanel = new ChangePasswordPanel(this); break;
             case "EXAM_SCORE": newPanel = new ExamScorePanel(this); break;
+            case "STATISTICS": newPanel = new ScoreStatisticsPanel(); break;
             case "AUDIT_LOG": newPanel = new AuditLogPanel(); break;
             case "ADMISSION_RUN":
                 showDevelopingMessage();

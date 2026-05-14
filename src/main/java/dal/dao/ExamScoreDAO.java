@@ -194,7 +194,9 @@ public class ExamScoreDAO {
             List<MethodStatDTO> result = new ArrayList<>();
 
             for (Object[] row : rows) {
-                String method = row[0] == null ? "Khác" : (String) row[0];
+                String method = row[0] == null || row[0].toString().trim().isEmpty()
+                        ? "Chưa xác định"
+                        : row[0].toString();
                 Long count = (Long) row[1];
 
                 result.add(new MethodStatDTO(method, count));

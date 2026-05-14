@@ -81,22 +81,22 @@ public class ScoreStatisticsPanel extends JPanel {
         JPanel top = new JPanel(new FlowLayout(FlowLayout.LEFT));
 
         cbSubject = new JComboBox<>();
-        cbSubject.addItem(new ComboItem("to", "Toán"));
-        cbSubject.addItem(new ComboItem("va", "Văn"));
-        cbSubject.addItem(new ComboItem("li", "Lý"));
-        cbSubject.addItem(new ComboItem("ho", "Hóa"));
-        cbSubject.addItem(new ComboItem("si", "Sinh"));
-        cbSubject.addItem(new ComboItem("su", "Sử"));
-        cbSubject.addItem(new ComboItem("di", "Địa"));
-        cbSubject.addItem(new ComboItem("n1Thi", "N1 Thi"));
-        cbSubject.addItem(new ComboItem("n1Cc", "N1 CC"));
-        cbSubject.addItem(new ComboItem("ktpl", "Kinh tế pháp luật"));
-        cbSubject.addItem(new ComboItem("ti", "Tin"));
-        cbSubject.addItem(new ComboItem("cncn", "Công nghệ công nghiệp"));
-        cbSubject.addItem(new ComboItem("cnnn", "Công nghệ nông nghiệp"));
-        cbSubject.addItem(new ComboItem("nl1", "NL1"));
-        cbSubject.addItem(new ComboItem("nk1", "NK1"));
-        cbSubject.addItem(new ComboItem("nk2", "NK2"));
+        cbSubject.addItem(new ComboItem("to", "Toán (TO)"));
+        cbSubject.addItem(new ComboItem("va", "Văn (VA)"));
+        cbSubject.addItem(new ComboItem("li", "Lý (LI)"));
+        cbSubject.addItem(new ComboItem("ho", "Hóa (HO)"));
+        cbSubject.addItem(new ComboItem("si", "Sinh (SI)"));
+        cbSubject.addItem(new ComboItem("su", "Sử (SU)"));
+        cbSubject.addItem(new ComboItem("di", "Địa (DI)"));
+        cbSubject.addItem(new ComboItem("n1Thi", "N1 Thi (N1_THI)"));
+        cbSubject.addItem(new ComboItem("n1Cc", "N1 CC (N1_CC)"));
+        cbSubject.addItem(new ComboItem("ktpl", "Kinh tế pháp luật (KTPL)"));
+        cbSubject.addItem(new ComboItem("ti", "Tin (TI)"));
+        cbSubject.addItem(new ComboItem("cncn", "Công nghệ công nghiệp (CNCN)"));
+        cbSubject.addItem(new ComboItem("cnnn", "Công nghệ nông nghiệp (CNNN)"));
+        cbSubject.addItem(new ComboItem("nl1", "NL1 (NL1)"));
+        cbSubject.addItem(new ComboItem("nk1", "NK1 (NK1)"));
+        cbSubject.addItem(new ComboItem("nk2", "NK2 (NK2)"));
 
         top.add(new JLabel("Chọn môn:"));
         top.add(cbSubject);

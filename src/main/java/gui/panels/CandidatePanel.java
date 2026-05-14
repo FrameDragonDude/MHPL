@@ -43,6 +43,7 @@ public class CandidatePanel extends JPanel {
 	private static final Color COLOR_GREEN = new Color(46, 125, 50);
 	private static final Color COLOR_BLUE = new Color(21, 101, 192);
 	private static final Color COLOR_BLUE_SOFT = new Color(30, 136, 229);
+	private static final Color COLOR_TEAL = new Color(0, 121, 107);
 	private static final Color COLOR_RED = new Color(198, 40, 40);
 	private static final int PAGE_SIZE = 20;
 
@@ -196,9 +197,9 @@ public class CandidatePanel extends JPanel {
 		}
 		fixedActionTable.getColumnModel().getColumn(0).setCellRenderer(new ActionCellRenderer());
 		fixedActionTable.getColumnModel().getColumn(0).setCellEditor(new ActionCellEditor());
-		fixedActionTable.getColumnModel().getColumn(0).setPreferredWidth(96);
-		fixedActionTable.getColumnModel().getColumn(0).setMinWidth(96);
-		fixedActionTable.getColumnModel().getColumn(0).setMaxWidth(96);
+		fixedActionTable.getColumnModel().getColumn(0).setPreferredWidth(150);
+		fixedActionTable.getColumnModel().getColumn(0).setMinWidth(150);
+		fixedActionTable.getColumnModel().getColumn(0).setMaxWidth(150);
 
 		JScrollPane mainScroll = new JScrollPane(table);
 		JScrollPane fixedScroll = new JScrollPane(fixedActionTable);
@@ -207,7 +208,7 @@ public class CandidatePanel extends JPanel {
 		fixedScroll.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
 		fixedScroll.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
 		fixedScroll.getVerticalScrollBar().setModel(mainScroll.getVerticalScrollBar().getModel());
-		fixedScroll.setPreferredSize(new Dimension(96, 0));
+		fixedScroll.setPreferredSize(new Dimension(150, 0));
 		mainScroll.setBorder(BorderFactory.createEmptyBorder());
 		fixedScroll.setBorder(BorderFactory.createEmptyBorder());
 		fixedScroll.setViewportBorder(BorderFactory.createEmptyBorder());
@@ -224,7 +225,7 @@ public class CandidatePanel extends JPanel {
 	}
 
 	private void applyFixedColumnWidths() {
-		int[] widths = {70, 150, 120, 200, 100, 100, 80, 180, 140, 90, 90, 110, 100, 90, 96};
+		int[] widths = {70, 150, 120, 200, 100, 100, 80, 180, 140, 90, 90, 110, 100, 90, 150};
 		for (int i = 0; i < widths.length && i < table.getColumnModel().getColumnCount(); i++) {
 			table.getColumnModel().getColumn(i).setPreferredWidth(widths[i]);
 			table.getColumnModel().getColumn(i).setMinWidth(widths[i]);
@@ -499,6 +500,45 @@ public class CandidatePanel extends JPanel {
 		}
 	}
 
+	private void viewCandidateDetailAt(int row) {
+		if (row < 0 || row >= currentCandidates.size()) {
+			JOptionPane.showMessageDialog(this, "Không xác định được thí sinh để xem.", "Cảnh báo", JOptionPane.WARNING_MESSAGE);
+			return;
+		}
+
+		CandidateDTO c = currentCandidates.get(row);
+		String fullName = (emptyIfNull(c.getHo()) + " " + emptyIfNull(c.getTen())).trim();
+		StringBuilder sb = new StringBuilder();
+		sb.append("CCCD: ").append(emptyIfNull(c.getCccd())).append("\n");
+		sb.append("Số báo danh: ").append(emptyIfNull(c.getSoBaoDanh())).append("\n");
+		sb.append("Họ tên: ").append(fullName).append("\n");
+		sb.append("Ngày sinh: ").append(emptyIfNull(c.getNgaySinh())).append("\n");
+		sb.append("Giới tính: ").append(emptyIfNull(c.getGioiTinh())).append("\n");
+		sb.append("Điện thoại: ").append(emptyIfNull(c.getDienThoai())).append("\n");
+		sb.append("Email: ").append(emptyIfNull(c.getEmail())).append("\n");
+		sb.append("Nơi sinh: ").append(emptyIfNull(c.getNoiSinh())).append("\n");
+		sb.append("Đối tượng: ").append(emptyIfNull(c.getDoiTuong())).append("\n");
+		sb.append("Khu vực: ").append(emptyIfNull(c.getKhuVuc())).append("\n");
+		sb.append("Chương trình: ").append(emptyIfNull(c.getChuongTrinh())).append("\n");
+		sb.append("Dân tộc: ").append(emptyIfNull(c.getDanToc())).append("\n");
+		sb.append("Mã dân tộc: ").append(emptyIfNull(c.getMaDanToc())).append("\n\n");
+		sb.append("Điểm: Toán ").append(formatNumber(c.getDiemTo()))
+				.append(", Văn ").append(formatNumber(c.getDiemVa()))
+				.append(", Lý ").append(formatNumber(c.getDiemLi()))
+				.append(", Hóa ").append(formatNumber(c.getDiemHo()))
+				.append(", Sinh ").append(formatNumber(c.getDiemSi()))
+				.append(", Sử ").append(formatNumber(c.getDiemSu()))
+				.append(", Địa ").append(formatNumber(c.getDiemDi()))
+				.append(", NN ").append(formatNumber(c.getDiemNn()));
+
+		JOptionPane.showMessageDialog(
+				this,
+				sb.toString(),
+				"Chi tiết thí sinh",
+				JOptionPane.INFORMATION_MESSAGE
+		);
+	}
+
 	private void exportCandidatesToExcel() {
 		JFileChooser chooser = new JFileChooser();
 		chooser.setDialogTitle("Lưu file Excel thí sinh");
@@ -570,7 +610,7 @@ public class CandidatePanel extends JPanel {
 
 	private String formatNumber(Double value) {
 		if (value == null) {
-			return "";
+			return "0.00";
 		}
 		return String.format("%.2f", value);
 	}
@@ -624,21 +664,28 @@ public class CandidatePanel extends JPanel {
 	}
 
 	private class ActionCellRenderer extends JPanel implements TableCellRenderer {
+		private final JButton btnView;
 		private final JButton btnEdit;
 		private final JButton btnDelete;
 
 		ActionCellRenderer() {
-			setLayout(new FlowLayout(FlowLayout.CENTER, 6, 4));
+			setLayout(new FlowLayout(FlowLayout.CENTER, 4, 4));
+			btnView = new JButton("👁");
 			btnEdit = new JButton("✎");
 			btnDelete = new JButton("🗑");
+			styleButton(btnView, COLOR_TEAL);
 			styleButton(btnEdit, COLOR_GREEN);
 			styleButton(btnDelete, COLOR_RED);
+			btnView.setMargin(new Insets(2, 6, 2, 6));
 			btnEdit.setMargin(new Insets(2, 6, 2, 6));
 			btnDelete.setMargin(new Insets(2, 6, 2, 6));
+			btnView.setFocusable(false);
 			btnEdit.setFocusable(false);
 			btnDelete.setFocusable(false);
+			btnView.setToolTipText("Xem chi tiết");
 			btnEdit.setToolTipText("Sửa");
 			btnDelete.setToolTipText("Xóa");
+			add(btnView);
 			add(btnEdit);
 			add(btnDelete);
 		}
@@ -659,24 +706,38 @@ public class CandidatePanel extends JPanel {
 
 	private class ActionCellEditor extends AbstractCellEditor implements TableCellEditor {
 		private final JPanel panel;
+		private final JButton btnView;
 		private final JButton btnEdit;
 		private final JButton btnDelete;
 		private int currentRow = -1;
 
 		ActionCellEditor() {
-			panel = new JPanel(new FlowLayout(FlowLayout.CENTER, 6, 4));
+			panel = new JPanel(new FlowLayout(FlowLayout.CENTER, 4, 4));
+			btnView = new JButton("👁");
 			btnEdit = new JButton("✎");
 			btnDelete = new JButton("🗑");
+			styleButton(btnView, COLOR_TEAL);
 			styleButton(btnEdit, COLOR_GREEN);
 			styleButton(btnDelete, COLOR_RED);
+			btnView.setMargin(new Insets(2, 6, 2, 6));
 			btnEdit.setMargin(new Insets(2, 6, 2, 6));
 			btnDelete.setMargin(new Insets(2, 6, 2, 6));
+			btnView.setFocusable(false);
 			btnEdit.setFocusable(false);
 			btnDelete.setFocusable(false);
+			btnView.setToolTipText("Xem chi tiết");
 			btnEdit.setToolTipText("Sửa");
 			btnDelete.setToolTipText("Xóa");
+			panel.add(btnView);
 			panel.add(btnEdit);
 			panel.add(btnDelete);
+
+			btnView.addActionListener(e -> {
+				fireEditingStopped();
+				if (currentRow >= 0) {
+					viewCandidateDetailAt(currentRow);
+				}
+			});
 
 			btnEdit.addActionListener(e -> {
 				fireEditingStopped();
