@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+	<meta charset="UTF-8"/>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+	<title>Đăng nhập thí sinh</title>
+	<link rel="stylesheet" th:href="@{/css/student-portal.css}"/>
+	<script defer th:src="@{/js/layout.js(v=2)}"></script>
+</head>
+<body class="portal-body portal-layout-page">
+<header class="portal-topbar">
+	<div class="portal-topbar-inner">
+		<div class="portal-brand">Hệ thống tra cứu xét tuyển</div>
+		<nav class="portal-tabs" aria-label="Chuyển trang tra cứu">
+			<a class="portal-tab-btn active" href="/student/login">Đăng nhập thí sinh</a>
+			<a class="portal-tab-btn" href="/lookup">Tra cứu nhanh</a>
+			<a class="portal-tab-btn" href="/calculator/dgnl">Tính điểm ĐGNL</a>
+			<a class="portal-tab-btn" href="/calculator/vsat-thpt">Tính điểm VSAT/THPT</a>
+		</nav>
+	</div>
+</header>
+
+<main class="portal-shell portal-layout-shell">
+	<section class="hero-card">
+		<div>
+			<p class="eyebrow">Đăng nhập thí sinh</p>
+			<h1>Xem kết quả xét tuyển theo CCCD</h1>
+			<p class="hero-note">Dùng CCCD làm tên đăng nhập và 8 số ngày sinh làm mật khẩu.</p>
+		</div>
+	</section>
+
+	<section class="lookup-grid">
+		<article class="panel form-panel">
+			<h2>Thông tin đăng nhập</h2>
+			<form class="lookup-form" th:action="@{/student/login}" method="post" th:object="${loginRequest}">
+				<label>
+					<span>Username / CCCD</span>
+					<input type="text" th:field="*{username}" placeholder="Ví dụ: 079200001234" autocomplete="off"/>
+				</label>
+				<label>
+					<span>Password / Ngày sinh (ddMMyyyy)</span>
+					<input type="password" th:field="*{password}" placeholder="Ví dụ: 25072007" autocomplete="off"/>
+				</label>
+				<button type="submit" class="primary-btn">Đăng nhập</button>
+			</form>
+		</article>
+
+		<article class="panel result-panel">
+			<h2>Hướng dẫn</h2>
+			<div class="hint-box">
+				Sau khi đăng nhập thành công, hệ thống sẽ mở trang kết quả cá nhân và liệt kê tất cả nguyện vọng.
+			</div>
+			<div class="empty-state">
+				Nếu đăng nhập đúng, bạn sẽ xem được ngành trúng tuyển, điểm xét tuyển và trạng thái từng nguyện vọng.
+			</div>
+		</article>
+	</section>
+
+	<section class="lookup-grid" th:if="${errorMessage != null}">
+		<article class="panel result-panel" style="grid-column: 1 / -1;">
+			<h2>Thông báo</h2>
+			<div class="message-box" th:text="${errorMessage}"></div>
+		</article>
+	</section>
+</main>
+</body>
+</html>
