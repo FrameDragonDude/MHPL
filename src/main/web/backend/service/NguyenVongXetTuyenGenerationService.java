@@ -275,20 +275,20 @@ public class NguyenVongXetTuyenGenerationService {
     }
 
     private Map<String, List<ComboData>> loadCombinations(Session session) {
+        // Load major-combo relationships separately to avoid collation JOIN issues
         @SuppressWarnings("unchecked")
-        List<Object[]> rows = session.createNativeQuery("""
+        List<Object[]> comboRows = session.createNativeQuery("""
                 select coalesce(nullif(nt.manganh, ''), substring_index(nt.tb_keys, '_', 1)),
                        nt.matohop,
-                       coalesce(nt.dolech, 0),
-                       coalesce(th.mon1, ''),
-                       coalesce(th.mon2, ''),
-                       coalesce(th.mon3, '')
+                       coalesce(nt.dolech, 0)
                 from xt_nganh_tohop nt
-                left join xt_tohop_monthi th on th.matohop = nt.matohop
                 """).list();
 
+        // Load subject-combo mappings separately
+        Map<String, Object[]> subjectsByCombo = loadSubjectsByCombo(session);
+
         Map<String, List<ComboData>> results = new HashMap<>();
-        for (Object[] row : rows) {
+        for (Object[] row : comboRows) {
             String majorCode = normalize(row[0]);
             String comboCode = normalize(row[1]);
             if (majorCode.isEmpty() || comboCode.isEmpty()) {
@@ -299,11 +299,31 @@ public class NguyenVongXetTuyenGenerationService {
             combo.majorCode = majorCode;
             combo.code = comboCode;
             combo.doLech = scale(toBigDecimal(row[2]), 2);
-            combo.mon1 = scoreFieldForSubject(toStr(row[3]));
-            combo.mon2 = scoreFieldForSubject(toStr(row[4]));
-            combo.mon3 = scoreFieldForSubject(toStr(row[5]));
+
+            // Lookup subjects in the offline map
+            Object[] subjectRow = subjectsByCombo.getOrDefault(comboCode, new Object[]{"", "", ""});
+            combo.mon1 = scoreFieldForSubject(toStr(subjectRow[0]));
+            combo.mon2 = scoreFieldForSubject(toStr(subjectRow[1]));
+            combo.mon3 = scoreFieldForSubject(toStr(subjectRow[2]));
 
             results.computeIfAbsent(majorCode, key -> new ArrayList<>()).add(combo);
+        }
+        return results;
+    }
+
+    private Map<String, Object[]> loadSubjectsByCombo(Session session) {
+        @SuppressWarnings("unchecked")
+        List<Object[]> rows = session.createNativeQuery("""
+                select matohop, coalesce(mon1, ''), coalesce(mon2, ''), coalesce(mon3, '')
+                from xt_tohop_monthi
+                """).list();
+
+        Map<String, Object[]> results = new HashMap<>();
+        for (Object[] row : rows) {
+            String comboCode = normalize(row[0]);
+            if (!comboCode.isEmpty()) {
+                results.put(comboCode, new Object[]{row[1], row[2], row[3]});
+            }
         }
         return results;
     }
