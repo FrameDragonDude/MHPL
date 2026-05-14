@@ -73,10 +73,18 @@ public class CandidateLookupService {
 
 		// Always expose full list of aspirations (nguyện vọng) to the UI, even if none is admitted
 		candidateWebMapper.applyAdmissionsList(viewModel, admissions);
+
+		Optional<CandidateLookupRepository.AdmissionRow> winning = admissions.stream()
+				.filter(row -> isPositiveResult(row.getResultLabel()))
+				.findFirst();
+
 		if (admissions == null || admissions.isEmpty()) {
 			viewModel.setMessage("Tìm thấy nhưng chưa có nguyện vọng.");
-		} else if (viewModel.isAdmitted()) {
-			viewModel.setMessage("Tìm thấy.");
+		} else if (winning.isPresent()) {
+			candidateWebMapper.applyAdmission(viewModel, winning.get());
+			viewModel.setMessage("Trúng tuyển ngành " + safe(viewModel.getMajorCode())
+					+ (safe(viewModel.getMajorName()).isEmpty() ? "" : " - " + safe(viewModel.getMajorName()))
+					+ " với điểm " + safe(viewModel.getDiemXettuyen()) + ".");
 		} else {
 			viewModel.setMessage("Tìm thấy nhưng không trúng tuyển.");
 		}

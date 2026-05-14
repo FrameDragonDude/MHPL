@@ -54,6 +54,30 @@
 				<div class="status-badge success" th:if="${result.admitted}">Chúc mừng! Bạn đã trúng tuyển</div>
 				<div class="status-badge warning" th:unless="${result.admitted}">Không trúng tuyển</div>
 
+				<div th:if="${result.admitted}" style="border-top: 1px solid #e5e7eb; padding-top: 12px; margin-top: 12px;">
+					<dl class="result-list">
+						<div>
+							<dt>Ngành trúng tuyển</dt>
+							<dd>
+								<strong th:text="${result.majorCode}">--</strong>
+								<span th:if="${result.majorName != null and !result.majorName.isEmpty()}" th:text="' - ' + ${result.majorName}"></span>
+							</dd>
+						</div>
+						<div>
+							<dt>Điểm trúng tuyển</dt>
+							<dd><strong th:text="${result.diemXettuyen}">--</strong></dd>
+						</div>
+						<div>
+							<dt>Phương thức</dt>
+							<dd th:text="${result.method}">--</dd>
+						</div>
+						<div>
+							<dt>Tổ hợp</dt>
+							<dd th:text="${result.combination}">--</dd>
+						</div>
+					</dl>
+				</div>
+
 				<dl class="result-list">
 					<div>
 						<dt>Họ tên</dt>
@@ -69,6 +93,7 @@
 					</div>
 					<!-- show all aspirations -->
 					<div th:if="${result.admissions != null}">
+						<div style="margin-top: 10px; font-weight: 600; color: #334155;">Danh sách nguyện vọng</div>
 						<div th:each="a : ${result.admissions}" style="border-top: 1px solid #e5e7eb; padding-top: 12px; margin-top: 12px;">
 							<dt>Ngành</dt>
 							<dd>

@@ -68,7 +68,7 @@ public class CandidateLookupRepository {
 		}
 
 		String normalizedCccd = cccd.trim();
-		String cccdDigits = normalizedCccd.replaceAll("\\D", "");
+		java.util.Set<String> cccdVariants = buildCccdVariants(normalizedCccd);
 
 		try (Session session = HibernateUtil.getSessionFactory().openSession()) {
 			// load major names separately to avoid cross-table collation issues in JOIN
@@ -95,7 +95,7 @@ public class CandidateLookupRepository {
 					.setParameter("cccd", normalizedCccd)
 					.getResultList();
 
-			if (rows.isEmpty() && !cccdDigits.isEmpty()) {
+			if (rows.isEmpty() && !cccdVariants.isEmpty()) {
 				String sqlByDigits = """
 				select nv.nv_manganh,
 				       nv.diem_xettuyen,
@@ -108,13 +108,14 @@ public class CandidateLookupRepository {
 				       coalesce(nv.diem_cong, 0) as diem_cong,
 				       coalesce(nv.diem_xettuyen, 0) as diem_xettuyen
 				from xt_nguyenvongxettuyen nv
-				where replace(replace(replace(nv.nn_cccd, '.', ''), '-', ''), ' ', '') = :cccdDigits
+				where lower(replace(replace(replace(replace(nv.nn_cccd, '_', ''), '.', ''), '-', ''), ' ', '')) in (:cccdVariants)
 				order by nv.nv_tt asc, nv.diem_xettuyen desc
 				""";
 
 				@SuppressWarnings("unchecked")
 				List<Object[]> byDigits = session.createNativeQuery(sqlByDigits)
-						.setParameter("cccdDigits", cccdDigits)
+						.unwrap(NativeQuery.class)
+						.setParameterList("cccdVariants", cccdVariants)
 						.getResultList();
 				rows = byDigits;
 			}
@@ -217,6 +218,40 @@ public class CandidateLookupRepository {
 		String lower = value.toLowerCase(Locale.ROOT).trim().replace('đ', 'd');
 		String noMark = Normalizer.normalize(lower, Normalizer.Form.NFD).replaceAll("\\p{M}+", "");
 		return noMark.replaceAll("[^a-z0-9]", "");
+	}
+
+	private java.util.Set<String> buildCccdVariants(String cccdInput) {
+		java.util.LinkedHashSet<String> variants = new java.util.LinkedHashSet<>();
+		if (cccdInput == null) {
+			return variants;
+		}
+
+		String canonical = normalize(cccdInput);
+		if (canonical.isEmpty()) {
+			return variants;
+		}
+		variants.add(canonical);
+
+		String withoutTs = canonical.startsWith("ts") ? canonical.substring(2) : canonical;
+		if (!withoutTs.isEmpty()) {
+			variants.add(withoutTs);
+			variants.add("ts" + withoutTs);
+		}
+
+		String digits = canonical.replaceAll("\\D", "");
+		if (!digits.isEmpty()) {
+			variants.add(digits);
+			variants.add("ts" + digits);
+			try {
+				int n = Integer.parseInt(digits);
+				String pad4 = String.format("%04d", n);
+				variants.add(pad4);
+				variants.add("ts" + pad4);
+			} catch (NumberFormatException ignored) {
+			}
+		}
+
+		return variants;
 	}
 
 	public static class AdmissionRow {
