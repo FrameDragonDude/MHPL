@@ -78,21 +78,27 @@ public class CandidateDAO {
 					.setMaxResults(pageSize)
 					.list();
 
-			Map<String, ExamScoreEntity> scoreMap = new HashMap<>();
+			Map<String, List<ExamScoreEntity>> scoreMap = new HashMap<>();
 			List<String> cccds = entities.stream()
 					.map(CandidateEntity::getCccd)
 					.filter(cccd -> cccd != null && !cccd.trim().isEmpty())
 					.collect(Collectors.toList());
 
 			if (!cccds.isEmpty()) {
-				List<ExamScoreEntity> scores = session.createQuery(
-						"from ExamScoreEntity s where s.cccd in (:cccds)",
+				// Load ALL exam scores and match by normalized CCCD (handles TS_0001 vs TS0001 format)
+				List<ExamScoreEntity> allScores = session.createQuery(
+						"from ExamScoreEntity s",
 						ExamScoreEntity.class
-				)
-						.setParameterList("cccds", cccds)
-						.list();
-				for (ExamScoreEntity score : scores) {
-					scoreMap.put(score.getCccd(), score);
+				).list();
+				
+				for (ExamScoreEntity score : allScores) {
+					String normalized = normalizeCccd(score.getCccd());
+					for (CandidateEntity entity : entities) {
+						if (normalized.equals(normalizeCccd(entity.getCccd()))) {
+							scoreMap.computeIfAbsent(entity.getCccd(), key -> new ArrayList<>()).add(score);
+							break;
+						}
+					}
 				}
 			}
 
@@ -264,32 +270,94 @@ public class CandidateDAO {
 		return candidate;
 	}
 
-	private void fillDerivedFields(CandidateDTO candidate, ExamScoreEntity score) {
-		if (score != null) {
-			candidate.setDiemTo(score.getDiemTo());
-			candidate.setDiemVa(score.getDiemVa());
-			candidate.setDiemLi(score.getDiemLi());
-			candidate.setDiemHo(score.getDiemHo());
-			candidate.setDiemSi(score.getDiemSi());
-			candidate.setDiemSu(score.getDiemSu());
-			candidate.setDiemDi(score.getDiemDi());
-			candidate.setDiemNn(score.getDiemN1Cc());
-			candidate.setDiemKtpl(score.getDiemKtpl());
-			candidate.setDiemTi(score.getDiemTi());
-			candidate.setDiemCncn(score.getDiemCncn());
-			candidate.setDiemCnnn(score.getDiemCnnn());
-			candidate.setDiemNk1(score.getDiemNk1());
-			candidate.setDiemNk2(score.getDiemNk2());
-			candidate.setMaMonNn(safeNullable(score.getDPhuongThuc()));
+	private void fillDerivedFields(CandidateDTO candidate, List<ExamScoreEntity> scores) {
+		ExamScoreEntity preferred = pickPreferredScore(scores);
+		if (preferred != null) {
+			candidate.setDiemTo(preferred.getDiemTo());
+			candidate.setDiemVa(preferred.getDiemVa());
+			candidate.setDiemLi(preferred.getDiemLi());
+			candidate.setDiemHo(preferred.getDiemHo());
+			candidate.setDiemSi(preferred.getDiemSi());
+			candidate.setDiemSu(preferred.getDiemSu());
+			candidate.setDiemDi(preferred.getDiemDi());
+			candidate.setDiemNn(preferred.getDiemN1Cc());
+			candidate.setDiemKtpl(preferred.getDiemKtpl());
+			candidate.setDiemTi(preferred.getDiemTi());
+			candidate.setDiemCncn(preferred.getDiemCncn());
+			candidate.setDiemCnnn(preferred.getDiemCnnn());
+			candidate.setDiemNk1(preferred.getDiemNk1());
+			candidate.setDiemNk2(preferred.getDiemNk2());
+			candidate.setMaMonNn(safeNullable(preferred.getDPhuongThuc()));
 		} else {
 			candidate.setMaMonNn(null);
 		}
+
+		candidate.setDiemThpt(maxMethodScore(scores, "THPT"));
+		candidate.setDiemVsat(maxMethodScore(scores, "VSAT"));
+		candidate.setDiemDgnl(maxMethodScore(scores, "DGNL"));
 
 		if (candidate.getDiemTo() != null && candidate.getDiemVa() != null && candidate.getDiemLi() != null) {
 			candidate.setDiemXetTotNghiep(round2((candidate.getDiemTo() + candidate.getDiemVa() + candidate.getDiemLi()) / 3.0));
 		} else {
 			candidate.setDiemXetTotNghiep(null);
 		}
+	}
+
+	private ExamScoreEntity pickPreferredScore(List<ExamScoreEntity> scores) {
+		if (scores == null || scores.isEmpty()) {
+			return null;
+		}
+		for (ExamScoreEntity score : scores) {
+			if ("THPT".equals(normalizeMethod(score.getDPhuongThuc()))) {
+				return score;
+			}
+		}
+		return scores.get(0);
+	}
+
+	private Double maxMethodScore(List<ExamScoreEntity> scores, String method) {
+		if (scores == null || scores.isEmpty()) {
+			return null;
+		}
+		Double max = null;
+		for (ExamScoreEntity score : scores) {
+			if (!method.equals(normalizeMethod(score.getDPhuongThuc()))) {
+				continue;
+			}
+			Double value = score.getDiemN1Thi();
+			if (value == null) {
+				continue;
+			}
+			if (max == null || value > max) {
+				max = value;
+			}
+		}
+		return max;
+	}
+
+	private String normalizeCccd(String cccd) {
+		if (cccd == null) {
+			return "";
+		}
+		// Remove underscores and trim to handle both TS_0001 and TS0001 formats
+		return cccd.trim().replace("_", "").toUpperCase();
+	}
+
+	private String normalizeMethod(String method) {
+		if (method == null) {
+			return "";
+		}
+		String m = method.trim().toUpperCase();
+		if (m.contains("THPT")) {
+			return "THPT";
+		}
+		if (m.contains("VSAT")) {
+			return "VSAT";
+		}
+		if (m.contains("DGNL") || m.contains("ĐGNL")) {
+			return "DGNL";
+		}
+		return m;
 	}
 
 	private void applyCandidateFromDto(CandidateEntity entity, CandidateDTO candidate) {

@@ -48,7 +48,7 @@ public class CandidatePanel extends JPanel {
 	private static final int PAGE_SIZE = 20;
 
 	private static final String[] TABLE_COLUMNS = {
-			"STT", "CCCD", "Số báo danh", "Họ Tên", "Ngày sinh", "Điện thoại", "Giới tính", "Email", "Nơi sinh", "Đối tượng", "Khu vực", "Chương trình", "Dân tộc", "Mã dân tộc", "Thao tác"
+			"STT", "CCCD", "Số báo danh", "Họ Tên", "Ngày sinh", "Điện thoại", "Giới tính", "Email", "Nơi sinh", "Đối tượng", "Khu vực", "Chương trình", "Dân tộc", "Mã dân tộc", "Điểm THPT", "Điểm VSAT", "Điểm DGNL", "Thao tác"
 	};
 
 	private static final int COL_STT = 0;
@@ -65,7 +65,10 @@ public class CandidatePanel extends JPanel {
 	private static final int COL_CHUONG_TRINH = 11;
 	private static final int COL_DAN_TOC = 12;
 	private static final int COL_MA_DAN_TOC = 13;
-	private static final int COL_ACTION = 14;
+	private static final int COL_DIEM_THPT = 14;
+	private static final int COL_DIEM_VSAT = 15;
+	private static final int COL_DIEM_DGNL = 16;
+	private static final int COL_ACTION = 17;
 
 	private final CandidateService candidateService;
 	private final DefaultTableModel tableModel;
@@ -225,7 +228,7 @@ public class CandidatePanel extends JPanel {
 	}
 
 	private void applyFixedColumnWidths() {
-		int[] widths = {70, 150, 120, 200, 100, 100, 80, 180, 140, 90, 90, 110, 100, 90, 150};
+		int[] widths = {70, 150, 120, 200, 100, 100, 80, 180, 140, 90, 90, 110, 100, 90, 100, 100, 100, 150};
 		for (int i = 0; i < widths.length && i < table.getColumnModel().getColumnCount(); i++) {
 			table.getColumnModel().getColumn(i).setPreferredWidth(widths[i]);
 			table.getColumnModel().getColumn(i).setMinWidth(widths[i]);
@@ -337,6 +340,9 @@ public class CandidatePanel extends JPanel {
 						c.getChuongTrinh(),
 						emptyIfNull(c.getDanToc()),
 						emptyIfNull(c.getMaDanToc()),
+						formatNullableNumber(c.getDiemThpt()),
+						formatNullableNumber(c.getDiemVsat()),
+						formatNullableNumber(c.getDiemDgnl()),
 						""
 				});
 			}
@@ -522,6 +528,10 @@ public class CandidatePanel extends JPanel {
 		sb.append("Chương trình: ").append(emptyIfNull(c.getChuongTrinh())).append("\n");
 		sb.append("Dân tộc: ").append(emptyIfNull(c.getDanToc())).append("\n");
 		sb.append("Mã dân tộc: ").append(emptyIfNull(c.getMaDanToc())).append("\n\n");
+		sb.append("Điểm theo phương thức:\n");
+		sb.append("DGNL: ").append(formatNullableNumber(c.getDiemDgnl())).append("\n");
+		sb.append("VSAT: ").append(formatNullableNumber(c.getDiemVsat())).append("\n");
+		sb.append("THPT: ").append(formatNullableNumber(c.getDiemThpt())).append("\n\n");
 		sb.append("Điểm: Toán ").append(formatNumber(c.getDiemTo()))
 				.append(", Văn ").append(formatNumber(c.getDiemVa()))
 				.append(", Lý ").append(formatNumber(c.getDiemLi()))
@@ -611,6 +621,13 @@ public class CandidatePanel extends JPanel {
 	private String formatNumber(Double value) {
 		if (value == null) {
 			return "0.00";
+		}
+		return String.format("%.2f", value);
+	}
+
+	private String formatNullableNumber(Double value) {
+		if (value == null) {
+			return "";
 		}
 		return String.format("%.2f", value);
 	}

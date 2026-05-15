@@ -38,6 +38,9 @@ public class CandidateDTO {
 	private Double diemNk9;
 	private Double diemNk10;
 	private Double diemXetTotNghiep;
+	private Double diemThpt;
+	private Double diemVsat;
+	private Double diemDgnl;
 	private String maMonNn;
 	private String chuongTrinh;
 	private String danToc;
@@ -341,6 +344,30 @@ public class CandidateDTO {
 
 	public void setDiemXetTotNghiep(Double diemXetTotNghiep) {
 		this.diemXetTotNghiep = diemXetTotNghiep;
+	}
+
+	public Double getDiemThpt() {
+		return diemThpt;
+	}
+
+	public void setDiemThpt(Double diemThpt) {
+		this.diemThpt = diemThpt;
+	}
+
+	public Double getDiemVsat() {
+		return diemVsat;
+	}
+
+	public void setDiemVsat(Double diemVsat) {
+		this.diemVsat = diemVsat;
+	}
+
+	public Double getDiemDgnl() {
+		return diemDgnl;
+	}
+
+	public void setDiemDgnl(Double diemDgnl) {
+		this.diemDgnl = diemDgnl;
 	}
 
 	public String getMaMonNn() {

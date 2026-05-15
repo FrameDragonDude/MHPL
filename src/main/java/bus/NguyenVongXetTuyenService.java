@@ -68,7 +68,8 @@ public class NguyenVongXetTuyenService {
 							.executeUpdate();
 				}
 
-				Set<String> candidateCcds = loadCandidateCcds(session);
+				Map<String, String> candidateCcdByKey = loadCandidateCcdByKey(session);
+				Set<String> candidateCcds = candidateCcdByKey.keySet();
 				Map<String, ExamScoreData> examScoresByCccd = loadExamScores(session);
 				Map<String, BigDecimal> priorityByCccd = loadPriorityScores(session);
 				Map<String, BigDecimal> bonusByKey = loadBonusScores(session);
@@ -87,30 +88,36 @@ public class NguyenVongXetTuyenService {
 
 				int generatedCount = 0;
 				int skippedCount = 0;
+				Map<String, Integer> reasonCounts = new HashMap<>();
 
 				for (AspirationEntity aspiration : aspirations) {
 					String cccd = normalize(aspiration.getCccd());
+					String displayCccd = resolveDisplayCccd(aspiration.getCccd(), candidateCcdByKey.get(cccd));
 					String majorCode = normalize(aspiration.getMaXetTuyen());
 					Integer thuTuNV = aspiration.getThuTuNV();
 
-					if (cccd.isEmpty() || majorCode.isEmpty() || thuTuNV == null || thuTuNV <= 0) {
+					if (cccd.isEmpty() || displayCccd.isEmpty() || majorCode.isEmpty() || thuTuNV == null || thuTuNV <= 0) {
+						incrementReason(reasonCounts, "invalid_input");
 						skippedCount++;
 						continue;
 					}
 
 					if (!candidateCcds.contains(cccd)) {
+						incrementReason(reasonCounts, "candidate_not_found");
 						skippedCount++;
 						continue;
 					}
 
 					ExamScoreData exam = examScoresByCccd.get(cccd);
 					if (exam == null) {
+						incrementReason(reasonCounts, "exam_not_found");
 						skippedCount++;
 						continue;
 					}
 
 					List<ComboData> combos = combosByMajor.getOrDefault(majorCode, List.of());
 					if (combos.isEmpty()) {
+						incrementReason(reasonCounts, "combo_missing");
 						skippedCount++;
 						continue;
 					}
@@ -132,6 +139,7 @@ public class NguyenVongXetTuyenService {
 					}
 
 					if (best == null) {
+						incrementReason(reasonCounts, "score_uncomputable");
 						skippedCount++;
 						continue;
 					}
@@ -158,7 +166,7 @@ public class NguyenVongXetTuyenService {
 							tt_phuongthuc = values(tt_phuongthuc),
 							tt_thm = values(tt_thm)
 						""")
-						.setParameter("cccd", cccd)
+						.setParameter("cccd", displayCccd)
 						.setParameter("manganh", majorCode)
 						.setParameter("nvTt", thuTuNV)
 						.setParameter("diemThxt", scale(best.examScore, 5))
@@ -172,11 +180,14 @@ public class NguyenVongXetTuyenService {
 						.executeUpdate();
 
 					generatedCount++;
+					incrementReason(reasonCounts, "generated");
 				}
 
 				tx.commit();
+				String reasonSummary = buildReasonSummary(reasonCounts);
 				return new GenerationResult(replaceExisting, aspirations.size(), generatedCount, skippedCount, deletedExistingRows,
-						"Sinh dữ liệu xét tuyển thành công: " + generatedCount + "/" + aspirations.size());
+						"Sinh dữ liệu xét tuyển thành công: " + generatedCount + "/" + aspirations.size()
+								+ (reasonSummary.isEmpty() ? "" : " | " + reasonSummary));
 			} catch (Exception ex) {
 				if (tx != null && tx.isActive()) {
 					tx.rollback();
@@ -186,16 +197,53 @@ public class NguyenVongXetTuyenService {
 		}
 	}
 
-	private Set<String> loadCandidateCcds(Session session) {
+	private void incrementReason(Map<String, Integer> reasonCounts, String reasonKey) {
+		reasonCounts.merge(reasonKey, 1, Integer::sum);
+	}
+
+	private String buildReasonSummary(Map<String, Integer> reasonCounts) {
+		if (reasonCounts == null || reasonCounts.isEmpty()) {
+			return "";
+		}
+		StringBuilder builder = new StringBuilder();
+		appendReason(builder, reasonCounts, "generated", "generated");
+		appendReason(builder, reasonCounts, "invalid_input", "invalid");
+		appendReason(builder, reasonCounts, "candidate_not_found", "noCandidate");
+		appendReason(builder, reasonCounts, "exam_not_found", "noExam");
+		appendReason(builder, reasonCounts, "combo_missing", "noCombo");
+		appendReason(builder, reasonCounts, "score_uncomputable", "noScore");
+		return builder.toString();
+	}
+
+	private void appendReason(StringBuilder builder, Map<String, Integer> reasonCounts, String key, String label) {
+		Integer value = reasonCounts.get(key);
+		if (value == null || value <= 0) {
+			return;
+		}
+		if (builder.length() > 0) {
+			builder.append(", ");
+		}
+		builder.append(label).append("=").append(value);
+	}
+
+	private Map<String, String> loadCandidateCcdByKey(Session session) {
 		List<String> rows = session.createQuery("select c.cccd from CandidateEntity c where c.cccd is not null", String.class).getResultList();
-		Set<String> result = new HashSet<>();
+		Map<String, String> result = new HashMap<>();
 		for (String row : rows) {
-			String cccd = normalize(row);
-			if (!cccd.isEmpty()) {
-				result.add(cccd);
+			String cccdKey = normalize(row);
+			String displayCccd = toStr(row);
+			if (!cccdKey.isEmpty() && !displayCccd.isEmpty()) {
+				result.putIfAbsent(cccdKey, displayCccd);
 			}
 		}
 		return result;
+	}
+
+	private String resolveDisplayCccd(String aspirationCccd, String candidateCccd) {
+		if (candidateCccd != null && !candidateCccd.trim().isEmpty()) {
+			return candidateCccd.trim();
+		}
+		return toStr(aspirationCccd);
 	}
 
 	private Map<String, ExamScoreData> loadExamScores(Session session) {
@@ -260,15 +308,18 @@ public class NguyenVongXetTuyenService {
 		Map<String, List<ComboData>> result = new HashMap<>();
 		@SuppressWarnings("unchecked")
 		List<Object[]> rows = session.createNativeQuery("""
-				select coalesce(nullif(nt.manganh, ''), substring_index(nt.tb_keys, '_', 1)), nt.matohop, coalesce(nt.dolech, 0)
+				select coalesce(nullif(nt.manganh, ''), substring_index(nt.tb_keys, '_', 1)), nt.matohop, coalesce(nt.dolech, 0), coalesce(nt.hsmon1, 1), coalesce(nt.hsmon2, 1), coalesce(nt.hsmon3, 1)
 				from xt_nganh_tohop nt
 				""").list();
 		System.out.println("[DEBUG] loadCombinations: loaded " + rows.size() + " rows from xt_nganh_tohop");
-		for (Object[] row : rows) {
-			String comboCode = toStr(row[1]);
-			System.out.println("[DEBUG] Processing row: manganh=" + toStr(row[0]) + ", matohop=" + comboCode);
-			addComboFromCode(result, toStr(row[0]), comboCode, toBigDecimal(row[2]));
-		}
+			for (Object[] row : rows) {
+				String comboCode = toStr(row[1]);
+				BigDecimal w1 = toBigDecimal(row[3]);
+				BigDecimal w2 = toBigDecimal(row[4]);
+				BigDecimal w3 = toBigDecimal(row[5]);
+				System.out.println("[DEBUG] Processing row: manganh=" + toStr(row[0]) + ", matohop=" + comboCode + ", weights=" + w1 + "," + w2 + "," + w3);
+				addComboFromCode(result, toStr(row[0]), comboCode, toBigDecimal(row[2]), w1, w2, w3);
+			}
 		System.out.println("[DEBUG] After main query: result size = " + result.size());
 
 		if (result.isEmpty()) {
@@ -284,7 +335,7 @@ public class NguyenVongXetTuyenService {
 		return result;
 	}
 
-	private void addComboFromCode(Map<String, List<ComboData>> result, String majorCode, String comboCode, BigDecimal doLech) {
+	private void addComboFromCode(Map<String, List<ComboData>> result, String majorCode, String comboCode, BigDecimal doLech, BigDecimal w1, BigDecimal w2, BigDecimal w3) {
 		// Map combo codes to subjects based on Vietnamese standard
 		Map<String, String[]> comboMap = new HashMap<>();
 		// Khối A: Toán, Lý, Hóa
@@ -343,14 +394,14 @@ public class NguyenVongXetTuyenService {
 		comboMap.put("X81", new String[]{"N1_THI", "LI", "HO"});
 
 		String[] subjects = comboMap.get(comboCode);
-		if (subjects != null && subjects.length >= 3) {
-			addCombo(result, majorCode, comboCode, doLech, subjects[0], subjects[1], subjects[2]);
-		} else {
+			if (subjects != null && subjects.length >= 3) {
+				addCombo(result, majorCode, comboCode, doLech, w1, w2, w3, subjects[0], subjects[1], subjects[2]);
+			} else {
 			System.out.println("[DEBUG] Unknown combo code: " + comboCode + ", skipping");
 		}
 	}
 
-	private void addCombo(Map<String, List<ComboData>> result, String majorCode, String comboCode, BigDecimal doLech,
+	private void addCombo(Map<String, List<ComboData>> result, String majorCode, String comboCode, BigDecimal doLech, BigDecimal w1, BigDecimal w2, BigDecimal w3,
 			String mon1, String mon2, String mon3) {
 		String normalizedMajor = normalize(majorCode);
 		String normalizedCombo = normalizeToHopCode(comboCode);
@@ -364,6 +415,9 @@ public class NguyenVongXetTuyenService {
 		combo.majorCode = normalizedMajor;
 		combo.code = normalizedCombo;
 		combo.doLech = scale(doLech, 2);
+		combo.weight1 = w1 == null ? BigDecimal.ONE : scale(w1, 2);
+		combo.weight2 = w2 == null ? BigDecimal.ONE : scale(w2, 2);
+		combo.weight3 = w3 == null ? BigDecimal.ONE : scale(w3, 2);
 		combo.mon1 = mon1;
 		combo.mon2 = mon2;
 		combo.mon3 = mon3;
@@ -389,10 +443,13 @@ public class NguyenVongXetTuyenService {
 			System.out.println("[DEBUG]   -> Skipped: not enough subjects");
 			return;
 		}
-		ComboData combo = new ComboData();
+			ComboData combo = new ComboData();
 		combo.majorCode = majorCode;
 		combo.code = comboCode.isEmpty() ? normalize(raw) : comboCode;
 		combo.doLech = BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP);
+			combo.weight1 = BigDecimal.ONE;
+			combo.weight2 = BigDecimal.ONE;
+			combo.weight3 = BigDecimal.ONE;
 		combo.mon1 = parsed[0];
 		combo.mon2 = parsed[1];
 		combo.mon3 = parsed[2];
@@ -454,7 +511,7 @@ public class NguyenVongXetTuyenService {
 		}
 
 		if ("DGNL".equals(exam.method)) {
-			BigDecimal raw = firstNonNull(exam.n1Thi, exam.n1Cc);
+			BigDecimal raw = maxNonNull(exam.n1Thi, exam.n1Cc);
 			return raw == null ? null : raw.multiply(BigDecimal.valueOf(30)).divide(BigDecimal.valueOf(1200), 5, RoundingMode.HALF_UP);
 		}
 
@@ -474,7 +531,26 @@ public class NguyenVongXetTuyenService {
 		if (s1 == null || s2 == null || s3 == null) {
 			return null;
 		}
-		return s1.add(s2).add(s3).setScale(5, RoundingMode.HALF_UP);
+		return calculateWeightedScore(s1, s2, s3, combo);
+	}
+
+	private BigDecimal calculateWeightedScore(BigDecimal subject1, BigDecimal subject2, BigDecimal subject3, ComboData combo) {
+		BigDecimal weight1 = combo.weight1 == null ? BigDecimal.ONE : combo.weight1;
+		BigDecimal weight2 = combo.weight2 == null ? BigDecimal.ONE : combo.weight2;
+		BigDecimal weight3 = combo.weight3 == null ? BigDecimal.ONE : combo.weight3;
+		BigDecimal totalWeight = weight1.add(weight2).add(weight3);
+		if (totalWeight.compareTo(BigDecimal.ZERO) == 0) {
+			totalWeight = BigDecimal.valueOf(3);
+			weight1 = BigDecimal.ONE;
+			weight2 = BigDecimal.ONE;
+			weight3 = BigDecimal.ONE;
+		}
+
+		BigDecimal weightedAverage = subject1.multiply(weight1)
+			.add(subject2.multiply(weight2))
+			.add(subject3.multiply(weight3))
+			.divide(totalWeight, 10, RoundingMode.HALF_UP);
+		return weightedAverage.multiply(BigDecimal.valueOf(3)).setScale(5, RoundingMode.HALF_UP);
 	}
 
 	private BigDecimal convertSubjectScore(ExamScoreData exam, String fieldName, boolean isVsat) {
@@ -563,6 +639,12 @@ public class NguyenVongXetTuyenService {
 		return left != null ? left : right;
 	}
 
+	private static BigDecimal maxNonNull(BigDecimal left, BigDecimal right) {
+		if (left == null) return right;
+		if (right == null) return left;
+		return left.compareTo(right) >= 0 ? left : right;
+	}
+
 	private static String toStr(Object value) {
 		return value == null ? "" : value.toString().trim();
 	}
@@ -601,6 +683,9 @@ public class NguyenVongXetTuyenService {
 		String majorCode;
 		String code;
 		BigDecimal doLech;
+		BigDecimal weight1;
+		BigDecimal weight2;
+		BigDecimal weight3;
 		String mon1;
 		String mon2;
 		String mon3;

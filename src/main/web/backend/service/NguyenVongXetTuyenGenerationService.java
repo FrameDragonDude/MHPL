@@ -22,6 +22,9 @@ import org.springframework.stereotype.Service;
 
 @Service
 public class NguyenVongXetTuyenGenerationService {
+    private static final BigDecimal PRIORITY_THRESHOLD = new BigDecimal("22.5");
+    private static final BigDecimal MAX_SCORE = new BigDecimal("30");
+    private static final BigDecimal PRIORITY_DIVISOR = new BigDecimal("7.5");
 
     public NguyenVongXetTuyenGenerationResultDTO generate(boolean replaceExisting) throws SQLException {
         try (Session session = HibernateUtil.getSessionFactory().openSession()) {
@@ -39,7 +42,7 @@ public class NguyenVongXetTuyenGenerationService {
                 ).getResultList();
                 Set<String> candidateCcds = loadCandidateCcds(session);
                 Map<String, ExamScoreData> examScoresByCccd = loadExamScores(session);
-                Map<String, BigDecimal> priorityByCccd = loadPriorityScores(session);
+                Map<String, PriorityData> priorityByCccd = loadPriorityScores(session);
                 Map<String, BigDecimal> bonusByKey = loadBonusScores(session);
                 Map<String, List<ComboData>> combosByMajor = loadCombinations(session);
                 Map<String, BigDecimal> thresholdByMajor = loadThresholds(session);
@@ -84,10 +87,11 @@ public class NguyenVongXetTuyenGenerationService {
                             continue;
                         }
 
-                        BigDecimal priorityScore = priorityByCccd.getOrDefault(cccd, BigDecimal.ZERO);
                         BigDecimal bonusScore = bonusByKey.getOrDefault(buildBonusKey(cccd, majorCode, combo.code, exam.method), BigDecimal.ZERO);
                         BigDecimal doLech = combo.doLech == null ? BigDecimal.ZERO : combo.doLech;
-                        BigDecimal totalScore = examScore.add(priorityScore).add(bonusScore).add(doLech).setScale(5, RoundingMode.HALF_UP);
+                        BigDecimal adjustedExamScore = examScore.add(doLech).setScale(5, RoundingMode.HALF_UP);
+                        BigDecimal priorityScore = calculatePriorityScore(priorityByCccd.get(cccd), adjustedExamScore, bonusScore);
+                        BigDecimal totalScore = adjustedExamScore.add(priorityScore).add(bonusScore).setScale(5, RoundingMode.HALF_UP);
 
                         CandidateScore current = new CandidateScore(combo, examScore, priorityScore, bonusScore, doLech, totalScore);
                         if (best == null || current.totalScore.compareTo(best.totalScore) > 0
@@ -237,23 +241,49 @@ public class NguyenVongXetTuyenGenerationService {
         return results;
     }
 
-    private Map<String, BigDecimal> loadPriorityScores(Session session) {
+    private Map<String, PriorityData> loadPriorityScores(Session session) {
         @SuppressWarnings("unchecked")
         List<Object[]> rows = session.createNativeQuery("""
                 select ts_cccd,
-                       coalesce(max(diem_cong_mondatmc), coalesce(max(diem_cong_khongmondatmc), 0))
+                       coalesce(max(diem_cong_mondatmc), 0),
+                       coalesce(max(diem_cong_khongmondatmc), 0)
                 from xt_uutien_xettuyen
                 group by ts_cccd
                 """).list();
 
-        Map<String, BigDecimal> results = new HashMap<>();
+        Map<String, PriorityData> results = new HashMap<>();
         for (Object[] row : rows) {
             String cccd = normalize(row[0]);
             if (!cccd.isEmpty()) {
-                results.put(cccd, scale(toBigDecimal(row[1]), 5));
+                PriorityData data = new PriorityData();
+                data.diemCongMonDatMc = scale(toBigDecimal(row[1]), 5);
+                data.diemCongKhongMonDatMc = scale(toBigDecimal(row[2]), 5);
+                results.put(cccd, data);
             }
         }
         return results;
+    }
+
+    // region Priority / bonus / combination rules
+
+    private BigDecimal calculatePriorityScore(PriorityData priorityData, BigDecimal adjustedExamScore, BigDecimal bonusScore) {
+        BigDecimal basePriority = priorityData == null ? BigDecimal.ZERO : priorityData.resolveBaseScore();
+        if (basePriority.compareTo(BigDecimal.ZERO) <= 0) {
+            return BigDecimal.ZERO.setScale(5, RoundingMode.HALF_UP);
+        }
+
+        BigDecimal combinedBeforePriority = safe(adjustedExamScore).add(safe(bonusScore));
+        if (combinedBeforePriority.compareTo(PRIORITY_THRESHOLD) < 0) {
+            return basePriority.setScale(5, RoundingMode.HALF_UP);
+        }
+
+        BigDecimal factor = MAX_SCORE.subtract(combinedBeforePriority)
+                .divide(PRIORITY_DIVISOR, 10, RoundingMode.HALF_UP);
+        if (factor.compareTo(BigDecimal.ZERO) < 0) {
+            factor = BigDecimal.ZERO;
+        }
+
+        return basePriority.multiply(factor).setScale(5, RoundingMode.HALF_UP);
     }
 
     private Map<String, BigDecimal> loadBonusScores(Session session) {
@@ -278,9 +308,12 @@ public class NguyenVongXetTuyenGenerationService {
         // Load major-combo relationships separately to avoid collation JOIN issues
         @SuppressWarnings("unchecked")
         List<Object[]> comboRows = session.createNativeQuery("""
-                select coalesce(nullif(nt.manganh, ''), substring_index(nt.tb_keys, '_', 1)),
-                       nt.matohop,
-                       coalesce(nt.dolech, 0)
+              select coalesce(nullif(nt.manganh, ''), substring_index(nt.tb_keys, '_', 1)),
+                  nt.matohop,
+                  coalesce(nt.dolech, 0),
+                  coalesce(nt.hsmon1, 1),
+                  coalesce(nt.hsmon2, 1),
+                  coalesce(nt.hsmon3, 1)
                 from xt_nganh_tohop nt
                 """).list();
 
@@ -299,6 +332,9 @@ public class NguyenVongXetTuyenGenerationService {
             combo.majorCode = majorCode;
             combo.code = comboCode;
             combo.doLech = scale(toBigDecimal(row[2]), 2);
+            combo.weight1 = scale(toBigDecimal(row[3]), 2);
+            combo.weight2 = scale(toBigDecimal(row[4]), 2);
+            combo.weight3 = scale(toBigDecimal(row[5]), 2);
 
             // Lookup subjects in the offline map
             Object[] subjectRow = subjectsByCombo.getOrDefault(comboCode, new Object[]{"", "", ""});
@@ -310,6 +346,10 @@ public class NguyenVongXetTuyenGenerationService {
         }
         return results;
     }
+
+    // endregion
+
+    // region Threshold / conversion rules
 
     private Map<String, Object[]> loadSubjectsByCombo(Session session) {
         @SuppressWarnings("unchecked")
@@ -373,36 +413,71 @@ public class NguyenVongXetTuyenGenerationService {
         return results;
     }
 
+    // endregion
+
+    // region Score calculation
+
     private BigDecimal calculateExamScore(ExamScoreData exam, ComboData combo, Map<String, List<ConversionRule>> conversionRules) {
         if (exam == null || combo == null) {
             return null;
         }
 
         if ("DGNL".equals(exam.method)) {
-            BigDecimal raw = firstNonNull(exam.n1Thi, exam.n1Cc);
-            if (raw == null) {
-                return null;
-            }
-            return convertScore(conversionRules, conversionKey("DGNL", combo.code), raw, 30);
+            return calculateDgnlExamScore(exam, combo, conversionRules);
         }
 
         if ("VSAT".equals(exam.method)) {
-            BigDecimal subject1 = convertSubjectScore(exam, combo.mon1, conversionRules);
-            BigDecimal subject2 = convertSubjectScore(exam, combo.mon2, conversionRules);
-            BigDecimal subject3 = convertSubjectScore(exam, combo.mon3, conversionRules);
-            if (subject1 == null || subject2 == null || subject3 == null) {
-                return null;
-            }
-            return subject1.add(subject2).add(subject3).setScale(5, RoundingMode.HALF_UP);
+            return calculateVsatExamScore(exam, combo, conversionRules);
         }
 
+        return calculateThptExamScore(exam, combo);
+    }
+
+    private BigDecimal calculateDgnlExamScore(ExamScoreData exam, ComboData combo, Map<String, List<ConversionRule>> conversionRules) {
+        BigDecimal raw = maxNonNull(exam.n1Thi, exam.n1Cc);
+        if (raw == null) {
+            return null;
+        }
+        return convertScore(conversionRules, conversionKey("DGNL", combo.code), raw, 30);
+    }
+
+    private BigDecimal calculateVsatExamScore(ExamScoreData exam, ComboData combo, Map<String, List<ConversionRule>> conversionRules) {
+        BigDecimal subject1 = convertSubjectScore(exam, combo.mon1, conversionRules);
+        BigDecimal subject2 = convertSubjectScore(exam, combo.mon2, conversionRules);
+        BigDecimal subject3 = convertSubjectScore(exam, combo.mon3, conversionRules);
+        if (subject1 == null || subject2 == null || subject3 == null) {
+            return null;
+        }
+        return calculateWeightedScore(subject1, subject2, subject3, combo);
+    }
+
+    private BigDecimal calculateThptExamScore(ExamScoreData exam, ComboData combo) {
         BigDecimal subject1 = rawSubjectScore(exam, combo.mon1);
         BigDecimal subject2 = rawSubjectScore(exam, combo.mon2);
         BigDecimal subject3 = rawSubjectScore(exam, combo.mon3);
         if (subject1 == null || subject2 == null || subject3 == null) {
             return null;
         }
-        return subject1.add(subject2).add(subject3).setScale(5, RoundingMode.HALF_UP);
+        return calculateWeightedScore(subject1, subject2, subject3, combo);
+    }
+
+    private BigDecimal calculateWeightedScore(BigDecimal subject1, BigDecimal subject2, BigDecimal subject3, ComboData combo) {
+        BigDecimal weight1 = combo.weight1 == null ? BigDecimal.ONE : combo.weight1;
+        BigDecimal weight2 = combo.weight2 == null ? BigDecimal.ONE : combo.weight2;
+        BigDecimal weight3 = combo.weight3 == null ? BigDecimal.ONE : combo.weight3;
+        BigDecimal totalWeight = weight1.add(weight2).add(weight3);
+        if (totalWeight.compareTo(BigDecimal.ZERO) == 0) {
+            totalWeight = BigDecimal.valueOf(3);
+            weight1 = BigDecimal.ONE;
+            weight2 = BigDecimal.ONE;
+            weight3 = BigDecimal.ONE;
+        }
+
+        BigDecimal weightedAverage = subject1.multiply(weight1)
+                .add(subject2.multiply(weight2))
+                .add(subject3.multiply(weight3))
+                .divide(totalWeight, 10, RoundingMode.HALF_UP);
+        return weightedAverage.multiply(BigDecimal.valueOf(3)).setScale(5, RoundingMode.HALF_UP);
     }
 
     private BigDecimal convertSubjectScore(ExamScoreData exam, String fieldName, Map<String, List<ConversionRule>> conversionRules) {
@@ -453,6 +528,10 @@ public class NguyenVongXetTuyenGenerationService {
         return rawScore.setScale(defaultScale, RoundingMode.HALF_UP);
     }
 
+    // endregion
+
+    // region Normalization / helpers
+
     private static String scoreFieldForSubject(String subject) {
         String norm = normalize(subject);
         if (norm.contains("toan") || norm.equals("to")) return "TO";
@@ -486,6 +565,10 @@ public class NguyenVongXetTuyenGenerationService {
         return value == null ? BigDecimal.ZERO.setScale(scale, RoundingMode.HALF_UP) : value.setScale(scale, RoundingMode.HALF_UP);
     }
 
+    private static BigDecimal safe(BigDecimal value) {
+        return value == null ? BigDecimal.ZERO : value;
+    }
+
     private static BigDecimal toBigDecimal(Object value) {
         if (value == null) {
             return null;
@@ -504,8 +587,10 @@ public class NguyenVongXetTuyenGenerationService {
         }
     }
 
-    private static BigDecimal firstNonNull(BigDecimal left, BigDecimal right) {
-        return left != null ? left : right;
+    private static BigDecimal maxNonNull(BigDecimal left, BigDecimal right) {
+        if (left == null) return right;
+        if (right == null) return left;
+        return left.compareTo(right) >= 0 ? left : right;
     }
 
     private static String toStr(Object value) {
@@ -524,6 +609,10 @@ public class NguyenVongXetTuyenGenerationService {
         return normalizeMethod(method) + "|" + normalize(value);
     }
 
+    // endregion
+
+    // region Local model classes
+
     static class ExamScoreData {
         String method;
         BigDecimal to;
@@ -541,9 +630,23 @@ public class NguyenVongXetTuyenGenerationService {
         String majorCode;
         String code;
         BigDecimal doLech;
+        BigDecimal weight1;
+        BigDecimal weight2;
+        BigDecimal weight3;
         String mon1;
         String mon2;
         String mon3;
+    }
+
+    static class PriorityData {
+        BigDecimal diemCongMonDatMc;
+        BigDecimal diemCongKhongMonDatMc;
+
+        BigDecimal resolveBaseScore() {
+            BigDecimal left = diemCongMonDatMc == null ? BigDecimal.ZERO : diemCongMonDatMc;
+            BigDecimal right = diemCongKhongMonDatMc == null ? BigDecimal.ZERO : diemCongKhongMonDatMc;
+            return left.compareTo(right) >= 0 ? left : right;
+        }
     }
 
     static class ConversionRule {
@@ -590,4 +693,6 @@ public class NguyenVongXetTuyenGenerationService {
             this.totalScore = totalScore;
         }
     }
+
+    // endregion
 }
