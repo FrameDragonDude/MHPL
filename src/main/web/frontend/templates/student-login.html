@@ -12,10 +12,11 @@
 	<div class="portal-topbar-inner">
 		<div class="portal-brand">Hệ thống tra cứu xét tuyển</div>
 		<nav class="portal-tabs" aria-label="Chuyển trang tra cứu">
-			<a class="portal-tab-btn active" href="/student/login">Đăng nhập thí sinh</a>
-			<a class="portal-tab-btn" href="/lookup">Tra cứu nhanh</a>
-			<a class="portal-tab-btn" href="/calculator/dgnl">Tính điểm ĐGNL</a>
-			<a class="portal-tab-btn" href="/calculator/vsat-thpt">Tính điểm VSAT/THPT</a>
+			<a class="portal-tab-btn active" th:if="${result == null or !result.searched}" href="/student/login">Đăng nhập thí sinh</a>
+			<a class="portal-tab-btn active" th:if="${result != null and result.searched}" href="/student/logout">Đăng xuất</a>
+			<a class="portal-tab-btn" th:if="${result != null and result.searched}" href="/student/login#ket-qua">Kết quả cá nhân</a>
+			<a class="portal-tab-btn" th:if="${result != null and result.searched}" href="/calculator/dgnl">Tính điểm ĐGNL</a>
+			<a class="portal-tab-btn" th:if="${result != null and result.searched}" href="/calculator/vsat-thpt">Tính điểm VSAT/THPT</a>
 		</nav>
 	</div>
 </header>
@@ -24,8 +25,8 @@
 	<section class="hero-card">
 		<div>
 			<p class="eyebrow">Đăng nhập thí sinh</p>
-			<h1>Xem kết quả xét tuyển theo CCCD</h1>
-			<p class="hero-note">Dùng CCCD làm tên đăng nhập và 8 số ngày sinh làm mật khẩu.</p>
+			<h1>Xem kết quả xét tuyển và 2 công cụ tính điểm</h1>
+			<p class="hero-note">Dùng CCCD làm tên đăng nhập và 8 số ngày sinh làm mật khẩu. Đăng nhập xong sẽ hiện ngay kết quả đậu/rớt của nguyện vọng.</p>
 		</div>
 	</section>
 
@@ -45,13 +46,20 @@
 			</form>
 		</article>
 
-		<article class="panel result-panel">
-			<h2>Hướng dẫn</h2>
+		<article class="panel result-panel" th:if="${result != null and result.searched}">
+			<h2>Công cụ tính điểm</h2>
 			<div class="hint-box">
-				Sau khi đăng nhập thành công, hệ thống sẽ mở trang kết quả cá nhân và liệt kê tất cả nguyện vọng.
+				Chọn một trong hai công cụ bên dưới để tính nhanh điểm xét tuyển.
 			</div>
-			<div class="empty-state">
-				Nếu đăng nhập đúng, bạn sẽ xem được ngành trúng tuyển, điểm xét tuyển và trạng thái từng nguyện vọng.
+			<div class="portal-actions">
+				<a class="portal-action-btn" th:href="@{/calculator/dgnl}">
+					<span class="action-title">Tính điểm ĐGNL</span>
+					<span class="action-desc">Dành cho phương thức ĐGNL</span>
+				</a>
+				<a class="portal-action-btn" th:href="@{/calculator/vsat-thpt}">
+					<span class="action-title">Tính điểm VSAT/THPT</span>
+					<span class="action-desc">Dành cho phương thức VSAT và THPT</span>
+				</a>
 			</div>
 		</article>
 	</section>
@@ -60,6 +68,112 @@
 		<article class="panel result-panel" style="grid-column: 1 / -1;">
 			<h2>Thông báo</h2>
 			<div class="message-box" th:text="${errorMessage}"></div>
+		</article>
+	</section>
+
+	<section id="ket-qua" class="lookup-grid" th:if="${result != null and result.searched}">
+		<article class="panel result-panel" style="grid-column: 1 / -1;">
+			<h2>Kết quả cá nhân</h2>
+			<div class="message-box" th:text="${result.message}">--</div>
+
+			<div th:if="${result.found}" class="result-summary" style="margin-top: 16px;">
+				<div class="status-badge success" th:if="${result.admitted}">Chúc mừng! Bạn đã trúng tuyển</div>
+				<div class="status-badge warning" th:unless="${result.admitted}">Không trúng tuyển</div>
+
+				<dl class="result-list">
+					<div>
+						<dt>Họ tên</dt>
+						<dd th:text="${result.fullName}">--</dd>
+					</div>
+					<div>
+						<dt>CCCD</dt>
+						<dd th:text="${result.cccd}">--</dd>
+					</div>
+					<div>
+						<dt>Ngày sinh</dt>
+						<dd th:text="${result.ngaySinh}">--</dd>
+					</div>
+				</dl>
+
+				<div th:if="${result.admitted}" style="margin-top: 16px; border-top: 1px solid #e5e7eb; padding-top: 16px;">
+					<dl class="result-list">
+						<div>
+							<dt>Ngành trúng tuyển</dt>
+							<dd>
+								<strong th:text="${result.majorCode}">--</strong>
+								<span th:if="${result.majorName != null and !result.majorName.isEmpty()}" th:text="' - ' + ${result.majorName}"></span>
+							</dd>
+						</div>
+						<div>
+							<dt>Điểm trúng tuyển</dt>
+							<dd th:text="${result.diemXettuyen}">--</dd>
+						</div>
+						<div>
+							<dt>Phương thức</dt>
+							<dd th:text="${result.method}">--</dd>
+						</div>
+						<div>
+							<dt>Tổ hợp</dt>
+							<dd th:text="${result.combination}">--</dd>
+						</div>
+					</dl>
+				</div>
+
+				<div th:if="${result.admissions != null and !result.admissions.isEmpty()}" style="margin-top: 20px;">
+					<h3 style="margin: 0 0 12px 0;">Danh sách nguyện vọng</h3>
+					<div th:each="a : ${result.admissions}" style="border-top: 1px solid #e5e7eb; padding-top: 12px; margin-top: 12px;">
+						<dl class="result-list">
+							<div>
+								<dt>Ngành</dt>
+								<dd>
+									<strong th:text="${a.majorCode}">--</strong>
+									<span th:if="${a.majorName != null and !a.majorName.isEmpty()}" th:text="' - ' + ${a.majorName}"></span>
+								</dd>
+							</div>
+							<div>
+								<dt>Nguyện vọng</dt>
+								<dd th:text="${a.priority}">--</dd>
+							</div>
+							<div>
+								<dt>Phương thức</dt>
+								<dd th:text="${a.method}">--</dd>
+							</div>
+							<div>
+								<dt>Tổ hợp môn</dt>
+								<dd th:text="${a.combination}">--</dd>
+							</div>
+							<div>
+								<dt>Điểm THXT</dt>
+								<dd th:text="${a.diemThxt}">--</dd>
+							</div>
+							<div>
+								<dt>Điểm ưu tiên</dt>
+								<dd th:text="${a.diemUtqd}">--</dd>
+							</div>
+							<div>
+								<dt>Điểm cộng</dt>
+								<dd th:text="${a.diemCong}">--</dd>
+							</div>
+							<div>
+								<dt>Điểm xét tuyển</dt>
+								<dd th:text="${a.diemXettuyen}">--</dd>
+							</div>
+							<div>
+								<dt>Điểm sàn</dt>
+								<dd th:text="${a.diemSan}">--</dd>
+							</div>
+							<div>
+								<dt>Trạng thái</dt>
+								<dd th:text="${a.resultLabel}">--</dd>
+							</div>
+						</dl>
+					</div>
+				</div>
+			</div>
+
+			<div th:if="${result.searched and !result.found}" class="empty-state">
+				Không tìm thấy thông tin thí sinh với CCCD và ngày sinh đã nhập!
+			</div>
 		</article>
 	</section>
 </main>

@@ -188,6 +188,43 @@
 	border: 1px dashed rgba(45, 108, 223, 0.25);
 }
 
+.portal-actions {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 14px;
+	margin-top: 18px;
+}
+
+.portal-action-btn {
+	display: grid;
+	gap: 6px;
+	padding: 16px 18px;
+	border-radius: 16px;
+	border: 1px solid rgba(16, 32, 51, 0.08);
+	background: linear-gradient(180deg, #ffffff 0%, #f4f8ff 100%);
+	box-shadow: 0 10px 24px rgba(16, 32, 51, 0.07);
+	text-decoration: none;
+	color: #102033;
+	transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+}
+
+.portal-action-btn:hover {
+	transform: translateY(-2px);
+	box-shadow: 0 16px 32px rgba(16, 32, 51, 0.12);
+	border-color: rgba(45, 108, 223, 0.24);
+}
+
+.action-title {
+	font-weight: 800;
+	font-size: 1.02rem;
+	color: #1747a1;
+}
+
+.action-desc {
+	font-size: 0.94rem;
+	color: #58697f;
+}
+
 .result-summary {
 	margin-top: 18px;
 }

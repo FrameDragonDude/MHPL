@@ -23,17 +23,18 @@ public class CandidateLookupController {
 
 	@GetMapping
 	public String showLookupPage(Model model) {
-		model.addAttribute("lookupRequest", new CandidateLookupRequest());
+		model.addAttribute("loginRequest", new CandidateLookupRequest());
 		CandidateLookupViewModel result = new CandidateLookupViewModel();
 		result.setSearched(false);
 		model.addAttribute("result", result);
-		return "lookup";
+		return "student-login";
 	}
 
 	@PostMapping
-	public String lookup(@ModelAttribute("lookupRequest") CandidateLookupRequest request, Model model) {
+	public String lookup(@ModelAttribute("loginRequest") CandidateLookupRequest request, Model model) {
 		CandidateLookupViewModel result = candidateLookupService.lookup(request);
+		model.addAttribute("loginRequest", request);
 		model.addAttribute("result", result);
-		return "lookup";
+		return "student-login";
 	}
 }

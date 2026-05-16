@@ -26,11 +26,11 @@ public class StudentPortalController {
 
 	@GetMapping({"", "/login"})
 	public String loginPage(Model model, HttpSession session) {
-		if (session.getAttribute(SESSION_LOOKUP_RESULT) instanceof CandidateLookupViewModel) {
-			return "redirect:/student/result";
-		}
 		if (!model.containsAttribute("loginRequest")) {
 			model.addAttribute("loginRequest", new CandidateLookupRequest());
+		}
+		if (session.getAttribute(SESSION_LOOKUP_RESULT) instanceof CandidateLookupViewModel result) {
+			model.addAttribute("result", result);
 		}
 		return "student-login";
 	}
@@ -38,6 +38,7 @@ public class StudentPortalController {
 	@PostMapping("/login")
 	public String login(@ModelAttribute("loginRequest") CandidateLookupRequest request,
 			HttpSession session,
+			org.springframework.ui.Model model,
 			RedirectAttributes redirectAttributes) {
 		CandidateLookupViewModel result = candidateLookupService.lookup(request);
 		if (result == null || !result.isFound()) {
@@ -48,7 +49,9 @@ public class StudentPortalController {
 		}
 
 		session.setAttribute(SESSION_LOOKUP_RESULT, result);
-		return "redirect:/student/result";
+		model.addAttribute("loginRequest", request);
+		model.addAttribute("result", result);
+		return "student-login";
 	}
 
 	@GetMapping("/result")
@@ -59,7 +62,7 @@ public class StudentPortalController {
 		}
 
 		model.addAttribute("result", result);
-		return "student-result";
+		return "redirect:/student/login";
 	}
 
 	@GetMapping("/logout")

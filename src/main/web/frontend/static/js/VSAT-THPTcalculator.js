@@ -36,8 +36,9 @@ document.addEventListener('DOMContentLoaded', () => {
 		englishScore: 'Tiếng Anh',
 		historyScore: 'Lịch sử',
 		geographyScore: 'Địa lý',
-		khxhScore: 'KHXH',
-		khtnScore: 'KHTN'
+		ktplScore: 'KTPL',
+		nangKhieuScore: 'Năng khiếu',
+		tinHocScore: 'Tin học'
 	};
 
 	const comboSubjects = {
@@ -64,8 +65,12 @@ document.addEventListener('DOMContentLoaded', () => {
 		'lich su': 'historyScore',
 		dia: 'geographyScore',
 		'dia ly': 'geographyScore',
-		'khxh': 'khxhScore',
-		'khtn': 'khtnScore'
+		ktpl: 'ktplScore',
+		'kinh te phap luat': 'ktplScore',
+		nangkhieu: 'nangKhieuScore',
+		'nang khieu': 'nangKhieuScore',
+		'tin hoc': 'tinHocScore',
+		tinhoc: 'tinHocScore'
 	};
 
 	const normalizeText = (value) => (value || '')
@@ -287,8 +292,9 @@ document.addEventListener('DOMContentLoaded', () => {
 		document.getElementById('subjectEnglish').textContent = fmt(subjectScores.englishScore);
 		document.getElementById('subjectHistory').textContent = fmt(subjectScores.historyScore);
 		document.getElementById('subjectGeography').textContent = fmt(subjectScores.geographyScore);
-		document.getElementById('subjectKhxh').textContent = fmt(subjectScores.khxhScore);
-		document.getElementById('subjectKhtn').textContent = fmt(subjectScores.khtnScore);
+		document.getElementById('subjectKtpl').textContent = fmt(subjectScores.ktplScore);
+		document.getElementById('subjectNangKhieu').textContent = fmt(subjectScores.nangKhieuScore);
+		document.getElementById('subjectTinHoc').textContent = fmt(subjectScores.tinHocScore);
 
 		document.getElementById('resultAreaPreference').textContent = fmt(areaPreferenceScore);
 		document.getElementById('resultObjectPreference').textContent = fmt(objectPreferenceScore);

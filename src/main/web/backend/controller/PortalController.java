@@ -7,6 +7,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 public class PortalController {
 	@GetMapping({"/", "/portal"})
 	public String portal() {
-		return "fragments/layout";
+		return "redirect:/student/login";
 	}
 }
