@@ -85,11 +85,11 @@ public class NguyenVongXetTuyenDAO {
 
 	public List<Object[]> findAdmittedCountsByMajorAndMethod() throws SQLException {
 		String sql = """
-			select nv.nv_manganh, nv.tt_phuongthuc, count(*)
+			select nv.nv_manganh, nv.tt_phuongthuc, nv.tt_thm, count(*)
 			from xt_nguyenvongxettuyen nv
 			where lower(coalesce(nv.nv_ketqua, '')) = 'trúng tuyển'
-			group by nv.nv_manganh, nv.tt_phuongthuc
-			order by nv.nv_manganh asc, nv.tt_phuongthuc asc
+			group by nv.nv_manganh, nv.tt_phuongthuc, nv.tt_thm
+			order by nv.nv_manganh asc, nv.tt_phuongthuc asc, nv.tt_thm asc
 			""";
 
 		try (Session session = HibernateUtil.getSessionFactory().openSession()) {

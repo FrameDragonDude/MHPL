@@ -67,10 +67,12 @@ public class NguyenVongXetTuyenService {
 
 		for (Object[] row : rows) {
 			String majorCode = toStr(row[0]);
-			String method = normalizeMethod(row[1]);
-			long count = row[2] instanceof Number number ? number.longValue() : 0L;
+			String rawMethod = toStr(row[1]);
+			String rawCombo = toStr(row[2]);
+			String method = resolveAdmissionMethodBucket(rawMethod, rawCombo);
+			long count = row[3] instanceof Number number ? number.longValue() : 0L;
 
-			if (majorCode.isEmpty() || count <= 0) {
+			if (majorCode.isEmpty() || count <= 0 || method.isEmpty()) {
 				continue;
 			}
 
@@ -87,6 +89,40 @@ public class NguyenVongXetTuyenService {
 		}
 
 		return new ArrayList<>(result.values());
+	}
+
+	private String resolveAdmissionMethodBucket(String rawMethod, String rawCombo) {
+		String method = normalizeMethod(rawMethod);
+		if ("THPT".equals(method) || "VSAT".equals(method) || "DGNL".equals(method)) {
+			return method;
+		}
+
+		String combo = normalize(rawCombo).toUpperCase(Locale.ROOT);
+		String normalizedMethod = normalize(rawMethod).toUpperCase(Locale.ROOT);
+
+		if (looksLikeThptCode(normalizedMethod) || looksLikeThptCode(combo)) {
+			return "THPT";
+		}
+
+		if (normalizedMethod.contains("VSAT") || combo.contains("VSAT")) {
+			return "VSAT";
+		}
+
+		if (normalizedMethod.contains("DGNL") || combo.contains("DGNL")) {
+			return "DGNL";
+		}
+
+		return "";
+	}
+
+	private boolean looksLikeThptCode(String code) {
+		if (code == null || code.isEmpty()) {
+			return false;
+		}
+		if ("N1".equals(code) || "N1THI".equals(code) || "THPT".equals(code)) {
+			return true;
+		}
+		return code.matches("^[ABCDXK][0-9]{2,3}[A-Z]*$");
 	}
 
 	private Map<String, String> loadMajorNames() throws SQLException {
