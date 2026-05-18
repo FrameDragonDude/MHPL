@@ -6,11 +6,13 @@ import dal.entities.CandidateEntity;
 import dal.entities.ExamScoreEntity;
 import dal.entities.NganhEntity;
 import dal.hibernate.HibernateUtil;
+import dto.AdmissionMethodSummaryDTO;
 import dto.NguyenVongXetTuyenDTO;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -56,6 +58,55 @@ public class NguyenVongXetTuyenService {
 			return false;
 		}
 		return dao.delete(id);
+	}
+
+	public List<AdmissionMethodSummaryDTO> getAdmissionMethodSummaries() throws SQLException {
+		List<Object[]> rows = dao.findAdmittedCountsByMajorAndMethod();
+		Map<String, AdmissionMethodSummaryDTO> result = new LinkedHashMap<>();
+		Map<String, String> majorNames = loadMajorNames();
+
+		for (Object[] row : rows) {
+			String majorCode = toStr(row[0]);
+			String method = normalizeMethod(row[1]);
+			long count = row[2] instanceof Number number ? number.longValue() : 0L;
+
+			if (majorCode.isEmpty() || count <= 0) {
+				continue;
+			}
+
+			AdmissionMethodSummaryDTO summary = result.computeIfAbsent(majorCode, key -> {
+				AdmissionMethodSummaryDTO dto = new AdmissionMethodSummaryDTO();
+				dto.setMajorCode(key);
+				dto.setMajorName(majorNames.getOrDefault(key, key));
+				return dto;
+			});
+
+			Map<String, Long> methodCounts = summary.getMethodCounts();
+			methodCounts.put(method, methodCounts.getOrDefault(method, 0L) + count);
+			summary.setTotalCount(summary.getTotalCount() + count);
+		}
+
+		return new ArrayList<>(result.values());
+	}
+
+	private Map<String, String> loadMajorNames() throws SQLException {
+		try (Session session = HibernateUtil.getSessionFactory().openSession()) {
+			List<NganhEntity> majors = session.createQuery("from NganhEntity n", NganhEntity.class).getResultList();
+			Map<String, String> result = new HashMap<>();
+			for (NganhEntity major : majors) {
+				String code = normalize(major.getManganh());
+				if (code.isEmpty()) {
+					continue;
+				}
+				String name = major.getTennganh() == null || major.getTennganh().trim().isEmpty()
+						? major.getManganh()
+						: major.getTennganh().trim();
+				result.put(code, name);
+			}
+			return result;
+		} catch (Exception ex) {
+			throw new SQLException("Không thể tải tên ngành: " + ex.getMessage(), ex);
+		}
 	}
 
 	public GenerationResult generateFromDatabase(boolean replaceExisting) throws SQLException {

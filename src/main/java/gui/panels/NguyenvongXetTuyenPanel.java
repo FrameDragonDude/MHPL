@@ -1,6 +1,7 @@
 package gui.panels;
 
 import bus.NguyenVongXetTuyenService;
+import dto.AdmissionMethodSummaryDTO;
 import dto.NguyenVongXetTuyenDTO;
 import gui.dialogs.NguyenVongXetTuyenEditDialog;
 import java.awt.BorderLayout;
@@ -15,6 +16,7 @@ import java.util.List;
 import javax.swing.AbstractCellEditor;
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
+import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
@@ -65,6 +67,7 @@ public class NguyenvongXetTuyenPanel extends JPanel {
 	private final JLabel lblPaging;
 	private final JLabel lblRows;
 	private final JButton btnGenerate;
+	private final JButton btnStatistics;
 	private final int actionColumnIndex;
 	private int currentPage = 1;
 	private int totalPages = 1;
@@ -85,6 +88,7 @@ public class NguyenvongXetTuyenPanel extends JPanel {
 		this.lblPaging = new JLabel("Trang 1/1 (20 dòng/trang)");
 		this.lblRows = new JLabel("Tổng dòng: 0");
 		this.btnGenerate = new JButton("Sinh dữ liệu từ DB");
+		this.btnStatistics = new JButton("Thống kê trúng tuyển");
 		this.actionColumnIndex = tableModel.getColumnCount() - 1;
 
 		attachLiveSearch();
@@ -124,11 +128,15 @@ public class NguyenvongXetTuyenPanel extends JPanel {
 		btnAdd.setMargin(new Insets(6, 16, 6, 16));
 		styleButton(btnGenerate, COLOR_GREEN);
 		btnGenerate.setMargin(new Insets(6, 16, 6, 16));
+		styleButton(btnStatistics, COLOR_BLUE);
+		btnStatistics.setMargin(new Insets(6, 16, 6, 16));
 		actions.add(btnAdd);
 		actions.add(btnGenerate);
+		actions.add(btnStatistics);
 
 		btnAdd.addActionListener(e -> addRow());
 		btnGenerate.addActionListener(e -> generateFromDatabase());
+		btnStatistics.addActionListener(e -> showAdmissionStatistics());
 
 		wrapper.add(left, BorderLayout.WEST);
 		wrapper.add(actions, BorderLayout.EAST);
@@ -401,6 +409,46 @@ public class NguyenvongXetTuyenPanel extends JPanel {
 			loadPage(1);
 		} catch (SQLException ex) {
 			showError("Không thể sinh dữ liệu nguyện vọng xét tuyển", ex);
+		}
+	}
+
+	private void showAdmissionStatistics() {
+		try {
+			List<AdmissionMethodSummaryDTO> summaries = service.getAdmissionMethodSummaries();
+			DefaultTableModel statsModel = new DefaultTableModel(new Object[]{"Mã ngành", "Tên ngành", "THPT", "VSAT", "DGNL"}, 0) {
+				@Override
+				public boolean isCellEditable(int row, int column) {
+					return false;
+				}
+			};
+
+			for (AdmissionMethodSummaryDTO summary : summaries) {
+				statsModel.addRow(new Object[]{
+					emptyIfNull(summary.getMajorCode()),
+					emptyIfNull(summary.getMajorName()),
+					summary.getMethodCounts().getOrDefault("THPT", 0L),
+					summary.getMethodCounts().getOrDefault("VSAT", 0L),
+					summary.getMethodCounts().getOrDefault("DGNL", 0L)
+				});
+			}
+
+			JTable statsTable = new JTable(statsModel);
+			statsTable.setRowHeight(30);
+			statsTable.getTableHeader().setReorderingAllowed(false);
+			statsTable.setAutoCreateRowSorter(true);
+
+			JScrollPane scrollPane = new JScrollPane(statsTable);
+			scrollPane.setPreferredSize(new Dimension(720, 420));
+
+			JDialog dialog = new JDialog(SwingUtilities.getWindowAncestor(this), "Thống kê trúng tuyển theo ngành và phương thức", java.awt.Dialog.ModalityType.APPLICATION_MODAL);
+			dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+			dialog.setLayout(new BorderLayout());
+			dialog.add(scrollPane, BorderLayout.CENTER);
+			dialog.pack();
+			dialog.setLocationRelativeTo(this);
+			dialog.setVisible(true);
+		} catch (SQLException ex) {
+			showError("Không thể tải thống kê trúng tuyển", ex);
 		}
 	}
 

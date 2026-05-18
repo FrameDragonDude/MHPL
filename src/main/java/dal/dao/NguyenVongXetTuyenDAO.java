@@ -83,6 +83,24 @@ public class NguyenVongXetTuyenDAO {
 		}
 	}
 
+	public List<Object[]> findAdmittedCountsByMajorAndMethod() throws SQLException {
+		String sql = """
+			select nv.nv_manganh, nv.tt_phuongthuc, count(*)
+			from xt_nguyenvongxettuyen nv
+			where lower(coalesce(nv.nv_ketqua, '')) = 'trúng tuyển'
+			group by nv.nv_manganh, nv.tt_phuongthuc
+			order by nv.nv_manganh asc, nv.tt_phuongthuc asc
+			""";
+
+		try (Session session = HibernateUtil.getSessionFactory().openSession()) {
+			@SuppressWarnings("unchecked")
+			List<Object[]> rows = session.createNativeQuery(sql).list();
+			return rows;
+		} catch (Exception ex) {
+			throw asSqlException("thong ke trung tuyen theo nganh va phuong thuc", ex);
+		}
+	}
+
 	public boolean create(NguyenVongXetTuyenDTO dto) throws SQLException {
 		Transaction tx = null;
 		try (Session session = HibernateUtil.getSessionFactory().openSession()) {
