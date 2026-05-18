@@ -147,9 +147,9 @@ public class ExamScoreFormDialog extends JDialog {
                 try {
                     double score = Double.parseDouble(val);
 
-                    if (score < 0 || score > 10) {
+                    if (score < 0) {
                         JOptionPane.showMessageDialog(this,
-                                "Điểm phải nằm trong khoảng 0 - 10 (" + key + ")");
+                                "Điểm phải là một số không âm (" + key + ")");
                         tf.requestFocus();
                         return false;
                     }

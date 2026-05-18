@@ -78,4 +78,19 @@ public class MajorCombinationService {
     private boolean isBlank(String value) {
         return value == null || value.trim().isEmpty();
     }
+
+    public boolean importFromExcel(List<MajorCombinationDTO> dtos) throws SQLException {
+        for (MajorCombinationDTO dto : dtos) {
+            if (!isValid(dto)) {
+                return false; 
+            }
+        }
+        try {
+            dao.saveImportedData(dtos);
+            return true; 
+        } catch (SQLException e) {
+            System.err.println("Lỗi khi import danh sách tổ hợp: " + e.getMessage());
+            throw e; 
+        }
+    }
 }

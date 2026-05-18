@@ -2,6 +2,8 @@ package dal.dao;
 
 import dal.hibernate.HibernateUtil;
 import dto.MajorCombinationDTO;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -450,4 +452,92 @@ public class MajorCombinationDAO {
 			}
 		}
 	}
+
+	public void saveImportedData(List<MajorCombinationDTO> dtoList) throws SQLException {
+        if (dtoList == null || dtoList.isEmpty()) {
+            return;
+        }
+
+        // Tận dụng chính SessionFactory của Hibernate đã cấu hình trong dự án của bạn
+        try (Session session = HibernateUtil.getSessionFactory().openSession()) {
+            Transaction tx = null;
+            try {
+                tx = session.beginTransaction();
+
+                // Sử dụng doWork để mượn Connection vật lý từ Hibernate chạy Batch PreparedStatement
+                session.doWork(conn -> {
+                    String insertSql = "INSERT INTO xt_nganh_tohop ("
+                            + "manganh, matohop, th_mon1, hsmon1, th_mon2, hsmon2, th_mon3, hsmon3, tb_keys, dolech, "
+                            + "`TO`, `VA`, `N1`, `LI`, `HO`, `SI`, `SU`, `DI`, `TI`, `KTPL`"
+                            + ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) "
+                            + "ON DUPLICATE KEY UPDATE "
+                            + "th_mon1=VALUES(th_mon1), hsmon1=VALUES(hsmon1), "
+                            + "th_mon2=VALUES(th_mon2), hsmon2=VALUES(hsmon2), "
+                            + "th_mon3=VALUES(th_mon3), hsmon3=VALUES(hsmon3), "
+                            + "dolech=VALUES(dolech), "
+                            + "`TO`=VALUES(`TO`), `VA`=VALUES(`VA`), `N1`=VALUES(`N1`), `LI`=VALUES(`LI`), "
+                            + "`HO`=VALUES(`HO`), `SI`=VALUES(`SI`), `SU`=VALUES(`SU`), `DI`=VALUES(`DI`), "
+                            + "`TI`=VALUES(`TI`), `KTPL`=VALUES(`KTPL`)";
+
+                    String updateNganhSql = "UPDATE xt_nganh SET n_tohopgoc = ? WHERE manganh = ?";
+
+                    try (PreparedStatement psInsert = conn.prepareStatement(insertSql);
+                         PreparedStatement psUpdateNganh = conn.prepareStatement(updateNganhSql)) {
+
+                        for (MajorCombinationDTO dto : dtoList) {
+                            // 1. Gán tham số cho câu lệnh chèn/cập nhật bảng xt_nganh_tohop
+                            psInsert.setString(1, dto.getManganh());
+                            psInsert.setString(2, dto.getMaToHop());
+                            psInsert.setString(3, dto.getMon1());
+                            psInsert.setInt(4, dto.getHsmon1() != null ? dto.getHsmon1() : 1);
+                            psInsert.setString(5, dto.getMon2());
+                            psInsert.setInt(6, dto.getHsmon2() != null ? dto.getHsmon2() : 1);
+                            psInsert.setString(7, dto.getMon3());
+                            psInsert.setInt(8, dto.getHsmon3() != null ? dto.getHsmon3() : 1);
+                            psInsert.setString(9, dto.getTbKeys());
+                            psInsert.setDouble(10, dto.getDoLech() != null ? dto.getDoLech() : 0.0);
+
+                            // Điền các cờ môn học (1 nếu trùng môn, 0 nếu không trùng)
+                            psInsert.setInt(11, isMon(dto, "TO") ? 1 : 0);
+                            psInsert.setInt(12, isMon(dto, "VA") ? 1 : 0);
+                            psInsert.setInt(13, (isMon(dto, "N1") || isMon(dto, "N")) ? 1 : 0);
+                            psInsert.setInt(14, isMon(dto, "LI") ? 1 : 0);
+                            psInsert.setInt(15, isMon(dto, "HO") ? 1 : 0);
+                            psInsert.setInt(16, isMon(dto, "SI") ? 1 : 0);
+                            psInsert.setInt(17, isMon(dto, "SU") ? 1 : 0);
+                            psInsert.setInt(18, isMon(dto, "DI") ? 1 : 0);
+                            psInsert.setInt(19, isMon(dto, "TI") ? 1 : 0);
+                            psInsert.setInt(20, isMon(dto, "KTPL") ? 1 : 0);
+
+                            psInsert.addBatch();
+
+                            // 2. Nếu là tổ hợp Gốc -> add vào hàng đợi cập nhật bảng xt_nganh
+                            if (dto.getGoc() != null && "Gốc".equalsIgnoreCase(dto.getGoc().trim())) {
+                                psUpdateNganh.setString(1, dto.getMaToHop());
+                                psUpdateNganh.setString(2, dto.getManganh());
+                                psUpdateNganh.addBatch();
+                            }
+                        }
+
+                        // Đồng loạt đẩy xuống Database xử lý hàng loạt cùng một lúc
+                        psInsert.executeBatch();
+                        psUpdateNganh.executeBatch();
+                    }
+                });
+
+                tx.commit(); // Lưu thay đổi an toàn vào database
+            } catch (Exception ex) {
+                rollbackQuietly(tx);
+                throw asSqlException("import excel nganh-to-hop", ex);
+            }
+        }
+    }
+
+    // Hàm phụ trợ so khớp mã môn không phân biệt hoa thường
+    private boolean isMon(MajorCombinationDTO dto, String targetCode) {
+        return targetCode.equalsIgnoreCase(dto.getMon1()) 
+            || targetCode.equalsIgnoreCase(dto.getMon2()) 
+            || targetCode.equalsIgnoreCase(dto.getMon3());
+    }
+
 }

@@ -419,19 +419,32 @@ public class MajorCombinationPanel extends JPanel {
             int fail = 0;
             String firstError = null;
 
-            for (MajorCombinationDTO row : imported) {
-                try {
-                    if (service.upsertByTbKeys(row)) {
-                        success++;
-                    } else {
-                        fail++;
-                    }
-                } catch (Exception ex) {
-                    fail++;
-                    if (firstError == null) {
-                        firstError = ex.getMessage();
-                    }
+            // for (MajorCombinationDTO row : imported) {
+            //     try {
+            //         if (service.upsertByTbKeys(row)) {
+            //             success++;
+            //         } else {
+            //             fail++;
+            //         }
+            //     } catch (Exception ex) {
+            //         fail++;
+            //         if (firstError == null) {
+            //             firstError = ex.getMessage();
+            //         }
+            //     }
+            // }
+
+            try {
+                boolean importResult = service.importFromExcel(imported);
+                if (importResult) {
+                    success = imported.size();
+                } else {
+                    fail = imported.size();
+                    firstError = "Có lỗi xảy ra khi lưu dữ liệu vào cơ sở dữ liệu.";
                 }
+            } catch (Exception ex) {
+                fail = imported.size();
+                firstError = "Có lỗi xảy ra khi lưu dữ liệu vào cơ sở dữ liệu: " + ex.getMessage();
             }
 
             String message = "Import xong: " + success + " dòng thành công, " + fail + " dòng lỗi.";

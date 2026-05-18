@@ -6,8 +6,11 @@ public class MajorCombinationDTO {
 	private String tenNganhChuan;
 	private String maToHop;
 	private String mon1;
+	private Integer hsmon1;
 	private String mon2;
+	private Integer hsmon2;
 	private String mon3;
+	private Integer hsmon3;
 	private String tbKeys;
 	private String tenToHop;
 	private String goc;
@@ -51,6 +54,29 @@ public class MajorCombinationDTO {
 
 	public void setMon1(String mon1) {
 		this.mon1 = mon1;
+	}
+	public Integer getHsmon1() {
+		return hsmon1;
+	}
+
+	public void setHsmon1(Integer hsmon1) {
+		this.hsmon1 = hsmon1;
+	}
+
+	public Integer getHsmon2() {
+		return hsmon2;
+	}
+
+	public void setHsmon2(Integer hsmon2) {
+		this.hsmon2 = hsmon2;
+	}
+
+	public Integer getHsmon3() {
+		return hsmon3;
+	}
+
+	public void setHsmon3(Integer hsmon3) {
+		this.hsmon3 = hsmon3;
 	}
 
 	public String getMon2() {

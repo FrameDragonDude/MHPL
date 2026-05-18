@@ -17,8 +17,13 @@ import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public final class MajorCombinationExcelImportUtil {
+
+    private static final Pattern SUBJECT_WEIGHT_PATTERN = Pattern.compile("([A-Z0-9]+)-([0-9]+)");
+
     private MajorCombinationExcelImportUtil() {
     }
 
@@ -80,8 +85,16 @@ public final class MajorCombinationExcelImportUtil {
                     "matohop", "ma_to_hop", "ma_tohop");
                 fillSubjects(dto, parsedSubjects);
                 dto.setTenToHop(subjectNames(dto));
-                dto.setGoc(text(row, headerIndex, formatter, evaluator,
-                        "goc", "tohopgoc", "to_hop_goc"));
+                // dto.setGoc(text(row, headerIndex, formatter, evaluator,
+                //         "goc", "tohopgoc", "to_hop_goc"));
+
+                String gocText = text(row, headerIndex, formatter, evaluator, "goc", "tohopgoc", "to_hop_goc");
+                if (normalize(gocText).contains("goc")) {
+                    dto.setGoc("Gốc");
+                } else {
+                    dto.setGoc("");
+                }
+
                 dto.setDoLech(number(row, headerIndex, formatter, evaluator,
                         "dolech", "do_lech", "dolech"));
 
@@ -176,6 +189,35 @@ public final class MajorCombinationExcelImportUtil {
         return trimmed;
     }
 
+    // private static void fillSubjects(MajorCombinationDTO dto, String rawMaToHop) {
+    //     if (isBlank(rawMaToHop)) {
+    //         return;
+    //     }
+    //     String inside = extractInsideParentheses(rawMaToHop);
+    //     if (isBlank(inside)) {
+    //         return;
+    //     }
+
+    //     String cleaned = inside.replaceAll("[0-9-]", " ");
+    //     String[] tokens = cleaned.split("[^A-Za-z]+|");
+    //     List<String> codes = new ArrayList<>();
+    //     for (String token : tokens) {
+    //         if (!isBlank(token)) {
+    //             codes.add(token.trim().toUpperCase(Locale.ROOT));
+    //         }
+    //     }
+
+    //     if (codes.size() > 0 && isBlank(dto.getMon1())) {
+    //         dto.setMon1(mapSubject(codes.get(0)));
+    //     }
+    //     if (codes.size() > 1 && isBlank(dto.getMon2())) {
+    //         dto.setMon2(mapSubject(codes.get(1)));
+    //     }
+    //     if (codes.size() > 2 && isBlank(dto.getMon3())) {
+    //         dto.setMon3(mapSubject(codes.get(2)));
+    //     }
+    // }
+
     private static void fillSubjects(MajorCombinationDTO dto, String rawMaToHop) {
         if (isBlank(rawMaToHop)) {
             return;
@@ -185,23 +227,30 @@ public final class MajorCombinationExcelImportUtil {
             return;
         }
 
-        String cleaned = inside.replaceAll("[0-9-]", " ");
-        String[] tokens = cleaned.split("[^A-Za-z]+|");
-        List<String> codes = new ArrayList<>();
-        for (String token : tokens) {
-            if (!isBlank(token)) {
-                codes.add(token.trim().toUpperCase(Locale.ROOT));
-            }
-        }
+        // Tách chuỗi bên trong dấu ngoặc thành các phần nhỏ bằng dấu phẩy
+        String[] parts = inside.split(",");
+        int position = 1;
 
-        if (codes.size() > 0 && isBlank(dto.getMon1())) {
-            dto.setMon1(mapSubject(codes.get(0)));
-        }
-        if (codes.size() > 1 && isBlank(dto.getMon2())) {
-            dto.setMon2(mapSubject(codes.get(1)));
-        }
-        if (codes.size() > 2 && isBlank(dto.getMon3())) {
-            dto.setMon3(mapSubject(codes.get(2)));
+        for (String part : parts) {
+            if (isBlank(part)) continue;
+            
+            Matcher matcher = SUBJECT_WEIGHT_PATTERN.matcher(part.trim().toUpperCase(Locale.ROOT));
+            if (matcher.find()) {
+                String subCode = matcher.group(1);               // Ví dụ: TO, VA, N1
+                int weight = Integer.parseInt(matcher.group(2));  // Ví dụ: 3, 1
+                String fullSubjectName = mapSubject(subCode);     // Ví dụ: Toán, Văn
+                if (position == 1) {
+                    dto.setMon1(subCode);          
+                    dto.setHsmon1(weight);           
+                } else if (position == 2) {
+                    dto.setMon2(subCode);
+                    dto.setHsmon2(weight);           
+                } else if (position == 3) {
+                    dto.setMon3(subCode);
+                    dto.setHsmon3(weight);           
+                }
+                position++;
+            }
         }
     }
 
