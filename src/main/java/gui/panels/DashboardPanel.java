@@ -4,11 +4,21 @@ import bus.CandidateService;
 import bus.MajorCombinationService;
 import bus.NganhTuyenSinhService;
 import bus.UserService;
+import dto.EnglishConversionDTO;
+import dto.PriorityAdmissionDTO;
+import bus.AdmissionEngineService;
 import gui.SessionManager;
+import utils.excel.EnglishConversionExcelImportUtil;
+import utils.excel.PriorityAdmissionExcelImportUtil;
+
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
+import javax.swing.filechooser.FileNameExtensionFilter;
+
 import java.awt.*;
 import java.awt.geom.RoundRectangle2D;
+import java.io.File;
+import java.util.List;
 
 public class DashboardPanel extends JPanel {
 
@@ -16,6 +26,7 @@ public class DashboardPanel extends JPanel {
     private final NganhTuyenSinhService nganhTuyenSinhService;
     private final MajorCombinationService majorCombinationService;
     private final UserService userService;
+    private final AdmissionEngineService admissionService;
     private final Color MAIN_BG = new Color(223, 234, 252);
     private final Color CARD_COLOR = Color.WHITE;
     private final Color TEXT_PRIMARY = new Color(30, 41, 59);
@@ -27,6 +38,7 @@ public class DashboardPanel extends JPanel {
         this.nganhTuyenSinhService = new NganhTuyenSinhService();
         this.majorCombinationService = new MajorCombinationService();
         this.userService = new UserService();
+        this.admissionService = new AdmissionEngineService();
         setupPanel();
     }
 
@@ -83,7 +95,80 @@ public class DashboardPanel extends JPanel {
         Box v = Box.createVerticalBox();
         v.add(title); v.add(sub);
         panel.add(v, BorderLayout.WEST);
+
+        // Thanh công cụ nút Import góc phải
+        JPanel actionPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 5));
+        actionPanel.setOpaque(false);
+
+        JButton btnImportEnglish = new JButton("📥 Quy đổi Tiếng Anh");
+        styleHeaderButton(btnImportEnglish);
+        btnImportEnglish.addActionListener(e -> triggerEnglishImport());
+
+        JButton btnImportPriority = new JButton("📥 Ưu tiên xét tuyển");
+        styleHeaderButton(btnImportPriority);
+        btnImportPriority.addActionListener(e -> triggerPriorityImport());
+
+        actionPanel.add(btnImportEnglish);
+        actionPanel.add(btnImportPriority);
+        panel.add(actionPanel, BorderLayout.EAST);
         return panel;
+    }
+
+    private void styleHeaderButton(JButton button) {
+        button.setFont(new Font("Segoe UI", Font.BOLD, 13));
+        button.setForeground(Color.WHITE);
+        button.setBackground(PURPLE_ACCENT);
+        button.setFocusPainted(false);
+        button.setBorder(BorderFactory.createEmptyBorder(8, 15, 8, 15));
+        button.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+    }
+
+    // Logic xử lý nút bấm Import Quy đổi Tiếng Anh
+    private void triggerEnglishImport() {
+        JFileChooser chooser = new JFileChooser();
+        chooser.setDialogTitle("Chọn file Excel Quy đổi Tiếng Anh");
+        chooser.setFileFilter(new FileNameExtensionFilter("Excel Files (*.xlsx)", "xlsx"));
+        
+        int result = chooser.showOpenDialog(this);
+        if (result == JFileChooser.APPROVE_OPTION) {
+            File selectedFile = chooser.getSelectedFile();
+            try {
+                List<EnglishConversionDTO> dtos = EnglishConversionExcelImportUtil.importRows(selectedFile);
+                boolean success = admissionService.importEnglishFromExcel(dtos);
+                if (success) {
+                    JOptionPane.showMessageDialog(this, "Import thành công " + dtos.size() + " dòng quy đổi Tiếng Anh!", "Thành công", JOptionPane.INFORMATION_MESSAGE);
+                } else {
+                    JOptionPane.showMessageDialog(this, "Không có dữ liệu hợp lệ để import.", "Thông báo", JOptionPane.WARNING_MESSAGE);
+                }
+            } catch (Exception ex) {
+                ex.printStackTrace();
+                JOptionPane.showMessageDialog(this, "Lỗi khi import file: " + ex.getMessage(), "Lỗi Hệ Thống", JOptionPane.ERROR_MESSAGE);
+            }
+        }
+    }
+
+    // Logic xử lý nút bấm Import Ưu tiên xét tuyển
+    private void triggerPriorityImport() {
+        JFileChooser chooser = new JFileChooser();
+        chooser.setDialogTitle("Chọn file Excel Danh sách ưu tiên xét tuyển");
+        chooser.setFileFilter(new FileNameExtensionFilter("Excel Files (*.xlsx)", "xlsx"));
+        
+        int result = chooser.showOpenDialog(this);
+        if (result == JFileChooser.APPROVE_OPTION) {
+            File selectedFile = chooser.getSelectedFile();
+            try {
+                List<PriorityAdmissionDTO> dtos = PriorityAdmissionExcelImportUtil.importRows(selectedFile);
+                boolean success = admissionService.importPriorityFromExcel(dtos);
+                if (success) {
+                    JOptionPane.showMessageDialog(this, "Import thành công " + dtos.size() + " dòng ưu tiên xét tuyển!", "Thành công", JOptionPane.INFORMATION_MESSAGE);
+                } else {
+                    JOptionPane.showMessageDialog(this, "Không có dữ liệu hợp lệ để import.", "Thông báo", JOptionPane.WARNING_MESSAGE);
+                }
+            } catch (Exception ex) {
+                ex.printStackTrace();
+                JOptionPane.showMessageDialog(this, "Lỗi khi import file: " + ex.getMessage(), "Lỗi Hệ Thống", JOptionPane.ERROR_MESSAGE);
+            }
+        }
     }
 
     private JPanel createStatCard(String title, String val, String icon, Color iconBg) {
