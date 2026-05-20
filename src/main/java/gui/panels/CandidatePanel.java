@@ -1,6 +1,8 @@
 package gui.panels;
 
 import bus.CandidateService;
+import bus.ScoreStatisticsService;
+import dto.StatisticsDTO;
 import dto.CandidateDTO;
 import gui.dialogs.CandidateFormDialog;
 import utils.excel.CandidateExcelExportUtil;
@@ -27,6 +29,7 @@ import javax.swing.table.TableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.JTableHeader;
 import java.awt.BorderLayout;
+import java.awt.GridLayout;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
@@ -71,6 +74,7 @@ public class CandidatePanel extends JPanel {
 	private static final int COL_ACTION = 17;
 
 	private final CandidateService candidateService;
+	private final ScoreStatisticsService statisticsService = new ScoreStatisticsService();
 	private final DefaultTableModel tableModel;
 	private final JTable table;
 	private final JTable fixedActionTable;
@@ -114,6 +118,43 @@ public class CandidatePanel extends JPanel {
 		loadPage(1);
 	}
 
+	private void showStatisticsDialog() {
+		try {
+			StatisticsDTO stats = statisticsService.getBasicStatistics();
+			// Build a panel with two tables: Khu vực and Đối tượng
+			JPanel panel = new JPanel(new BorderLayout(8,8));
+			JLabel title = new JLabel("Tổng thí sinh: " + stats.getTotal());
+			panel.add(title, BorderLayout.NORTH);
+
+			// Khu vực table
+			javax.swing.table.DefaultTableModel modelKhu = new javax.swing.table.DefaultTableModel(new Object[]{"Khu vực", "Số lượng"}, 0) {
+				@Override public boolean isCellEditable(int r, int c) { return false; }
+			};
+			stats.getCountByKhuVuc().forEach((k, v) -> modelKhu.addRow(new Object[]{k == null || k.isEmpty() ? "(không xác định)" : k, v}));
+			JTable tblKhu = new JTable(modelKhu);
+			JScrollPane spKhu = new JScrollPane(tblKhu);
+			spKhu.setPreferredSize(new Dimension(320, 240));
+
+			// Đối tượng table
+			javax.swing.table.DefaultTableModel modelDt = new javax.swing.table.DefaultTableModel(new Object[]{"Đối tượng", "Số lượng"}, 0) {
+				@Override public boolean isCellEditable(int r, int c) { return false; }
+			};
+			stats.getCountByDoiTuong().forEach((k, v) -> modelDt.addRow(new Object[]{k == null || k.isEmpty() ? "(không xác định)" : k, v}));
+			JTable tblDt = new JTable(modelDt);
+			JScrollPane spDt = new JScrollPane(tblDt);
+			spDt.setPreferredSize(new Dimension(320, 240));
+
+			JPanel center = new JPanel(new GridLayout(1,2,12,0));
+			center.add(spKhu);
+			center.add(spDt);
+			panel.add(center, BorderLayout.CENTER);
+
+			JOptionPane.showMessageDialog(this, panel, "Thống kê thí sinh", JOptionPane.INFORMATION_MESSAGE);
+		} catch (Exception ex) {
+			showError("Không thể tải thống kê", ex instanceof Exception ? (Exception) ex : new Exception(ex));
+		}
+	}
+
 	private JPanel buildTopPanel() {
 		JPanel wrapper = new JPanel(new BorderLayout());
 		wrapper.setBorder(BorderFactory.createEmptyBorder(18, 20, 12, 20));
@@ -138,19 +179,24 @@ public class CandidatePanel extends JPanel {
 		actions.setOpaque(false);
 		JButton btnImport = new JButton("Import");
 		JButton btnExport = new JButton("Export");
+		JButton btnStats = new JButton("Thống kê");
 		JButton btnAdd = new JButton("+ Thêm thí sinh");
 		styleButton(btnImport, COLOR_GREEN);
 		styleButton(btnExport, COLOR_BLUE_SOFT);
+		styleButton(btnStats, COLOR_TEAL);
 		styleButton(btnAdd, COLOR_BLUE);
 		btnImport.setMargin(new Insets(6, 16, 6, 16));
 		btnExport.setMargin(new Insets(6, 16, 6, 16));
+		btnStats.setMargin(new Insets(6, 12, 6, 12));
 		btnAdd.setMargin(new Insets(6, 16, 6, 16));
 		actions.add(btnImport);
 		actions.add(btnExport);
+		actions.add(btnStats);
 		actions.add(btnAdd);
 
 		btnImport.addActionListener(e -> importCandidatesFromExcel());
 		btnExport.addActionListener(e -> exportCandidatesToExcel());
+		btnStats.addActionListener(e -> showStatisticsDialog());
 		btnAdd.addActionListener(e -> addCandidateFull());
 
 		wrapper.add(left, BorderLayout.WEST);
@@ -376,7 +422,7 @@ public class CandidatePanel extends JPanel {
 		candidate.setNoiSinh(stringValueAt(row, COL_NOI_SINH));
 		candidate.setDoiTuong(stringValueAt(row, COL_DOI_TUONG));
 		candidate.setKhuVuc(stringValueAt(row, COL_KHU_VUC));
-		candidate.setChuongTrinh(stringValueAt(row, COL_CHUONG_TRINH));
+		// candidate.setChuongTrinh(stringValueAt(row, COL_CHUONG_TRINH));
 		candidate.setDanToc(stringValueAt(row, COL_DAN_TOC));
 		candidate.setMaDanToc(stringValueAt(row, COL_MA_DAN_TOC));
 
@@ -525,7 +571,7 @@ public class CandidatePanel extends JPanel {
 		sb.append("Nơi sinh: ").append(emptyIfNull(c.getNoiSinh())).append("\n");
 		sb.append("Đối tượng: ").append(emptyIfNull(c.getDoiTuong())).append("\n");
 		sb.append("Khu vực: ").append(emptyIfNull(c.getKhuVuc())).append("\n");
-		sb.append("Chương trình: ").append(emptyIfNull(c.getChuongTrinh())).append("\n");
+		// sb.append("Chương trình: ").append(emptyIfNull(c.getChuongTrinh())).append("\n");
 		sb.append("Dân tộc: ").append(emptyIfNull(c.getDanToc())).append("\n");
 		sb.append("Mã dân tộc: ").append(emptyIfNull(c.getMaDanToc())).append("\n\n");
 		sb.append("Điểm theo phương thức:\n");

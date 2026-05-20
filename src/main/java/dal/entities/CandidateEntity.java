@@ -49,8 +49,8 @@ public class CandidateEntity {
 	@Column(name = "khu_vuc")
 	private String khuVuc;
 
-	@Column(name = "chuong_trinh")
-	private String chuongTrinh;
+	// @Column(name = "chuong_trinh")
+	// private String chuongTrinh;
 
 	@Column(name = "dan_toc")
 	private String danToc;
@@ -164,13 +164,13 @@ public class CandidateEntity {
 		return (hoSafe + " " + tenSafe).trim();
 	}
 
-	public String getChuongTrinh() {
-		return chuongTrinh;
-	}
+	// public String getChuongTrinh() {
+	// 	return chuongTrinh;
+	// }
 
-	public void setChuongTrinh(String chuongTrinh) {
-		this.chuongTrinh = chuongTrinh;
-	}
+	// public void setChuongTrinh(String chuongTrinh) {
+	// 	this.chuongTrinh = chuongTrinh;
+	// }
 
 	public String getDanToc() {
 		return danToc;

@@ -264,7 +264,7 @@ public class CandidateDAO {
 		candidate.setNoiSinh(entity.getNoiSinh());
 		candidate.setDoiTuong(entity.getDoiTuong());
 		candidate.setKhuVuc(entity.getKhuVuc());
-		candidate.setChuongTrinh(entity.getChuongTrinh());
+		// candidate.setChuongTrinh(entity.getChuongTrinh());
 		candidate.setDanToc(entity.getDanToc());
 		candidate.setMaDanToc(entity.getMaDanToc());
 		return candidate;
@@ -372,7 +372,7 @@ public class CandidateDAO {
 		entity.setNoiSinh(safeNullable(candidate.getNoiSinh()));
 		entity.setDoiTuong(safeNullable(candidate.getDoiTuong()));
 		entity.setKhuVuc(safeNullable(candidate.getKhuVuc()));
-		entity.setChuongTrinh(safeNullable(candidate.getChuongTrinh()));
+		// entity.setChuongTrinh(safeNullable(candidate.getChuongTrinh()));
 		entity.setDanToc(safeNullable(candidate.getDanToc()));
 		entity.setMaDanToc(safeNullable(candidate.getMaDanToc()));
 	}
@@ -396,6 +396,52 @@ public class CandidateDAO {
 
 	private double round2(double value) {
 		return Math.round(value * 100.0) / 100.0;
+	}
+
+	public int totalCount() throws SQLException {
+		try (Session session = HibernateUtil.getSessionFactory().openSession()) {
+			Long total = session.createQuery("select count(c.id) from CandidateEntity c", Long.class)
+					.uniqueResult();
+			return total == null ? 0 : total.intValue();
+		} catch (Exception ex) {
+			throw asSqlException("đếm tổng thí sinh", ex);
+		}
+	}
+
+	public Map<String, Integer> countByKhuVuc() throws SQLException {
+		try (Session session = HibernateUtil.getSessionFactory().openSession()) {
+			@SuppressWarnings("unchecked")
+			java.util.List<Object[]> rows = session.createQuery(
+					"select c.khuVuc, count(c.id) from CandidateEntity c group by c.khuVuc"
+			).list();
+			Map<String, Integer> result = new HashMap<>();
+			for (Object[] r : rows) {
+				String key = r[0] == null ? "" : String.valueOf(r[0]);
+				Long cnt = (Long) r[1];
+				result.put(key, cnt == null ? 0 : cnt.intValue());
+			}
+			return result;
+		} catch (Exception ex) {
+			throw asSqlException("thống kê theo khu_vuc", ex);
+		}
+	}
+
+	public Map<String, Integer> countByDoiTuong() throws SQLException {
+		try (Session session = HibernateUtil.getSessionFactory().openSession()) {
+			@SuppressWarnings("unchecked")
+			java.util.List<Object[]> rows = session.createQuery(
+					"select c.doiTuong, count(c.id) from CandidateEntity c group by c.doiTuong"
+			).list();
+			Map<String, Integer> result = new HashMap<>();
+			for (Object[] r : rows) {
+				String key = r[0] == null ? "" : String.valueOf(r[0]);
+				Long cnt = (Long) r[1];
+				result.put(key, cnt == null ? 0 : cnt.intValue());
+			}
+			return result;
+		} catch (Exception ex) {
+			throw asSqlException("thống kê theo doi_tuong", ex);
+		}
 	}
 
 	private String safe(String input) {
