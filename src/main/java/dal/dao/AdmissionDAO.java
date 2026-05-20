@@ -14,6 +14,7 @@ import java.util.List;
 import java.sql.ResultSet;
 import java.sql.Connection;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 
 public class AdmissionDAO {
@@ -30,16 +31,48 @@ public class AdmissionDAO {
                                + "ON DUPLICATE KEY UPDATE chung_chi=VALUES(chung_chi), diem_goc=VALUES(diem_goc), "
                                + "diem_quydoi=VALUES(diem_quydoi), diem_cong=VALUES(diem_cong)";
 
-                    try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                    String updateExamSql = "UPDATE xt_diemthixettuyen SET N1_CC = ? WHERE cccd = ?";
+                    String updateBonusSql = "UPDATE xt_diemcongxetuyen SET diemCC = ? WHERE ts_cccd = ? AND (phuongthuc IS NULL OR phuongthuc = '' OR LOWER(phuongthuc) = ? OR LOWER(phuongthuc) LIKE ?)";
+                    String updateBonusFallbackSql = "UPDATE xt_diemcongxetuyen SET diemCC = ? WHERE ts_cccd = ?";
+
+                    try (PreparedStatement ps = conn.prepareStatement(sql);
+                         PreparedStatement psExam = conn.prepareStatement(updateExamSql);
+                         PreparedStatement psBonusMatch = conn.prepareStatement(updateBonusSql);
+                         PreparedStatement psBonusFallback = conn.prepareStatement(updateBonusFallbackSql)) {
                         for (EnglishConversionDTO dto : dtoList) {
-                            ps.setString(1, dto.getCccd());
-                            ps.setString(2, dto.getChungChi());
+                            String cccd = dto.getCccd();
+                            BigDecimal diemQuydoi = dto.getDiemQuydoi() == null ? BigDecimal.ZERO : dto.getDiemQuydoi();
+                            BigDecimal diemCong = dto.getDiemCong() == null ? BigDecimal.ZERO : dto.getDiemCong();
+                            String chungChi = dto.getChungChi() == null ? "" : dto.getChungChi().trim();
+                            String lowerChungChi = chungChi.toLowerCase(Locale.ROOT);
+
+                            ps.setString(1, cccd);
+                            ps.setString(2, chungChi);
                             ps.setString(3, dto.getDiemGoc());
-                            ps.setBigDecimal(4, dto.getDiemQuydoi());
-                            ps.setBigDecimal(5, dto.getDiemCong());
+                            ps.setBigDecimal(4, diemQuydoi);
+                            ps.setBigDecimal(5, diemCong);
                             ps.addBatch();
+
+                            psExam.setBigDecimal(1, diemQuydoi);
+                            psExam.setString(2, cccd);
+                            psExam.addBatch();
+
+                            if (lowerChungChi.isEmpty()) {
+                                psBonusFallback.setBigDecimal(1, diemCong);
+                                psBonusFallback.setString(2, cccd);
+                                psBonusFallback.addBatch();
+                            } else {
+                                psBonusMatch.setBigDecimal(1, diemCong);
+                                psBonusMatch.setString(2, cccd);
+                                psBonusMatch.setString(3, lowerChungChi);
+                                psBonusMatch.setString(4, "%" + lowerChungChi + "%");
+                                psBonusMatch.addBatch();
+                            }
                         }
                         ps.executeBatch();
+                        psExam.executeBatch();
+                        psBonusMatch.executeBatch();
+                        psBonusFallback.executeBatch();
                     }
                 });
                 tx.commit();

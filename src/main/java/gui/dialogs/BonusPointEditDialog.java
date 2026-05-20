@@ -13,6 +13,8 @@ import javax.swing.SwingUtilities;
 
 public class BonusPointEditDialog extends JDialog {
     private final JTextField txtCccd = new JTextField(24);
+    private final JTextField txtMaNganh = new JTextField(24);
+    private final JTextField txtMaToHop = new JTextField(24);
     private final JTextField txtPhuongThuc = new JTextField(24);
     private final JTextField txtDiemCC = new JTextField(24);
     private final JTextField txtDiemUtxt = new JTextField(24);
@@ -23,18 +25,22 @@ public class BonusPointEditDialog extends JDialog {
     private BonusPointEditDialog(Component parent, BonusPointDTO dto, boolean isReadOnly) {
         super(SwingUtilities.getWindowAncestor(parent), "Điểm cộng", ModalityType.APPLICATION_MODAL);
 
-        JPanel form = new JPanel(new GridLayout(6, 2, 8, 8));
+        JPanel form = new JPanel(new GridLayout(8, 2, 8, 8));
         form.setBorder(BorderFactory.createEmptyBorder(12, 12, 12, 12));
 
         form.add(new JLabel("CCCD:"));
         form.add(txtCccd);
-        form.add(new JLabel("Chứng chỉ ngoại ngữ:"));
+        form.add(new JLabel("Mã ngành:"));
+        form.add(txtMaNganh);
+        form.add(new JLabel("Mã tổ hợp:"));
+        form.add(txtMaToHop);
+        form.add(new JLabel("Phương thức:"));
         form.add(txtPhuongThuc);
-        form.add(new JLabel("Điểm:"));
-        form.add(txtDiemCC);
-        form.add(new JLabel("Điểm quy đổi:"));
-        form.add(txtDiemUtxt);
         form.add(new JLabel("Điểm cộng:"));
+        form.add(txtDiemCC);
+        form.add(new JLabel("Điểm ưu tiên:"));
+        form.add(txtDiemUtxt);
+        form.add(new JLabel("Tổng điểm:"));
         form.add(txtDiemTong);
         form.add(new JLabel("Ghi chú:"));
         form.add(txtGhiChu);
@@ -46,6 +52,8 @@ public class BonusPointEditDialog extends JDialog {
 
         if (dto != null) {
             txtCccd.setText(dto.getTsCccd() != null ? dto.getTsCccd() : "");
+            txtMaNganh.setText(dto.getMaNganh() != null ? dto.getMaNganh() : "");
+            txtMaToHop.setText(dto.getMaToHop() != null ? dto.getMaToHop() : "");
             txtPhuongThuc.setText(dto.getPhuongThuc() != null ? dto.getPhuongThuc() : "");
             txtDiemCC.setText(dto.getDiemCC() != null ? dto.getDiemCC().toString() : "");
             txtDiemUtxt.setText(dto.getDiemUtxt() != null ? dto.getDiemUtxt().toString() : "");
@@ -69,6 +77,8 @@ public class BonusPointEditDialog extends JDialog {
                 newDto.setId(dto.getId());
             }
             newDto.setTsCccd(txtCccd.getText());
+            newDto.setMaNganh(txtMaNganh.getText());
+            newDto.setMaToHop(txtMaToHop.getText());
             newDto.setPhuongThuc(txtPhuongThuc.getText());
             newDto.setDiemCC(parseDouble(txtDiemCC.getText()));
             newDto.setDiemUtxt(parseDouble(txtDiemUtxt.getText()));

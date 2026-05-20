@@ -43,7 +43,7 @@ public class BonusPointPanel extends JPanel {
 	private static final int PAGE_SIZE = 20;
 
 	private static final String[] TABLE_COLUMNS = {
-			"STT", "CCCD", "Chứng chỉ ngoại ngữ", "Điểm", "Điểm quy đổi", "Điểm cộng", "Thao tác"
+			"STT", "CCCD", "Phương thức", "Mã ngành", "Mã tổ hợp", "Điểm cộng", "Điểm ưu tiên", "Tổng điểm", "Ghi chú", "Thao tác"
 	};
 
 	private final BonusPointService service;
@@ -97,7 +97,7 @@ public class BonusPointPanel extends JPanel {
 		title.setFont(title.getFont().deriveFont(java.awt.Font.BOLD, 28f));
 		title.setForeground(new Color(17, 24, 39));
 
-		JLabel subtitle = new JLabel("Danh sách CCCD, chứng chỉ ngoại ngữ và điểm cộng");
+		JLabel subtitle = new JLabel("Danh sách CCCD, phương thức và điểm cộng");
 		subtitle.setFont(subtitle.getFont().deriveFont(java.awt.Font.PLAIN, 13f));
 		subtitle.setForeground(new Color(75, 85, 99));
 
@@ -108,15 +108,20 @@ public class BonusPointPanel extends JPanel {
 		JPanel actions = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
 		actions.setOpaque(false);
 		JButton btnImport = new JButton("Import");
+		JButton btnGenerate = new JButton("Sinh dữ liệu NVXT");
 		JButton btnAdd = new JButton("+ Thêm điểm cộng");
 		styleButton(btnImport, COLOR_GREEN);
+		styleButton(btnGenerate, COLOR_BLUE_SOFT);
 		styleButton(btnAdd, COLOR_BLUE);
 		btnImport.setMargin(new Insets(6, 16, 6, 16));
+		btnGenerate.setMargin(new Insets(6, 16, 6, 16));
 		btnAdd.setMargin(new Insets(6, 16, 6, 16));
 		actions.add(btnImport);
+		actions.add(btnGenerate);
 		actions.add(btnAdd);
 
 		btnImport.addActionListener(e -> importFromExcel());
+		btnGenerate.addActionListener(e -> generateFromAspirationData());
 		btnAdd.addActionListener(e -> addRow());
 
 		wrapper.add(left, BorderLayout.WEST);
@@ -195,7 +200,7 @@ public class BonusPointPanel extends JPanel {
 		searchPanel.setOpaque(false);
 		searchPanel.add(new JLabel("CCCD:"));
 		searchPanel.add(txtSearchCccd);
-		searchPanel.add(new JLabel("Chứng chỉ ngoại ngữ:"));
+		searchPanel.add(new JLabel("Phương thức:"));
 		searchPanel.add(txtSearchMethod);
 		searchCard.add(searchPanel, BorderLayout.CENTER);
 
@@ -230,7 +235,7 @@ public class BonusPointPanel extends JPanel {
 	}
 
 	private void applyFixedColumnWidths() {
-		int[] widths = {70, 150, 220, 90, 110, 100, 96};
+		int[] widths = {70, 150, 220, 120, 120, 110, 110, 110, 180, 96};
 		for (int i = 0; i < widths.length && i < table.getColumnModel().getColumnCount(); i++) {
 			table.getColumnModel().getColumn(i).setPreferredWidth(widths[i]);
 			table.getColumnModel().getColumn(i).setMinWidth(widths[i]);
@@ -277,9 +282,12 @@ public class BonusPointPanel extends JPanel {
 						stt,
 						emptyIfNull(row.getTsCccd()),
 						emptyIfNull(row.getPhuongThuc()),
+						emptyIfNull(row.getMaNganh()),
+						emptyIfNull(row.getMaToHop()),
 						formatNumber(row.getDiemCC()),
 						formatNumber(row.getDiemUtxt()),
 						formatNumber(row.getDiemTong()),
+						emptyIfNull(row.getGhiChu()),
 						""
 				});
 			}
@@ -403,6 +411,26 @@ public class BonusPointPanel extends JPanel {
 			loadPage(1);
 		} catch (Exception ex) {
 			showError("Không thể import file Excel", ex);
+		}
+	}
+
+	private void generateFromAspirationData() {
+		int confirm = JOptionPane.showConfirmDialog(
+				this,
+				"Sinh dữ liệu điểm cộng từ nguyện vọng trong DB?\nChọn 'Có' để ghi đè toàn bộ dữ liệu hiện có, 'Không' để chỉ cập nhật/ghép mới.",
+				"Xác nhận sinh dữ liệu",
+				JOptionPane.YES_NO_CANCEL_OPTION);
+		if (confirm == JOptionPane.CANCEL_OPTION || confirm == JOptionPane.CLOSED_OPTION) {
+			return;
+		}
+
+		boolean replaceExisting = confirm == JOptionPane.YES_OPTION;
+		try {
+			BonusPointService.GenerationResult result = service.generateBonusPointsFromAspirations(replaceExisting);
+			JOptionPane.showMessageDialog(this, result.getMessage(), "Thành công", JOptionPane.INFORMATION_MESSAGE);
+			loadPage(1);
+		} catch (SQLException ex) {
+			showError("Không thể sinh dữ liệu điểm cộng", ex);
 		}
 	}
 

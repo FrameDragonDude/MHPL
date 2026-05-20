@@ -10,6 +10,7 @@ import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
 import utils.excel.ExamScoresExcelImportUtil;
 import utils.excel.ExamScoresExcelExportUtil;
+import utils.excel.ExamScoresMultiSheetExcelImportUtil;
 import bus.ExamScoreService;
 import dto.ExamScoreDTO;
 import gui.MainFrame;
@@ -95,17 +96,19 @@ public class ExamScorePanel extends JPanel {
 
         JPanel actions = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
         JButton btnImport = new JButton("Nhập Excel");
+        JButton btnImportMulti = new JButton("Nhập VSAT/ĐGNL");
         JButton btnExport = new JButton("Xuất Excel");
         JButton btnAdd = new JButton("+ Nhập điểm");
         JButton btnStats = new JButton("Xem thống kê");
         styleButton(btnStats, new Color(255, 178, 102));
         styleButton(btnImport, COLOR_GREEN);
+        styleButton(btnImportMulti, new Color(0, 150, 136));
         styleButton(btnExport, new Color(30, 136, 229));
         styleButton(btnAdd, COLOR_BLUE);
 
         btnExport.addActionListener(e -> exportExamScoresToExcel());
-
         btnImport.addActionListener(e -> handleImportExcel());
+        btnImportMulti.addActionListener(e -> handleImportVasatDgnlExcel());
         
         btnStats.addActionListener(e -> {
             mainFrame.switchPanel("STATISTICS");
@@ -128,6 +131,7 @@ public class ExamScorePanel extends JPanel {
         actions.add(btnStats);
         actions.add(btnExport);
         actions.add(btnImport);
+        actions.add(btnImportMulti);
         actions.add(btnAdd);
 
         wrapper.add(left, BorderLayout.WEST);
@@ -345,6 +349,36 @@ public class ExamScorePanel extends JPanel {
                 SwingUtilities.invokeLater(() -> {
                     JOptionPane.showMessageDialog(this, 
                         "Lỗi import: " + ex.getMessage(),
+                        "Lỗi", JOptionPane.ERROR_MESSAGE);
+                });
+            }
+        }).start();
+    }
+
+    private void handleImportVasatDgnlExcel() {
+        JFileChooser fileChooser = new JFileChooser();
+        fileChooser.setDialogTitle("Chọn file Excel VSAT/ĐGNL");
+
+        int result = fileChooser.showOpenDialog(this);
+        if (result != JFileChooser.APPROVE_OPTION) return;
+
+        java.io.File file = fileChooser.getSelectedFile();
+
+        new Thread(() -> {
+            try {
+                List<ExamScoreDTO> list = ExamScoresMultiSheetExcelImportUtil.importExamScores(file);
+                int success = examScoreService.importOrUpdateBatch(list);
+
+                SwingUtilities.invokeLater(() -> {
+                    JOptionPane.showMessageDialog(this, 
+                        "Import VSAT/ĐGNL thành công " + success + " dòng! (cập nhật hoặc thêm mới)");
+                    refreshData();
+                });
+
+            } catch (Exception ex) {
+                SwingUtilities.invokeLater(() -> {
+                    JOptionPane.showMessageDialog(this, 
+                        "Lỗi import VSAT/ĐGNL: " + ex.getMessage(),
                         "Lỗi", JOptionPane.ERROR_MESSAGE);
                 });
             }

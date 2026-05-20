@@ -385,7 +385,7 @@ public class CandidateDAO {
 		score.setDiemSi(candidate.getDiemSi());
 		score.setDiemSu(candidate.getDiemSu());
 		score.setDiemDi(candidate.getDiemDi());
-		score.setDiemN1Cc(candidate.getDiemNn());
+		score.setDiemN1Thi(candidate.getDiemNn());
 		score.setDiemKtpl(candidate.getDiemKtpl());
 		score.setDiemTi(candidate.getDiemTi());
 		score.setDiemCncn(candidate.getDiemCncn());

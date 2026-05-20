@@ -264,6 +264,56 @@ public class ExamScoreDAO {
         }
     }
 
+    public int insertOrUpdateBatch(List<ExamScoreDTO> list) throws SQLException {
+        Transaction tx = null;
+        int count = 0;
+
+        try (Session session = HibernateUtil.getSessionFactory().openSession()) {
+            tx = session.beginTransaction();
+            int batchSize = 50;
+
+            for (int i = 0; i < list.size(); i++) {
+                ExamScoreDTO dto = list.get(i);
+                String cccd = safe(dto.getCccd());
+                ExamScoreEntity entity = null;
+
+                if (!cccd.isEmpty()) {
+                    entity = findExamScoreEntityByCccd(session, cccd);
+                }
+
+                if (entity == null) {
+                    entity = mapToEntity(dto);
+                    session.persist(entity);
+                } else {
+                    mapToEntity(dto, entity);
+                }
+
+                if (i % batchSize == 0) {
+                    session.flush();
+                    session.clear();
+                }
+
+                count++;
+            }
+
+            tx.commit();
+            return count;
+        } catch (Exception ex) {
+            if (tx != null) tx.rollback();
+            throw asSqlException("import or update batch", ex);
+        }
+    }
+
+    private ExamScoreEntity findExamScoreEntityByCccd(Session session, String cccd) {
+        List<ExamScoreEntity> existing = session.createQuery(
+                "from ExamScoreEntity s where s.cccd = :cccd",
+                ExamScoreEntity.class)
+                .setParameter("cccd", cccd)
+                .setMaxResults(1)
+                .list();
+        return existing.isEmpty() ? null : existing.get(0);
+    }
+
     private ExamScoreDTO mapToDTO(ExamScoreEntity entity) {
         if (entity == null) return null;
         
@@ -293,7 +343,10 @@ public class ExamScoreDAO {
     }
 
     private ExamScoreEntity mapToEntity(ExamScoreDTO dto) {
-        ExamScoreEntity entity = new ExamScoreEntity();
+        return mapToEntity(dto, new ExamScoreEntity());
+    }
+
+    private ExamScoreEntity mapToEntity(ExamScoreDTO dto, ExamScoreEntity entity) {
         entity.setCccd(dto.getCccd());
         entity.setSoBaoDanh(dto.getSoBaoDanh());
         entity.setDPhuongThuc(dto.getPhuongThuc());

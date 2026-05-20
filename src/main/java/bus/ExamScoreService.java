@@ -145,4 +145,8 @@ public class ExamScoreService {
         return examScoreDAO.insertBatch(list);
     }
 
+    public int importOrUpdateBatch(List<ExamScoreDTO> list) throws SQLException {
+        return examScoreDAO.insertOrUpdateBatch(list);
+    }
+
 }
