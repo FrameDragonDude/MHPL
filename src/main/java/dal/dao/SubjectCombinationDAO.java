@@ -33,6 +33,24 @@ public class SubjectCombinationDAO {
         }
     }
 
+    public int countRowsWithMajors(String codeKeyword, String nameKeyword) throws SQLException {
+        String code = safe(codeKeyword);
+        String name = safe(nameKeyword);
+
+        String sql = "select count(1) from xt_nganh_tohop nt join xt_tohop_monthi t on nt.matohop = t.matohop where (:code = '' or t.matohop like :codeLike) and (:name = '' or t.tentohop like :nameLike)";
+        try (Session session = HibernateUtil.getSessionFactory().openSession()) {
+            Number result = (Number) session.createNativeQuery(sql)
+                    .setParameter("code", code)
+                    .setParameter("codeLike", "%" + code + "%")
+                    .setParameter("name", name)
+                    .setParameter("nameLike", "%" + name + "%")
+                    .getSingleResult();
+            return result == null ? 0 : result.intValue();
+        } catch (Exception ex) {
+            throw asSqlException("dem to hop mon voi nganh", ex);
+        }
+    }
+
     public List<SubjectCombinationDTO> findRows(String codeKeyword, String nameKeyword, int page, int pageSize) throws SQLException {
         String code = safe(codeKeyword);
         String name = safe(nameKeyword);
@@ -72,6 +90,48 @@ public class SubjectCombinationDAO {
             return results;
         } catch (Exception ex) {
             throw asSqlException("tai danh sach to hop mon", ex);
+        }
+    }
+
+    public List<SubjectCombinationDTO> findRowsWithMajors(String codeKeyword, String nameKeyword, int page, int pageSize) throws SQLException {
+        String code = safe(codeKeyword);
+        String name = safe(nameKeyword);
+        int offset = (Math.max(page, 1) - 1) * Math.max(pageSize, 1);
+
+        String sql = "select nt.id, nt.manganh, nt.matohop, t.mon1, nt.hsmon1, t.mon2, nt.hsmon2, t.mon3, nt.hsmon3, t.tentohop "
+                + "from xt_nganh_tohop nt join xt_tohop_monthi t on nt.matohop = t.matohop "
+                + "where (:code = '' or t.matohop like :codeLike) and (:name = '' or t.tentohop like :nameLike) "
+                + "order by t.matohop, nt.manganh limit :limitValue offset :offsetValue";
+
+        try (Session session = HibernateUtil.getSessionFactory().openSession()) {
+            @SuppressWarnings("unchecked")
+            List<Object[]> rows = session.createNativeQuery(sql)
+                    .setParameter("code", code)
+                    .setParameter("codeLike", "%" + code + "%")
+                    .setParameter("name", name)
+                    .setParameter("nameLike", "%" + name + "%")
+                    .setParameter("limitValue", Math.max(pageSize, 1))
+                    .setParameter("offsetValue", Math.max(offset, 0))
+                    .list();
+
+            List<SubjectCombinationDTO> results = new ArrayList<>();
+            for (Object[] row : rows) {
+                SubjectCombinationDTO dto = new SubjectCombinationDTO();
+                dto.setId(toInt(row[0]));
+                dto.setMaNganh(toStr(row[1]));
+                dto.setMaToHop(toStr(row[2]));
+                dto.setMon1(toStr(row[3]));
+                dto.setHs1(row[4] == null ? null : Integer.valueOf(toStr(row[4])));
+                dto.setMon2(toStr(row[5]));
+                dto.setHs2(row[6] == null ? null : Integer.valueOf(toStr(row[6])));
+                dto.setMon3(toStr(row[7]));
+                dto.setHs3(row[8] == null ? null : Integer.valueOf(toStr(row[8])));
+                dto.setTenToHop(toStr(row[9]));
+                results.add(dto);
+            }
+            return results;
+        } catch (Exception ex) {
+            throw asSqlException("tai danh sach to hop mon voi nganh", ex);
         }
     }
 
@@ -195,6 +255,104 @@ public class SubjectCombinationDAO {
         } catch (Exception ex) {
             rollbackQuietly(tx);
             throw asSqlException("upsert to hop mon", ex);
+        }
+    }
+
+    public String getMajorsSummary(String maToHop) throws SQLException {
+        if (maToHop == null || maToHop.trim().isEmpty()) {
+            return "";
+        }
+        try (Session session = HibernateUtil.getSessionFactory().openSession()) {
+            String sql = "select group_concat(concat(manganh, ' [', ifnull(hsmon1, ''), '/', ifnull(hsmon2, ''), '/', ifnull(hsmon3, ''), ']') separator '; ') from xt_nganh_tohop where matohop = :matohop";
+            Object result = session.createNativeQuery(sql)
+                    .setParameter("matohop", maToHop)
+                    .uniqueResult();
+            return result == null ? "" : result.toString();
+        } catch (Exception ex) {
+            throw asSqlException("lay danh sach nganh cho to hop", ex);
+        }
+    }
+
+    public String[] getHSCoefficients(String maToHop) throws SQLException {
+        if (maToHop == null || maToHop.trim().isEmpty()) {
+            return new String[] {"", "", ""};
+        }
+        try (Session session = HibernateUtil.getSessionFactory().openSession()) {
+            String sql = "select hsmon1, hsmon2, hsmon3 from xt_nganh_tohop where matohop = :matohop and (hsmon1 is not null or hsmon2 is not null or hsmon3 is not null)";
+            @SuppressWarnings("unchecked")
+            List<Object[]> rows = session.createNativeQuery(sql)
+                    .setParameter("matohop", maToHop)
+                    .list();
+
+            if (rows == null || rows.isEmpty()) {
+                return new String[] {"", "", ""};
+            }
+
+            // If all non-null values for each hs column are identical, return that value; otherwise return empty
+            Integer common1 = null, common2 = null, common3 = null;
+            for (Object[] r : rows) {
+                Integer v1 = r[0] == null ? null : ((Number) r[0]).intValue();
+                Integer v2 = r[1] == null ? null : ((Number) r[1]).intValue();
+                Integer v3 = r[2] == null ? null : ((Number) r[2]).intValue();
+
+                if (v1 != null) {
+                    if (common1 == null) common1 = v1;
+                    else if (!common1.equals(v1)) common1 = Integer.MIN_VALUE;
+                }
+                if (v2 != null) {
+                    if (common2 == null) common2 = v2;
+                    else if (!common2.equals(v2)) common2 = Integer.MIN_VALUE;
+                }
+                if (v3 != null) {
+                    if (common3 == null) common3 = v3;
+                    else if (!common3.equals(v3)) common3 = Integer.MIN_VALUE;
+                }
+            }
+
+            String s1 = (common1 == null || common1 == Integer.MIN_VALUE) ? "" : common1.toString();
+            String s2 = (common2 == null || common2 == Integer.MIN_VALUE) ? "" : common2.toString();
+            String s3 = (common3 == null || common3 == Integer.MIN_VALUE) ? "" : common3.toString();
+            return new String[] {s1, s2, s3};
+        } catch (Exception ex) {
+            throw asSqlException("lay he so cho to hop", ex);
+        }
+    }
+
+    public String[] getMajorsBySubject(String maToHop) throws SQLException {
+        if (maToHop == null || maToHop.trim().isEmpty()) {
+            return new String[] {"", "", ""};
+        }
+        try (Session session = HibernateUtil.getSessionFactory().openSession()) {
+            String sql = "select manganh, hsmon1, hsmon2, hsmon3 from xt_nganh_tohop where matohop = :matohop";
+            @SuppressWarnings("unchecked")
+            List<Object[]> rows = session.createNativeQuery(sql)
+                    .setParameter("matohop", maToHop)
+                    .list();
+
+            StringBuilder sb1 = new StringBuilder();
+            StringBuilder sb2 = new StringBuilder();
+            StringBuilder sb3 = new StringBuilder();
+            for (Object[] r : rows) {
+                String manganh = r[0] == null ? "" : r[0].toString();
+                Object o1 = r[1];
+                Object o2 = r[2];
+                Object o3 = r[3];
+                if (o1 != null) {
+                    if (sb1.length() > 0) sb1.append("; ");
+                    sb1.append(manganh).append("(").append(o1.toString()).append(")");
+                }
+                if (o2 != null) {
+                    if (sb2.length() > 0) sb2.append("; ");
+                    sb2.append(manganh).append("(").append(o2.toString()).append(")");
+                }
+                if (o3 != null) {
+                    if (sb3.length() > 0) sb3.append("; ");
+                    sb3.append(manganh).append("(").append(o3.toString()).append(")");
+                }
+            }
+            return new String[] {sb1.toString(), sb2.toString(), sb3.toString()};
+        } catch (Exception ex) {
+            throw asSqlException("lay danh sach nganh theo mon cho to hop", ex);
         }
     }
 

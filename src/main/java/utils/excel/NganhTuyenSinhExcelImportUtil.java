@@ -63,6 +63,18 @@ public final class NganhTuyenSinhExcelImportUtil {
                 String ct = text(row, headerIndex, formatter, evaluator, "chi_tieu_chot", "chitieu", "n_chitieu", "chỉ tiêu chốt");
                 try { dto.setChiTieuChot(ct == null || ct.isBlank() ? null : Integer.parseInt(ct)); } catch (Exception ex) { dto.setChiTieuChot(null); }
 
+                // Additional flags/columns: n_tuyenthang, n_dgnl, n_thpt, n_vsat
+                String nTuyenthang = text(row, headerIndex, formatter, evaluator, "n_tuyenthang", "n_tuyen_thang", "tuyenthang", "n_tuyen", "n_tuyenthang_flag");
+                if (isBlank(nTuyenthang)) {
+                    // fallback to program/chuongTrinh when available
+                    nTuyenthang = dto.getChuongTrinh();
+                }
+                dto.setnTuyenthang(nTuyenthang);
+
+                dto.setnDgnl(text(row, headerIndex, formatter, evaluator, "n_dgnl", "dgnl", "n_dgnl_flag"));
+                dto.setnThpt(text(row, headerIndex, formatter, evaluator, "n_thpt", "thpt", "n_thpt_flag"));
+                dto.setnVsat(text(row, headerIndex, formatter, evaluator, "n_vsat", "vsat", "n_vsat_flag"));
+
                 if (isBlank(dto.getMaXetTuyen()) && isBlank(dto.getTenNganh())) continue;
                 results.add(dto);
             }

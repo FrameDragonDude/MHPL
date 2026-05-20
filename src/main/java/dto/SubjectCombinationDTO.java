@@ -3,10 +3,14 @@ package dto;
 public class SubjectCombinationDTO {
 	private Integer id;
 	private String maToHop;
+	private String maNganh;
 	private String mon1;
 	private String mon2;
 	private String mon3;
 	private String tenToHop;
+	private Integer hs1;
+	private Integer hs2;
+	private Integer hs3;
 
 	public Integer getId() {
 		return id;
@@ -22,6 +26,14 @@ public class SubjectCombinationDTO {
 
 	public void setMaToHop(String maToHop) {
 		this.maToHop = maToHop;
+	}
+
+	public String getMaNganh() {
+		return maNganh;
+	}
+
+	public void setMaNganh(String maNganh) {
+		this.maNganh = maNganh;
 	}
 
 	public String getMon1() {
@@ -54,5 +66,29 @@ public class SubjectCombinationDTO {
 
 	public void setTenToHop(String tenToHop) {
 		this.tenToHop = tenToHop;
+	}
+
+	public Integer getHs1() {
+		return hs1;
+	}
+
+	public void setHs1(Integer hs1) {
+		this.hs1 = hs1;
+	}
+
+	public Integer getHs2() {
+		return hs2;
+	}
+
+	public void setHs2(Integer hs2) {
+		this.hs2 = hs2;
+	}
+
+	public Integer getHs3() {
+		return hs3;
+	}
+
+	public void setHs3(Integer hs3) {
+		this.hs3 = hs3;
 	}
 }

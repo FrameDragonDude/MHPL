@@ -16,11 +16,11 @@ public class SubjectCombinationService {
 
     public List<SubjectCombinationDTO> getRows(String codeKeyword, String nameKeyword, int page) throws SQLException {
         int safePage = Math.max(page, 1);
-        return dao.findRows(codeKeyword, nameKeyword, safePage, PAGE_SIZE);
+        return dao.findRowsWithMajors(codeKeyword, nameKeyword, safePage, PAGE_SIZE);
     }
 
     public int countRows(String codeKeyword, String nameKeyword) throws SQLException {
-        return dao.countRows(codeKeyword, nameKeyword);
+        return dao.countRowsWithMajors(codeKeyword, nameKeyword);
     }
 
     public int countPages(String codeKeyword, String nameKeyword) throws SQLException {
@@ -57,6 +57,18 @@ public class SubjectCombinationService {
             return false;
         }
         return dao.upsertByCode(dto);
+    }
+
+    public String getMajorsSummaryForToHop(String maToHop) throws SQLException {
+        return dao.getMajorsSummary(maToHop);
+    }
+
+    public String[] getHSCoefficientsForToHop(String maToHop) throws SQLException {
+        return dao.getHSCoefficients(maToHop);
+    }
+
+    public String[] getMajorsBySubjectForToHop(String maToHop) throws SQLException {
+        return dao.getMajorsBySubject(maToHop);
     }
 
     private boolean isValid(SubjectCombinationDTO dto) {

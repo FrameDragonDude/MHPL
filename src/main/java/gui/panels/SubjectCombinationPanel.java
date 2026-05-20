@@ -15,6 +15,11 @@ import java.util.ArrayList;
 import java.util.List;
 import javax.swing.AbstractCellEditor;
 import javax.swing.BorderFactory;
+import javax.swing.AbstractAction;
+import javax.swing.ActionMap;
+import javax.swing.InputMap;
+import javax.swing.JComponent;
+import javax.swing.KeyStroke;
 import javax.swing.JButton;
 import javax.swing.JFileChooser;
 import javax.swing.JLabel;
@@ -27,6 +32,7 @@ import javax.swing.JTextField;
 import javax.swing.ListSelectionModel;
 import javax.swing.SwingUtilities;
 import javax.swing.event.DocumentEvent;
+import java.awt.event.KeyEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.table.DefaultTableModel;
@@ -41,7 +47,7 @@ public class SubjectCombinationPanel extends JPanel {
     private static final Color COLOR_RED = new Color(198, 40, 40);
 
     private static final String[] TABLE_COLUMNS = {
-        "Mã tổ hợp", "Môn 1", "Môn 2", "Môn 3", "Tên tổ hợp", "Thao tác"
+        "Mã tổ hợp", "Mã ngành", "Môn 1", "HS1", "Môn 2", "HS2", "Môn 3", "HS3", "Tên tổ hợp", "Thao tác"
     };
 
     private final SubjectCombinationService service;
@@ -222,13 +228,21 @@ public class SubjectCombinationPanel extends JPanel {
             }
         });
 
+        // Keyboard bindings: Left arrow = previous page, Right arrow = next page
+        InputMap im = wrapper.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
+        ActionMap am = wrapper.getActionMap();
+        im.put(KeyStroke.getKeyStroke(KeyEvent.VK_LEFT, 0), "prevPage");
+        im.put(KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT, 0), "nextPage");
+        am.put("prevPage", new AbstractAction() { @Override public void actionPerformed(java.awt.event.ActionEvent e) { if (currentPage > 1) loadPage(currentPage - 1); } });
+        am.put("nextPage", new AbstractAction() { @Override public void actionPerformed(java.awt.event.ActionEvent e) { if (currentPage < totalPages) loadPage(currentPage + 1); } });
+
         wrapper.add(searchCard, BorderLayout.CENTER);
         wrapper.add(controls, BorderLayout.SOUTH);
         return wrapper;
     }
 
     private void applyFixedColumnWidths() {
-        int[] widths = {110, 150, 150, 150, 350, 96};
+        int[] widths = {110, 120, 160, 60, 160, 60, 160, 60, 300, 96};
         for (int i = 0; i < widths.length && i < table.getColumnModel().getColumnCount(); i++) {
             table.getColumnModel().getColumn(i).setPreferredWidth(widths[i]);
             table.getColumnModel().getColumn(i).setMinWidth(widths[i]);
@@ -271,14 +285,18 @@ public class SubjectCombinationPanel extends JPanel {
             for (SubjectCombinationDTO row : rows) {
                 // Generate "Tên tổ hợp" by concatenating the 3 subjects
                 String tenToHop = generateCombinationName(row.getMon1(), row.getMon2(), row.getMon3());
-                tableModel.addRow(new Object[]{
-                    emptyIfNull(row.getMaToHop()),
-                    emptyIfNull(row.getMon1()),
-                    emptyIfNull(row.getMon2()),
-                    emptyIfNull(row.getMon3()),
-                    tenToHop,
-                    ""
-                });
+                    tableModel.addRow(new Object[]{
+                        emptyIfNull(row.getMaToHop()),
+                        emptyIfNull(row.getMaNganh()),
+                        emptyIfNull(row.getMon1()),
+                        row.getHs1() == null ? "" : row.getHs1().toString(),
+                        emptyIfNull(row.getMon2()),
+                        row.getHs2() == null ? "" : row.getHs2().toString(),
+                        emptyIfNull(row.getMon3()),
+                        row.getHs3() == null ? "" : row.getHs3().toString(),
+                        tenToHop,
+                        ""
+                    });
             }
 
             this.currentPage = safePage;

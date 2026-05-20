@@ -34,9 +34,9 @@ public class NganhTuyenSinhDAO {
         String code = safe(codeKeyword);
         String name = safe(nameKeyword);
         int offset = (Math.max(page, 1) - 1) * Math.max(pageSize, 1);
-        String sql = """
-            select n.idnganh, n.manganh, n.tennganh, n.n_tuyenthang, n.n_diemsan, n.n_chitieu
-            from xt_nganh n
+                String sql = """
+                        select n.idnganh, n.manganh, n.tennganh, n.n_tuyenthang, n.n_diemsan, n.n_chitieu
+                        from xt_nganh n
             where (:code = '' or n.manganh like :codeLike)
               and (:name = '' or n.tennganh like :nameLike)
             order by n.idnganh asc
@@ -74,13 +74,16 @@ public class NganhTuyenSinhDAO {
         Transaction tx = null;
         try (Session session = HibernateUtil.getSessionFactory().openSession()) {
             tx = session.beginTransaction();
-            session.createNativeMutationQuery(
-                    "insert into xt_nganh (manganh, tennganh, n_tuyenthang, n_diemsan, n_chitieu) values (:manganh, :tennganh, :ntuyenthang, :ndiemsan, :nchitieu)")
+                session.createNativeMutationQuery(
+                    "insert into xt_nganh (manganh, tennganh, n_tuyenthang, n_diemsan, n_chitieu, n_dgnl, n_thpt, n_vsat) values (:manganh, :tennganh, :ntuyenthang, :ndiemsan, :nchitieu, :ndgnl, :nthpt, :nvsat)")
                     .setParameter("manganh", safeNullable(dto.getMaXetTuyen()))
                     .setParameter("tennganh", safeNullable(dto.getTenNganh()))
-                    .setParameter("ntuyenthang", safeNullable(dto.getChuongTrinh()))
+                    .setParameter("ntuyenthang", safeNullable(dto.getnTuyenthang()))
                     .setParameter("ndiemsan", safeNullable(dto.getNguongDauVao()))
                     .setParameter("nchitieu", dto.getChiTieuChot())
+                    .setParameter("ndgnl", safeNullable(dto.getnDgnl()))
+                    .setParameter("nthpt", safeNullable(dto.getnThpt()))
+                    .setParameter("nvsat", safeNullable(dto.getnVsat()))
                     .executeUpdate();
             tx.commit();
             return true;
@@ -97,13 +100,16 @@ public class NganhTuyenSinhDAO {
         Transaction tx = null;
         try (Session session = HibernateUtil.getSessionFactory().openSession()) {
             tx = session.beginTransaction();
-            int affected = session.createNativeMutationQuery(
-                    "update xt_nganh set manganh = :manganh, tennganh = :tennganh, n_tuyenthang = :ntuyenthang, n_diemsan = :ndiemsan, n_chitieu = :nchitieu where idnganh = :id")
+                int affected = session.createNativeMutationQuery(
+                    "update xt_nganh set manganh = :manganh, tennganh = :tennganh, n_tuyenthang = :ntuyenthang, n_diemsan = :ndiemsan, n_chitieu = :nchitieu, n_dgnl = :ndgnl, n_thpt = :nthpt, n_vsat = :nvsat where idnganh = :id")
                     .setParameter("manganh", safeNullable(dto.getMaXetTuyen()))
                     .setParameter("tennganh", safeNullable(dto.getTenNganh()))
-                    .setParameter("ntuyenthang", safeNullable(dto.getChuongTrinh()))
+                    .setParameter("ntuyenthang", safeNullable(dto.getnTuyenthang()))
                     .setParameter("ndiemsan", safeNullable(dto.getNguongDauVao()))
                     .setParameter("nchitieu", dto.getChiTieuChot())
+                    .setParameter("ndgnl", safeNullable(dto.getnDgnl()))
+                    .setParameter("nthpt", safeNullable(dto.getnThpt()))
+                    .setParameter("nvsat", safeNullable(dto.getnVsat()))
                     .setParameter("id", dto.getId())
                     .executeUpdate();
             tx.commit();
@@ -141,22 +147,28 @@ public class NganhTuyenSinhDAO {
                     .uniqueResult();
             if (foundId == null) {
                 session.createNativeMutationQuery(
-                        "insert into xt_nganh (manganh, tennganh, n_tuyenthang, n_diemsan, n_chitieu) values (:manganh, :tennganh, :ntuyenthang, :ndiemsan, :nchitieu)")
-                        .setParameter("manganh", code)
-                        .setParameter("tennganh", safeNullable(dto.getTenNganh()))
-                        .setParameter("ntuyenthang", safeNullable(dto.getChuongTrinh()))
-                        .setParameter("ndiemsan", safeNullable(dto.getNguongDauVao()))
-                        .setParameter("nchitieu", dto.getChiTieuChot())
-                        .executeUpdate();
+                    "insert into xt_nganh (manganh, tennganh, n_tuyenthang, n_diemsan, n_chitieu, n_dgnl, n_thpt, n_vsat) values (:manganh, :tennganh, :ntuyenthang, :ndiemsan, :nchitieu, :ndgnl, :nthpt, :nvsat)")
+                    .setParameter("manganh", code)
+                    .setParameter("tennganh", safeNullable(dto.getTenNganh()))
+                    .setParameter("ntuyenthang", safeNullable(dto.getnTuyenthang()))
+                    .setParameter("ndiemsan", safeNullable(dto.getNguongDauVao()))
+                    .setParameter("nchitieu", dto.getChiTieuChot())
+                    .setParameter("ndgnl", safeNullable(dto.getnDgnl()))
+                    .setParameter("nthpt", safeNullable(dto.getnThpt()))
+                    .setParameter("nvsat", safeNullable(dto.getnVsat()))
+                    .executeUpdate();
             } else {
                 session.createNativeMutationQuery(
-                        "update xt_nganh set tennganh = :tennganh, n_tuyenthang = :ntuyenthang, n_diemsan = :ndiemsan, n_chitieu = :nchitieu where idnganh = :id")
-                        .setParameter("tennganh", safeNullable(dto.getTenNganh()))
-                        .setParameter("ntuyenthang", safeNullable(dto.getChuongTrinh()))
-                        .setParameter("ndiemsan", safeNullable(dto.getNguongDauVao()))
-                        .setParameter("nchitieu", dto.getChiTieuChot())
-                        .setParameter("id", foundId.intValue())
-                        .executeUpdate();
+                    "update xt_nganh set tennganh = :tennganh, n_tuyenthang = :ntuyenthang, n_diemsan = :ndiemsan, n_chitieu = :nchitieu, n_dgnl = :ndgnl, n_thpt = :nthpt, n_vsat = :nvsat where idnganh = :id")
+                    .setParameter("tennganh", safeNullable(dto.getTenNganh()))
+                    .setParameter("ntuyenthang", safeNullable(dto.getnTuyenthang()))
+                    .setParameter("ndiemsan", safeNullable(dto.getNguongDauVao()))
+                    .setParameter("nchitieu", dto.getChiTieuChot())
+                    .setParameter("ndgnl", safeNullable(dto.getnDgnl()))
+                    .setParameter("nthpt", safeNullable(dto.getnThpt()))
+                    .setParameter("nvsat", safeNullable(dto.getnVsat()))
+                    .setParameter("id", foundId.intValue())
+                    .executeUpdate();
             }
             tx.commit();
             return true;

@@ -7,6 +7,10 @@ public class NganhTuyenSinhDTO {
     private String chuongTrinh;
     private String nguongDauVao; // store as string to allow empty/decimal
     private Integer chiTieuChot;
+    private String nTuyenthang;
+    private String nDgnl;
+    private String nThpt;
+    private String nVsat;
 
     public Integer getId() {
         return id;
@@ -54,5 +58,37 @@ public class NganhTuyenSinhDTO {
 
     public void setChiTieuChot(Integer chiTieuChot) {
         this.chiTieuChot = chiTieuChot;
+    }
+
+    public String getnTuyenthang() {
+        return nTuyenthang;
+    }
+
+    public void setnTuyenthang(String nTuyenthang) {
+        this.nTuyenthang = nTuyenthang;
+    }
+
+    public String getnDgnl() {
+        return nDgnl;
+    }
+
+    public void setnDgnl(String nDgnl) {
+        this.nDgnl = nDgnl;
+    }
+
+    public String getnThpt() {
+        return nThpt;
+    }
+
+    public void setnThpt(String nThpt) {
+        this.nThpt = nThpt;
+    }
+
+    public String getnVsat() {
+        return nVsat;
+    }
+
+    public void setnVsat(String nVsat) {
+        this.nVsat = nVsat;
     }
 }
