@@ -314,16 +314,60 @@ public class NguyenVongXetTuyenService {
 	}
 
 	private Map<String, String> loadCandidateCcdByKey(Session session) {
-		List<String> rows = session.createQuery("select c.cccd from CandidateEntity c where c.cccd is not null", String.class).getResultList();
+		@SuppressWarnings("unchecked")
+		List<Object[]> rows = session.createQuery("select c.cccd, c.soBaoDanh from CandidateEntity c").getResultList();
 		Map<String, String> result = new HashMap<>();
-		for (String row : rows) {
-			String cccdKey = normalize(row);
-			String displayCccd = toStr(row);
-			if (!cccdKey.isEmpty() && !displayCccd.isEmpty()) {
-				result.putIfAbsent(cccdKey, displayCccd);
-			}
+		for (Object[] row : rows) {
+			String cccd = toStr(row[0]);
+			String soBaoDanh = toStr(row[1]);
+			String display = !cccd.isEmpty() ? cccd : soBaoDanh;
+			if (display.isEmpty()) continue;
+
+			// primary normalized keys
+			String k1 = normalize(cccd);
+			String k2 = normalize(soBaoDanh);
+			// digits-only fallbacks
+			String d1 = normalizeDigitsOnly(cccd);
+			String d2 = normalizeDigitsOnly(soBaoDanh);
+			// strip common prefixes (e.g., TS_ or TS)
+			String s1 = stripTsPrefix(k1);
+			String s2 = stripTsPrefix(k2);
+
+			// insert all non-empty variants, prefer first seen display value
+			putIfKey(result, k1, display);
+			putIfKey(result, k2, display);
+			putIfKey(result, d1, display);
+			putIfKey(result, d2, display);
+			putIfKey(result, s1, display);
+			putIfKey(result, s2, display);
 		}
+		System.out.println("[DEBUG] loadCandidateCcdByKey: mapped " + result.size() + " candidate keys");
 		return result;
+	}
+
+	private static void putIfKey(Map<String, String> map, String key, String display) {
+		if (key != null && !key.isEmpty() && display != null && !display.isEmpty()) {
+			map.putIfAbsent(key, display);
+		}
+	}
+
+	private static String normalizeDigitsOnly(String value) {
+		if (value == null) return "";
+		String digits = value.replaceAll("[^0-9]", "");
+		return digits.trim();
+	}
+
+	private static String stripTsPrefix(String key) {
+		if (key == null) return "";
+		String v = key.toLowerCase(Locale.ROOT);
+		if (v.startsWith("ts")) {
+			String rest = v.substring(2);
+			// remove leading underscores or zeros
+			rest = rest.replaceAll("^[_]+", "");
+			rest = rest.replaceFirst("^0+(?!$)", "");
+			return rest;
+		}
+		return key;
 	}
 
 	private String resolveDisplayCccd(String aspirationCccd, String candidateCccd) {

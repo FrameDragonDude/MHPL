@@ -41,7 +41,7 @@ public class NganhTuyenSinhPanel extends JPanel {
     private static final Color COLOR_RED = new Color(198, 40, 40);
     private static final int PAGE_SIZE = 20;
 
-    private static final String[] TABLE_COLUMNS = {"STT", "Mã xét tuyển", "Tên ngành", "Chương trình đào tạo", "Ngưỡng đầu vào", "Chỉ tiêu chốt", "Thao tác"};
+    private static final String[] TABLE_COLUMNS = {"STT", "Mã xét tuyển", "Tên ngành", "Chương trình đào tạo", "Ngưỡng đầu vào", "Chỉ tiêu chốt", "Điểm trúng tuyển", "Số thí sinh đăng ký", "Thao tác"};
 
     private final NganhTuyenSinhService service = new NganhTuyenSinhService();
     private final DefaultTableModel tableModel;
@@ -213,7 +213,7 @@ public class NganhTuyenSinhPanel extends JPanel {
     }
 
     private void applyFixedColumnWidths() {
-        int[] widths = {70, 150, 300, 180, 120, 120, 96};
+        int[] widths = {70, 150, 300, 180, 120, 120, 140, 140, 96};
         for (int i = 0; i < widths.length && i < table.getColumnModel().getColumnCount(); i++) {
             table.getColumnModel().getColumn(i).setPreferredWidth(widths[i]);
             table.getColumnModel().getColumn(i).setMinWidth(widths[i]);
@@ -245,7 +245,7 @@ public class NganhTuyenSinhPanel extends JPanel {
             for (int i = 0; i < rows.size(); i++) {
                 NganhTuyenSinhDTO r = rows.get(i);
                 int stt = (safePage - 1) * PAGE_SIZE + i + 1;
-                tableModel.addRow(new Object[]{ stt, emptyIfNull(r.getMaXetTuyen()), emptyIfNull(r.getTenNganh()), emptyIfNull(r.getChuongTrinh()), emptyIfNull(r.getNguongDauVao()), r.getChiTieuChot() == null ? "" : r.getChiTieuChot().toString(), "" });
+                tableModel.addRow(new Object[]{ stt, emptyIfNull(r.getMaXetTuyen()), emptyIfNull(r.getTenNganh()), emptyIfNull(r.getChuongTrinh()), emptyIfNull(r.getNguongDauVao()), r.getChiTieuChot() == null ? "" : r.getChiTieuChot().toString(), emptyIfNull(r.getDiemTrungTuyen()), r.getSoThiSinhDangKy() == null ? "" : r.getSoThiSinhDangKy().toString(), "" });
             }
 
             this.currentPage = safePage;

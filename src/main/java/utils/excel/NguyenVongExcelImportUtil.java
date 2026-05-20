@@ -26,7 +26,13 @@ public final class NguyenVongExcelImportUtil {
         "cccd", "thutunv", "matruong", "tentruong", "maxettuyen", "tenmaxettuyen"
     };
 
+    private static final int DEFAULT_MAX_ROWS = 100;
+
     public static List<NguyenVongDTO> importRows(File file) throws IOException {
+        return importRows(file, DEFAULT_MAX_ROWS);
+    }
+
+    public static List<NguyenVongDTO> importRows(File file, int maxRows) throws IOException {
         try (FileInputStream input = new FileInputStream(file);
              Workbook workbook = new XSSFWorkbook(input)) {
             DataFormatter formatter = new DataFormatter();
@@ -81,6 +87,9 @@ public final class NguyenVongExcelImportUtil {
                 }
 
                 results.add(dto);
+                if (maxRows > 0 && results.size() >= maxRows) {
+                    break;
+                }
             }
 
             return results;

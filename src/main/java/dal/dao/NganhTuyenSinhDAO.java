@@ -34,14 +34,23 @@ public class NganhTuyenSinhDAO {
         String code = safe(codeKeyword);
         String name = safe(nameKeyword);
         int offset = (Math.max(page, 1) - 1) * Math.max(pageSize, 1);
-                String sql = """
-                        select n.idnganh, n.manganh, n.tennganh, n.n_tuyenthang, n.n_diemsan, n.n_chitieu
-                        from xt_nganh n
-            where (:code = '' or n.manganh like :codeLike)
-              and (:name = '' or n.tennganh like :nameLike)
-            order by n.idnganh asc
-            limit :limitValue offset :offsetValue
-            """;
+                                String sql = """
+                                                select n.idnganh,
+                                                             n.manganh,
+                                                             n.tennganh,
+                                                             n.n_tuyenthang,
+                                                             n.n_diemsan,
+                                                             n.n_chitieu,
+                                                               n.n_diemtrungtuyen,
+                                                               count(v.idnv) as so_thi_sinh_dangky
+                                                from xt_nganh n
+                                                left join xt_nguyenvongxettuyen v on lower(trim(v.nv_manganh)) = lower(trim(n.manganh))
+                        where (:code = '' or n.manganh like :codeLike)
+                            and (:name = '' or n.tennganh like :nameLike)
+                        group by n.idnganh, n.manganh, n.tennganh, n.n_tuyenthang, n.n_diemsan, n.n_chitieu, n.n_diemtrungtuyen
+                        order by n.idnganh asc
+                        limit :limitValue offset :offsetValue
+                        """;
         try (Session session = HibernateUtil.getSessionFactory().openSession()) {
             @SuppressWarnings("unchecked")
             List<Object[]> rows = session.createNativeQuery(sql)
@@ -62,6 +71,8 @@ public class NganhTuyenSinhDAO {
                 dto.setChuongTrinh(toStr(row[3]));
                 dto.setNguongDauVao(toStr(row[4]));
                 dto.setChiTieuChot(toInt(row[5]));
+                dto.setDiemTrungTuyen(toStr(row[6]));
+                dto.setSoThiSinhDangKy(toInt(row[7]));
                 results.add(dto);
             }
             return results;

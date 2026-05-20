@@ -11,6 +11,8 @@ public class NganhTuyenSinhDTO {
     private String nDgnl;
     private String nThpt;
     private String nVsat;
+    private String diemTrungTuyen;
+    private Integer soThiSinhDangKy;
 
     public Integer getId() {
         return id;
@@ -90,5 +92,21 @@ public class NganhTuyenSinhDTO {
 
     public void setnVsat(String nVsat) {
         this.nVsat = nVsat;
+    }
+
+    public String getDiemTrungTuyen() {
+        return diemTrungTuyen;
+    }
+
+    public void setDiemTrungTuyen(String diemTrungTuyen) {
+        this.diemTrungTuyen = diemTrungTuyen;
+    }
+
+    public Integer getSoThiSinhDangKy() {
+        return soThiSinhDangKy;
+    }
+
+    public void setSoThiSinhDangKy(Integer soThiSinhDangKy) {
+        this.soThiSinhDangKy = soThiSinhDangKy;
     }
 }
