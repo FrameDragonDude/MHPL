@@ -23,17 +23,19 @@ public final class BonusPointExcelImportUtil {
     }
 
     private static final String[] CCCD_HEADERS = {"cccd", "socccd", "socancuoc", "socancuoccongdan", "cancuoccongdan", "cancuoc"};
-    private static final String[] CERT_HEADERS = {"chungchinangoaingu", "chungchi", "chungchiangoai", "chungchingoaingu", "ngoaingu", "phuongthuc"};
-    private static final String[] RAW_SCORE_HEADERS = {"diem", "diembacchungchi", "diemgoc", "diemraw"};
-    private static final String[] CONVERTED_SCORE_HEADERS = {"diemquydoi"};
-    private static final String[] BONUS_SCORE_HEADERS = {"diemcong", "diemcongut", "diemut", "diemuut", "diemuutxetuyen"};
-    private static final String[] NOTE_HEADERS = {"ghichu", "note", "ghi chu"};
+    private static final String[] TA_SCORE_HEADERS = {"diemcc", "diemcongta", "diemtienganh", "diemcong"};
+    private static final String[] UT_SCORE_HEADERS = {"diemcongchomondatgiai", "mondatgiai"};
+    private static final String[] UT_HSG_SCORE_HEADERS = {"diemcongchothxkmondatgiai", "diemcongchothxk", "thxkmondatgiai"};
+    
+    private static final String[] WISH_MA_XET_TUYEN_HEADERS = {"maxettuyen"};
+    private static final String[] COMBINATION_MA_XET_TUYEN_HEADERS = {"manganh", "maxettuyen", "mangành", "mãxéttuyển"};
+    
+    // Đổi hẳn từ khóa nhận diện sang cấu trúc tên tổ hợp sạch từ Excel của bạn
+    private static final String[] MA_TO_HOP_HEADERS = {"tentohop", "tohop", "mãtổhợp", "tổhợpmôn", "matohop"};
+
     private static final int FALLBACK_CCCD_COL = 1;
-    private static final int FALLBACK_CERT_COL = 2;
-    private static final int FALLBACK_RAW_SCORE_COL = 3;
-    private static final int FALLBACK_CONVERTED_SCORE_COL = 4;
-    private static final int FALLBACK_BONUS_SCORE_COL = 5;
-    private static final int FALLBACK_NOTE_COL = 6;
+    private static final int FALLBACK_CERT_SCORE_COL = 4;
+    private static final int FALLBACK_UTXT_SCORE_COL = 5;
 
     public static List<BonusPointDTO> importRows(File file) throws IOException {
         try (FileInputStream input = new FileInputStream(file);
@@ -45,7 +47,8 @@ public final class BonusPointExcelImportUtil {
             Row headerRow = null;
             Map<String, Integer> headerIndex = null;
 
-            for (int sheetIndex = 0; sheetIndex < workbook.getNumberOfSheets(); sheetIndex++) {
+            int totalSheets = workbook.getNumberOfSheets();
+            for (int sheetIndex = 0; sheetIndex < totalSheets; sheetIndex++) {
                 Sheet candidate = workbook.getSheetAt(sheetIndex);
                 HeaderMatch match = findHeaderRow(candidate, formatter, evaluator);
                 if (match != null) {
@@ -60,43 +63,174 @@ public final class BonusPointExcelImportUtil {
                 return List.of();
             }
 
-            List<BonusPointDTO> results = new ArrayList<>();
+            String fileName = file.getName().toLowerCase(Locale.ROOT);
+            boolean isTiengAnh = fileName.contains("tieng anh") || fileName.contains("ielts") || fileName.contains("chung chi");
+
+            List<BonusPointDTO> results = new ArrayList<>(sheet.getLastRowNum() + 1);
             int startRow = headerRow != null ? headerRow.getRowNum() + 1 : findFirstDataRow(sheet, formatter, evaluator);
-            for (int rowIndex = Math.max(startRow, 0); rowIndex <= sheet.getLastRowNum(); rowIndex++) {
+            int lastRow = sheet.getLastRowNum();
+
+            for (int rowIndex = Math.max(startRow, 0); rowIndex <= lastRow; rowIndex++) {
                 Row row = sheet.getRow(rowIndex);
                 if (row == null) {
                     continue;
                 }
 
-                if (isLikelyHeaderRow(row, formatter, evaluator)) {
-                    continue;
-                }
-
                 BonusPointDTO dto = new BonusPointDTO();
                 dto.setTsCccd(readText(row, formatter, evaluator, headerIndex, CCCD_HEADERS, FALLBACK_CCCD_COL));
-                dto.setPhuongThuc(readText(row, formatter, evaluator, headerIndex, CERT_HEADERS, FALLBACK_CERT_COL));
-                dto.setDiemCC(readNumber(row, formatter, evaluator, headerIndex, RAW_SCORE_HEADERS, FALLBACK_RAW_SCORE_COL));
-                dto.setDiemUtxt(readNumber(row, formatter, evaluator, headerIndex, CONVERTED_SCORE_HEADERS, FALLBACK_CONVERTED_SCORE_COL));
-                dto.setDiemTong(readNumber(row, formatter, evaluator, headerIndex, BONUS_SCORE_HEADERS, FALLBACK_BONUS_SCORE_COL));
-                dto.setGhiChu(readText(row, formatter, evaluator, headerIndex, NOTE_HEADERS, FALLBACK_NOTE_COL));
+                
+                dto.setMaNganh("");
+                dto.setMaToHop("");
+                dto.setPhuongThuc("");
+
+                if (isTiengAnh) {
+                    Double dcc = readNumber(row, formatter, evaluator, headerIndex, TA_SCORE_HEADERS, FALLBACK_CERT_SCORE_COL);
+                    dto.setDiemCC(dcc != null ? dcc : 0.0);
+                    dto.setDiemUtxt(0.0);
+                } else {
+                    Double scoreUt = readNumber(row, formatter, evaluator, headerIndex, UT_SCORE_HEADERS, FALLBACK_UTXT_SCORE_COL);
+                    Double scoreHsg = readNumber(row, formatter, evaluator, headerIndex, UT_HSG_SCORE_HEADERS, FALLBACK_UTXT_SCORE_COL);
+
+                    double v1 = (scoreUt != null) ? scoreUt : 0.0;
+                    double v2 = (scoreHsg != null) ? scoreHsg : 0.0;
+
+                    dto.setDiemCC(0.0);
+                    dto.setDiemUtxt(v1 + v2);
+                }
 
                 if (isBlank(dto.getTsCccd())) {
                     continue;
                 }
 
-                if (isBlank(dto.getPhuongThuc())) {
-                    dto.setPhuongThuc(readText(row, formatter, evaluator, null, CERT_HEADERS, FALLBACK_CERT_COL));
-                }
-
-                if (isBlank(dto.getPhuongThuc()) && isBlank(dto.getGhiChu()) && dto.getDiemCC() == null && dto.getDiemUtxt() == null && dto.getDiemTong() == null) {
-                    continue;
-                }
-
-                dto.setDcKeys(dto.getTsCccd().trim() + "|" + safe(dto.getPhuongThuc()) + "|" + safe(dto.getGhiChu()) + "|" + safeNumber(dto.getDiemCC()) + "|" + safeNumber(dto.getDiemUtxt()) + "|" + safeNumber(dto.getDiemTong()));
+                double total = dto.getDiemCC() + dto.getDiemUtxt();
+                dto.setDiemTong(total > 3.0 ? 3.0 : total);
+                dto.setDcKeys(dto.getTsCccd().trim() + "||");
                 results.add(dto);
             }
             return results;
         }
+    }
+
+    public static Map<String, List<String>> loadCombinationMap(File combinationFile) throws IOException {
+        Map<String, List<String>> combinationMap = new HashMap<>();
+        try (FileInputStream input = new FileInputStream(combinationFile);
+             Workbook workbook = new XSSFWorkbook(input)) {
+            DataFormatter formatter = new DataFormatter();
+            FormulaEvaluator evaluator = workbook.getCreationHelper().createFormulaEvaluator();
+            Sheet sheet = workbook.getSheetAt(0);
+            Row headerRow = null;
+            Map<String, Integer> headerIndex = null;
+
+            int limit = Math.min(sheet.getLastRowNum(), 20);
+            for (int i = sheet.getFirstRowNum(); i <= limit; i++) {
+                Row r = sheet.getRow(i);
+                if (r == null) continue;
+                Map<String, Integer> idx = buildHeaderIndex(r, formatter, evaluator);
+                if (hasAny(idx, COMBINATION_MA_XET_TUYEN_HEADERS) && hasAny(idx, MA_TO_HOP_HEADERS)) {
+                    headerRow = r;
+                    headerIndex = idx;
+                    break;
+                }
+            }
+
+            int start = headerRow != null ? headerRow.getRowNum() + 1 : 1;
+            int lastRow = sheet.getLastRowNum();
+            for (int i = start; i <= lastRow; i++) {
+                Row row = sheet.getRow(i);
+                if (row == null) continue;
+                String maNganh = readText(row, formatter, evaluator, headerIndex, COMBINATION_MA_XET_TUYEN_HEADERS, 1);
+                String maToHop = readText(row, formatter, evaluator, headerIndex, MA_TO_HOP_HEADERS, 5); // Fallback cột 5 (TEN_TO_HOP)
+                if (!isBlank(maNganh) && !isBlank(maToHop)) {
+                    combinationMap.computeIfAbsent(maNganh.trim(), k -> new ArrayList<>()).add(maToHop.trim());
+                }
+            }
+        }
+        return combinationMap;
+    }
+
+    public static List<BonusPointDTO> importWishesOnly(File wishFile, Map<String, List<String>> combinationMap) throws IOException {
+        List<BonusPointDTO> wishes = new ArrayList<>(80000);
+        try (FileInputStream input = new FileInputStream(wishFile);
+             Workbook workbook = new XSSFWorkbook(input)) {
+            DataFormatter formatter = new DataFormatter();
+            FormulaEvaluator evaluator = workbook.getCreationHelper().createFormulaEvaluator();
+
+            int totalSheets = workbook.getNumberOfSheets();
+            for (int sIdx = 0; sIdx < totalSheets; sIdx++) {
+                Sheet sheet = workbook.getSheetAt(sIdx);
+                String sheetName = sheet.getSheetName().toLowerCase(Locale.ROOT);
+                
+                if (sheetName.contains("tk") || sheetName.contains("thongke") || sheetName.contains("chung")) {
+                    continue;
+                }
+
+                Row headerRow = null;
+                Map<String, Integer> headerIndex = null;
+
+                int limit = Math.min(sheet.getLastRowNum(), 20);
+                for (int i = sheet.getFirstRowNum(); i <= limit; i++) {
+                    Row r = sheet.getRow(i);
+                    if (r == null) continue;
+                    Map<String, Integer> idx = buildHeaderIndex(r, formatter, evaluator);
+                    if (hasAny(idx, CCCD_HEADERS) && hasAny(idx, WISH_MA_XET_TUYEN_HEADERS)) {
+                        headerRow = r;
+                        headerIndex = idx;
+                        break;
+                    }
+                }
+
+                if (headerIndex == null) continue;
+
+                int start = headerRow.getRowNum() + 1;
+                int lastRow = sheet.getLastRowNum();
+                for (int i = start; i <= lastRow; i++) {
+                    Row row = sheet.getRow(i);
+                    if (row == null) continue;
+
+                    String cccd = readText(row, formatter, evaluator, headerIndex, CCCD_HEADERS, 1);
+                    String maXetTuyen = readText(row, formatter, evaluator, headerIndex, WISH_MA_XET_TUYEN_HEADERS, 5);
+
+                    if (isBlank(cccd) || isBlank(maXetTuyen) || cccd.toUpperCase(Locale.ROOT).contains("CCCD")) {
+                        continue;
+                    }
+
+                    Map<String, List<String>> safeMap = (combinationMap != null) ? combinationMap : new HashMap<>();
+                    List<String> validToHops = safeMap.get(maXetTuyen.trim());
+
+                    if (validToHops != null && !validToHops.isEmpty()) {
+                        for (String toHop : validToHops) {
+                            BonusPointDTO resultDto = new BonusPointDTO();
+                            resultDto.setTsCccd(cccd.trim());
+                            resultDto.setDiemCC(0.0);
+                            resultDto.setDiemUtxt(0.0);
+                            resultDto.setDiemTong(0.0);
+                            resultDto.setMaNganh(maXetTuyen.trim());
+                            resultDto.setMaToHop(toHop.trim());
+                            resultDto.setPhuongThuc("");
+                            resultDto.setDcKeys(cccd.trim() + "|" + maXetTuyen.trim() + "|" + toHop.trim());
+                            wishes.add(resultDto);
+                        }
+                    } else {
+                        BonusPointDTO resultDto = new BonusPointDTO();
+                        resultDto.setTsCccd(cccd.trim());
+                        resultDto.setDiemCC(0.0);
+                        resultDto.setDiemUtxt(0.0);
+                        resultDto.setDiemTong(0.0);
+                        resultDto.setMaNganh(maXetTuyen.trim());
+                        resultDto.setMaToHop("");
+                        resultDto.setPhuongThuc("");
+                        resultDto.setDcKeys(cccd.trim() + "|" + maXetTuyen.trim() + "|");
+                        wishes.add(resultDto);
+                    }
+                }
+            }
+        }
+        return wishes;
+    }
+
+    private static boolean matchesRequiredHeaders(Map<String, Integer> headerIndex) {
+        return headerIndex.containsKey(normalize("cccd")) || headerIndex.containsKey(normalize("socccd")) 
+            || headerIndex.containsKey(normalize("socancuoc")) || headerIndex.containsKey(normalize("socancuoccongdan"));
     }
 
     private static HeaderMatch findHeaderRow(Sheet sheet, DataFormatter formatter, FormulaEvaluator evaluator) {
@@ -122,20 +256,10 @@ public final class BonusPointExcelImportUtil {
         Map<String, Integer> map = new HashMap<>();
         for (Cell cell : headerRow) {
             String value = formatter.formatCellValue(cell, evaluator);
-            if (isBlank(value)) {
-                continue;
-            }
+            if (isBlank(value)) continue;
             map.put(normalize(value), cell.getColumnIndex());
         }
         return map;
-    }
-
-    private static boolean matchesRequiredHeaders(Map<String, Integer> headerIndex) {
-        return hasAny(headerIndex, CCCD_HEADERS)
-                && (hasAny(headerIndex, CERT_HEADERS)
-                || hasAny(headerIndex, RAW_SCORE_HEADERS)
-                || hasAny(headerIndex, CONVERTED_SCORE_HEADERS)
-                || hasAny(headerIndex, BONUS_SCORE_HEADERS));
     }
 
     private static boolean hasAny(Map<String, Integer> headerIndex, String[] keys) {
@@ -163,14 +287,13 @@ public final class BonusPointExcelImportUtil {
     }
 
     private static boolean isLikelyHeaderRow(Row row, DataFormatter formatter, FormulaEvaluator evaluator) {
-        int matches = 0;
         for (Cell cell : row) {
             String value = normalize(formatter.formatCellValue(cell, evaluator));
-            if (value.equals("cccd") || value.contains("chungchi") || value.contains("diem")) {
-                matches++;
+            if (value.equals("cccd") || value.equals("socccd")) {
+                return true;
             }
         }
-        return matches >= 2;
+        return false;
     }
 
     private static String readText(Row row, DataFormatter formatter, FormulaEvaluator evaluator, Map<String, Integer> headerIndex, String[] headerKeys, int fallbackColumn) {
@@ -201,7 +324,6 @@ public final class BonusPointExcelImportUtil {
                 }
             }
         }
-
         Cell fallbackCell = row.getCell(fallbackColumn, Row.MissingCellPolicy.RETURN_BLANK_AS_NULL);
         String fallbackValue = safe(formatter.formatCellValue(fallbackCell, evaluator));
         return isBlank(fallbackValue) ? "" : fallbackValue;
@@ -219,16 +341,6 @@ public final class BonusPointExcelImportUtil {
 
     private static String safe(String value) {
         return value == null ? "" : value.trim();
-    }
-
-    private static String safeNumber(Double value) {
-        if (value == null) {
-            return "";
-        }
-        if (value == Math.rint(value)) {
-            return String.valueOf(value.intValue());
-        }
-        return String.valueOf(value);
     }
 
     private static boolean isBlank(String value) {
