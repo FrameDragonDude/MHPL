@@ -161,10 +161,12 @@ public class CandidateLookupRepository {
 
 	private boolean isPositiveResult(String resultLabel) {
 		String normalized = normalize(resultLabel);
-		return normalized.contains("trungtuyen")
-				|| normalized.contains("dau")
-				|| normalized.contains("dat")
-				|| normalized.contains("trungtuyenv")
+		if (normalized.contains("khongtrungtuyen") || normalized.contains("chuatrungtuyen")) {
+			return false;
+		}
+		return normalized.equals("trungtuyen")
+				|| normalized.startsWith("trungtuyen")
+				|| normalized.contains("duoccongnhantrungtuyen")
 				|| normalized.contains("pass")
 				|| normalized.contains("accepted");
 	}

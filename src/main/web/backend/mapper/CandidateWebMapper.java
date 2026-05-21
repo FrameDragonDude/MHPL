@@ -71,6 +71,9 @@ public class CandidateWebMapper {
 			dto.setDiemSan(r.getDiemSan());
 			list.add(dto);
 			String norm = r.getResultLabel() == null ? "" : r.getResultLabel().toLowerCase(java.util.Locale.ROOT);
+			if (norm.contains("khongtrungtuyen") || norm.contains("chuatrungtuyen")) {
+				continue;
+			}
 			if (norm.contains("trungtuyen") || norm.contains("dat") || norm.contains("dau") || norm.contains("pass") || norm.contains("accepted")) {
 				anyPositive = true;
 			}

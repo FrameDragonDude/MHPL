@@ -174,9 +174,12 @@ public class CandidateLookupService {
 		String normalized = Normalizer.normalize(lower, Normalizer.Form.NFD)
 				.replaceAll("\\p{M}+", "")
 				.replaceAll("[^a-z0-9]", "");
-		return normalized.contains("trungtuyen")
-				|| normalized.contains("dau")
-				|| normalized.contains("dat")
+		if (normalized.contains("khongtrungtuyen") || normalized.contains("chuatrungtuyen")) {
+			return false;
+		}
+		return normalized.equals("trungtuyen")
+				|| normalized.startsWith("trungtuyen")
+				|| normalized.contains("duoccongnhantrungtuyen")
 				|| normalized.contains("accepted")
 				|| normalized.contains("pass");
 	}

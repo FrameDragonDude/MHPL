@@ -12,6 +12,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -162,6 +163,7 @@ public class NguyenVongXetTuyenService {
 				Map<String, BigDecimal> bonusByKey = loadBonusScores(session);
 				Map<String, List<ComboData>> combosByMajor = loadCombinations(session);
 				Map<String, BigDecimal> thresholdByMajor = loadThresholds(session);
+				Map<String, Integer> quotaByMajor = loadQuotas(session);
 
 				if (combosByMajor.isEmpty()) {
 					throw new SQLException("Chưa có dữ liệu tổ hợp môn theo ngành. Hãy nhập 'Ngành - Tổ hợp' hoặc cột n_tohopgoc của ngành trước khi sinh dữ liệu.");
@@ -176,6 +178,7 @@ public class NguyenVongXetTuyenService {
 				int generatedCount = 0;
 				int skippedCount = 0;
 				Map<String, Integer> reasonCounts = new HashMap<>();
+				List<PendingResult> pendingResults = new ArrayList<>();
 
 				for (AspirationEntity aspiration : aspirations) {
 					String cccd = normalize(aspiration.getCccd());
@@ -232,42 +235,77 @@ public class NguyenVongXetTuyenService {
 					}
 
 					BigDecimal threshold = thresholdByMajor.getOrDefault(majorCode, BigDecimal.ZERO);
-					String resultLabel = best.totalScore.compareTo(threshold) >= 0 ? "Trúng tuyển" : "Chưa trúng tuyển";
 					String nvKeys = buildNvKeys(cccd, majorCode, thuTuNV);
 
-					session.createNativeMutationQuery("""
-						insert into xt_nguyenvongxettuyen
-							(nn_cccd, nv_manganh, nv_tt, diem_thxt, diem_utqd, diem_cong, diem_xettuyen, nv_ketqua, nv_keys, tt_phuongthuc, tt_thm)
-						values
-							(:cccd, :manganh, :nvTt, :diemThxt, :diemUtqd, :diemCong, :diemXettuyen, :nvKetqua, :nvKeys, :ttPhuongthuc, :ttThm)
-						on duplicate key update
-							nn_cccd = values(nn_cccd),
-							nv_manganh = values(nv_manganh),
-							nv_tt = values(nv_tt),
-							diem_thxt = values(diem_thxt),
-							diem_utqd = values(diem_utqd),
-							diem_cong = values(diem_cong),
-							diem_xettuyen = values(diem_xettuyen),
-							nv_ketqua = values(nv_ketqua),
-							nv_keys = values(nv_keys),
-							tt_phuongthuc = values(tt_phuongthuc),
-							tt_thm = values(tt_thm)
-						""")
-						.setParameter("cccd", displayCccd)
-						.setParameter("manganh", majorCode)
-						.setParameter("nvTt", thuTuNV)
-						.setParameter("diemThxt", scale(best.examScore, 5))
-						.setParameter("diemUtqd", scale(best.priorityScore, 5))
-						.setParameter("diemCong", scale(best.bonusScore, 2))
-						.setParameter("diemXettuyen", best.totalScore)
-						.setParameter("nvKetqua", resultLabel)
-						.setParameter("nvKeys", nvKeys)
-						.setParameter("ttPhuongthuc", exam.method)
-						.setParameter("ttThm", best.combo.code)
-						.executeUpdate();
+					pendingResults.add(new PendingResult(
+						displayCccd,
+						majorCode,
+						thuTuNV,
+						scale(best.examScore, 5),
+						scale(best.priorityScore, 5),
+						scale(best.bonusScore, 2),
+						best.totalScore,
+						threshold,
+						quotaByMajor.getOrDefault(majorCode, 0),
+						nvKeys,
+						exam.method,
+						best.combo.code
+					));
+				}
 
-					generatedCount++;
-					incrementReason(reasonCounts, "generated");
+				Map<String, List<PendingResult>> pendingByMajor = new HashMap<>();
+				for (PendingResult row : pendingResults) {
+					pendingByMajor.computeIfAbsent(row.majorCode, key -> new ArrayList<>()).add(row);
+				}
+
+				for (Map.Entry<String, List<PendingResult>> entry : pendingByMajor.entrySet()) {
+					List<PendingResult> rowsByMajor = entry.getValue();
+					rowsByMajor.sort(Comparator
+						.comparing((PendingResult r) -> r.totalScore, Comparator.reverseOrder())
+						.thenComparing((PendingResult r) -> r.priorityScore, Comparator.reverseOrder())
+						.thenComparing((PendingResult r) -> r.bonusScore, Comparator.reverseOrder())
+						.thenComparing(r -> r.cccd)
+						.thenComparingInt(r -> r.thuTuNV == null ? Integer.MAX_VALUE : r.thuTuNV));
+
+					for (int index = 0; index < rowsByMajor.size(); index++) {
+						PendingResult row = rowsByMajor.get(index);
+						boolean admittedByQuota = row.quota > 0 && index < row.quota;
+						boolean admittedByThreshold = row.totalScore.compareTo(row.threshold) >= 0;
+						String resultLabel = (admittedByQuota && admittedByThreshold) ? "Trúng tuyển" : "Chưa trúng tuyển";
+
+						session.createNativeMutationQuery("""
+							insert into xt_nguyenvongxettuyen
+								(nn_cccd, nv_manganh, nv_tt, diem_thxt, diem_utqd, diem_cong, diem_xettuyen, nv_ketqua, nv_keys, tt_phuongthuc, tt_thm)
+							values
+								(:cccd, :manganh, :nvTt, :diemThxt, :diemUtqd, :diemCong, :diemXettuyen, :nvKetqua, :nvKeys, :ttPhuongthuc, :ttThm)
+							on duplicate key update
+								nn_cccd = values(nn_cccd),
+								nv_manganh = values(nv_manganh),
+								nv_tt = values(nv_tt),
+								diem_thxt = values(diem_thxt),
+								diem_utqd = values(diem_utqd),
+								diem_cong = values(diem_cong),
+								diem_xettuyen = values(diem_xettuyen),
+								nv_ketqua = values(nv_ketqua),
+								nv_keys = values(nv_keys),
+								tt_phuongthuc = values(tt_phuongthuc),
+								tt_thm = values(tt_thm)
+							""")
+							.setParameter("cccd", row.cccd)
+							.setParameter("manganh", row.majorCode)
+							.setParameter("nvTt", row.thuTuNV)
+							.setParameter("diemThxt", row.examScore)
+							.setParameter("diemUtqd", row.priorityScore)
+							.setParameter("diemCong", row.bonusScore)
+							.setParameter("diemXettuyen", row.totalScore)
+							.setParameter("nvKetqua", resultLabel)
+							.setParameter("nvKeys", row.nvKeys)
+							.setParameter("ttPhuongthuc", row.method)
+							.setParameter("ttThm", row.comboCode)
+							.executeUpdate();
+						generatedCount++;
+						incrementReason(reasonCounts, "generated");
+					}
 				}
 
 				tx.commit();
@@ -636,6 +674,18 @@ public class NguyenVongXetTuyenService {
 		return result;
 	}
 
+	private Map<String, Integer> loadQuotas(Session session) {
+		List<NganhEntity> rows = session.createQuery("from NganhEntity n", NganhEntity.class).getResultList();
+		Map<String, Integer> result = new HashMap<>();
+		for (NganhEntity row : rows) {
+			String majorCode = normalize(row.getManganh());
+			if (!majorCode.isEmpty()) {
+				result.put(majorCode, Math.max(row.getN_chitieu(), 0));
+			}
+		}
+		return result;
+	}
+
 	private BigDecimal calculateExamScore(ExamScoreData exam, ComboData combo) {
 		if (exam == null || combo == null) {
 			return null;
@@ -820,6 +870,38 @@ public class NguyenVongXetTuyenService {
 		String mon1;
 		String mon2;
 		String mon3;
+	}
+
+	static class PendingResult {
+		final String cccd;
+		final String majorCode;
+		final Integer thuTuNV;
+		final BigDecimal examScore;
+		final BigDecimal priorityScore;
+		final BigDecimal bonusScore;
+		final BigDecimal totalScore;
+		final BigDecimal threshold;
+		final int quota;
+		final String nvKeys;
+		final String method;
+		final String comboCode;
+
+		PendingResult(String cccd, String majorCode, Integer thuTuNV, BigDecimal examScore, BigDecimal priorityScore,
+				BigDecimal bonusScore, BigDecimal totalScore, BigDecimal threshold, int quota, String nvKeys,
+				String method, String comboCode) {
+			this.cccd = cccd;
+			this.majorCode = majorCode;
+			this.thuTuNV = thuTuNV;
+			this.examScore = examScore;
+			this.priorityScore = priorityScore;
+			this.bonusScore = bonusScore;
+			this.totalScore = totalScore;
+			this.threshold = threshold;
+			this.quota = quota;
+			this.nvKeys = nvKeys;
+			this.method = method;
+			this.comboCode = comboCode;
+		}
 	}
 
 	static class CandidateScore {
