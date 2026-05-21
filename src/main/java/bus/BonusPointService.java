@@ -5,9 +5,12 @@ import dal.dao.MajorCombinationDAO;
 import dal.hibernate.HibernateUtil;
 import dto.BonusPointDTO;
 import dto.MajorCombinationDTO;
+import java.io.File;
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import utils.excel.BonusPointExcelImportUtil;
 import java.util.List;
 import java.util.Locale;
 import org.hibernate.Session;
@@ -49,99 +52,281 @@ public class BonusPointService {
 		return dao.upsertByKey(dto);
 	}
 
-	public GenerationResult generateBonusPointsFromAspirations(boolean replaceExisting) throws SQLException {
-		try (Session session = HibernateUtil.getSessionFactory().openSession()) {
-			Transaction tx = session.beginTransaction();
-			try {
-				// Xóa dữ liệu hiện có nếu cần
-				int deletedExisting = 0;
-				if (replaceExisting) {
-					deletedExisting = session.createNativeMutationQuery("DELETE FROM xt_diemcongxetuyen")
-							.executeUpdate();
-				}
+	public EnglishCertificateImportResult importEnglishCertificateScores(File file) throws SQLException, IOException {
+		List<BonusPointDTO> imported = BonusPointExcelImportUtil.importEnglishCertificateRows(file);
+		int totalRows = imported.size();
+		int updatedRows = 0;
+		int notFoundRows = 0;
+		int skippedRows = 0;
+		int errorRows = 0;
 
-				// Lấy tất cả nguyện vọng từ xt_nguyen_vong
-				@SuppressWarnings("unchecked")
-				List<Object[]> aspirations = session.createNativeQuery("""
-						SELECT nv.cccd, nv.maxettuyen, nv.matruong
-						FROM xt_nguyen_vong nv
-						ORDER BY nv.cccd ASC, nv.thutunv ASC
-						""").list();
-
-				int generatedCount = 0;
-				int skippedCount = 0;
-
-				for (Object[] aspiration : aspirations) {
-					String cccd = toString(aspiration[0]);
-					String maNganh = toString(aspiration[1]);
-					String maTruong = toString(aspiration[2]);
-
-					if (cccd.isEmpty() || maNganh.isEmpty()) {
-						skippedCount++;
-						continue;
-					}
-
-					// Lấy tất cả tổ hợp của ngành từ xt_nganh_tohop
-					List<MajorCombinationDTO> combos = getMajorCombinationsByMajor(session, maNganh);
-					if (combos.isEmpty()) {
-						skippedCount++;
-						continue;
-					}
-
-					// Với mỗi tổ hợp, kiểm tra thí sinh có đủ môn
-					for (MajorCombinationDTO combo : combos) {
-						String mon1 = combo.getMon1();
-						String mon2 = combo.getMon2();
-						String mon3 = combo.getMon3();
-
-						// Kiểm tra thí sinh có tất cả các môn của tổ hợp
-						if (!hasAllSubjects(session, cccd, mon1, mon2, mon3)) {
-							continue; // Bỏ qua tổ hợp này
-						}
-
-						// Tính diemUtxt từ xt_uutien_xettuyen
-						BigDecimal diemUtxt = calculateDiemUtxt(session, cccd, mon1, mon2, mon3);
-
-						// Tạo BonusPointDTO
-						BonusPointDTO dto = new BonusPointDTO();
-						dto.setTsCccd(cccd);
-						dto.setPhuongThuc(maTruong); // Sử dụng maTruong làm phương thức
-						dto.setMaNganh(maNganh);
-						dto.setMaToHop(combo.getMaToHop());
-						dto.setDiemCC(0.0); // Điểm chứng chỉ ngoại ngữ (mặc định 0)
-						dto.setDiemUtxt(diemUtxt != null ? diemUtxt.doubleValue() : 0.0);
-						dto.setDiemTong((dto.getDiemCC() != null ? dto.getDiemCC() : 0.0) + (dto.getDiemUtxt() != null ? dto.getDiemUtxt() : 0.0));
-						dto.setGhiChu("Tự động sinh từ nguyện vọng");
-
-						// Lưu vào database
-						try {
-							if (dao.create(dto)) {
-								generatedCount++;
-							}
-						} catch (Exception ex) {
-							// Bỏ qua lỗi cá nhân và tiếp tục
-						}
-					}
-				}
-
-				tx.commit();
-				return new GenerationResult(
-						replaceExisting,
-						aspirations.size(),
-						generatedCount,
-						skippedCount,
-						deletedExisting,
-						"Sinh dữ liệu điểm cộng thành công: " + generatedCount + " record được tạo từ " + aspirations.size() + " nguyện vọng"
-				);
-			} catch (Exception ex) {
-				if (tx != null && tx.isActive()) {
-					tx.rollback();
-				}
-				throw new SQLException("Lỗi sinh dữ liệu điểm cộng: " + ex.getMessage(), ex);
+		for (BonusPointDTO importedRow : imported) {
+			String cccd = importedRow.getTsCccd();
+			Double importedScore = importedRow.getDiemCC();
+			if (cccd == null || cccd.trim().isEmpty() || importedScore == null) {
+				skippedRows++;
+				continue;
 			}
+
+			List<BonusPointDTO> existingRows = dao.findRowsByCccd(cccd);
+			if (existingRows.isEmpty()) {
+				notFoundRows++;
+				continue;
+			}
+
+			for (BonusPointDTO existing : existingRows) {
+				try {
+					boolean hasEnglish = majorCombinationDao.hasEnglishSubject(existing.getMaToHop());
+					boolean isDgnl = normalize(existing.getPhuongThuc()).equals("dgnl");
+					Double newDiemCC = importedScore;
+					if (hasEnglish && !isDgnl) {
+						newDiemCC = 0.0;
+					}
+					existing.setDiemCC(newDiemCC);
+					Double diemUtxt = existing.getDiemUtxt() == null ? 0.0 : existing.getDiemUtxt();
+					Double tong = newDiemCC + diemUtxt;
+					if (tong > 3.0) {
+						tong = 3.0;
+					}
+					existing.setDiemTong(tong);
+					if (dao.update(existing)) {
+						updatedRows++;
+					} else {
+						errorRows++;
+					}
+				} catch (Exception ex) {
+					errorRows++;
+				}
+			}
+		}
+
+		return new EnglishCertificateImportResult(totalRows, updatedRows, notFoundRows, skippedRows, errorRows);
+	}
+
+	public static class EnglishCertificateImportResult {
+		private final int totalRows;
+		private final int updatedRows;
+		private final int notFoundRows;
+		private final int skippedRows;
+		private final int errorRows;
+
+		public EnglishCertificateImportResult(int totalRows, int updatedRows, int notFoundRows, int skippedRows, int errorRows) {
+			this.totalRows = totalRows;
+			this.updatedRows = updatedRows;
+			this.notFoundRows = notFoundRows;
+			this.skippedRows = skippedRows;
+			this.errorRows = errorRows;
+		}
+
+		public int getTotalRows() {
+			return totalRows;
+		}
+
+		public int getUpdatedRows() {
+			return updatedRows;
+		}
+
+		public int getNotFoundRows() {
+			return notFoundRows;
+		}
+
+		public int getSkippedRows() {
+			return skippedRows;
+		}
+
+		public int getErrorRows() {
+			return errorRows;
 		}
 	}
 
+	// public GenerationResult generateBonusPointsFromAspirations(boolean replaceExisting) throws SQLException {
+	// 	try (Session session = HibernateUtil.getSessionFactory().openSession()) {
+	// 		Transaction tx = session.beginTransaction();
+	// 		try {
+	// 			// Xóa dữ liệu hiện có nếu cần
+	// 			int deletedExisting = 0;
+	// 			if (replaceExisting) {
+	// 				deletedExisting = session.createNativeMutationQuery("DELETE FROM xt_diemcongxetuyen")
+	// 						.executeUpdate();
+	// 			}
+
+	// 			// Lấy tất cả nguyện vọng từ xt_nguyen_vong
+	// 			@SuppressWarnings("unchecked")
+	// 			List<Object[]> aspirations = session.createNativeQuery("""
+	// 					SELECT nv.cccd, nv.maxettuyen, nv.matruong
+	// 					FROM xt_nguyen_vong nv
+	// 					ORDER BY nv.cccd ASC, nv.thutunv ASC
+	// 					""").list();
+
+	// 			int generatedCount = 0;
+	// 			int skippedCount = 0;
+
+	// 			for (Object[] aspiration : aspirations) {
+	// 				String cccd = toString(aspiration[0]);
+	// 				String maNganh = toString(aspiration[1]);
+	// 				String maTruong = toString(aspiration[2]);
+	// 				System.out.println("[BP GEN] Processing aspiration: cccd='" + cccd + "', maNganh='" + maNganh + "', maTruong='" + maTruong + "'");
+
+	// 				if (cccd.isEmpty() || maNganh.isEmpty()) {
+	// 					skippedCount++;
+	// 					continue;
+	// 				}
+
+	// 				// Lấy tất cả tổ hợp của ngành từ xt_nganh_tohop
+	// 				List<MajorCombinationDTO> combos = getMajorCombinationsByMajor(session, maNganh);
+	// 				System.out.println("[BP GEN]   combos for " + maNganh + " -> " + combos.size());
+	// 				if (combos.isEmpty()) {
+	// 					skippedCount++;
+	// 					continue;
+	// 				}
+
+	// 				// Với mỗi tổ hợp, kiểm tra thí sinh có đủ môn
+	// 				for (MajorCombinationDTO combo : combos) {
+	// 					String mon1 = combo.getMon1();
+	// 					String mon2 = combo.getMon2();
+	// 					String mon3 = combo.getMon3();
+
+	// 					// Kiểm tra thí sinh có tất cả các môn của tổ hợp
+	// 					if (!hasAllSubjects(session, cccd, mon1, mon2, mon3)) {
+	// 						List<String> missing = getMissingSubjects(session, cccd, mon1, mon2, mon3);
+	// 						System.out.println("[BP GEN]   skipped combo " + combo.getMaToHop() + " (missing: " + String.join(",", missing) + ")");
+	// 						continue; // Bỏ qua tổ hợp này
+	// 					}
+
+	// 					// Tạo BonusPointDTO mà không gán điểm cộng/ưu tiên ban đầu
+	// 					BonusPointDTO dto = new BonusPointDTO();
+	// 					dto.setTsCccd(cccd);
+	// 					dto.setPhuongThuc(maTruong); // Sử dụng maTruong làm phương thức
+	// 					dto.setMaNganh(maNganh);
+	// 					dto.setMaToHop(combo.getMaToHop());
+	// 					dto.setDiemCC(null);
+	// 					dto.setDiemUtxt(null);
+	// 					dto.setDiemTong(0.0);
+	// 					dto.setGhiChu("Tự động sinh từ nguyện vọng");
+
+	// 			tx.commit();
+	// 			return new GenerationResult(
+	// 					replaceExisting,
+	// 					aspirations.size(),
+	// 					generatedCount,
+	// 					skippedCount,
+	// 					deletedExisting,
+	// 					"Sinh dữ liệu điểm cộng thành công: " + generatedCount + " record được tạo từ " + aspirations.size() + " nguyện vọng"
+	// 			);
+	// 				}
+	// 		} catch (Exception ex) {
+	// 			if (tx != null && tx.isActive()) {
+	// 				tx.rollback();
+	// 			}
+	// 			throw new SQLException("Lỗi sinh dữ liệu điểm cộng: " + ex.getMessage(), ex);
+	// 		}
+	// 	}
+	// }
+
+	public GenerationResult generateBonusPointsFromAspirations(boolean replaceExisting) throws SQLException {
+		try (Session session = HibernateUtil.getSessionFactory().openSession()) {
+
+			int deletedExisting = 0;
+			if (replaceExisting) {
+				Transaction deleteTx = null;
+				try {
+					deleteTx = session.beginTransaction();
+					deletedExisting = session
+							.createNativeMutationQuery("DELETE FROM xt_diemcongxetuyen")
+							.executeUpdate();
+					deleteTx.commit();
+				} catch (Exception ex) {
+					if (deleteTx != null && deleteTx.isActive()) {
+						deleteTx.rollback();
+					}
+					throw new SQLException("Lỗi xóa dữ liệu điểm cộng cũ: " + ex.getMessage(), ex);
+				}
+			}
+
+			@SuppressWarnings("unchecked")
+			List<Object[]> aspirations = session.createNativeQuery("""
+				SELECT nv.cccd, nv.maxettuyen, nv.matruong
+				FROM xt_nguyen_vong nv
+				ORDER BY nv.id ASC
+			""").list();
+
+			int generatedCount = 0;
+			int skippedCount = 0;
+
+			for (Object[] aspiration : aspirations) {
+
+				String cccd = toString(aspiration[0]);
+				String maNganh = toString(aspiration[1]);
+				String maTruong = toString(aspiration[2]);
+
+				System.out.println(
+					"[BP GEN] Processing aspiration: cccd='"
+						+ cccd
+						+ "', maNganh='"
+						+ maNganh
+						+ "', maTruong='"
+						+ maTruong
+						+ "'"
+				);
+
+				if (cccd.isEmpty() || maNganh.isEmpty()) {
+					skippedCount++;
+					continue;
+				}
+
+				List<MajorCombinationDTO> combos = getMajorCombinationsByMajor(session, maNganh);
+				System.out.println("[BP GEN] combos for " + maNganh + " -> " + combos.size());
+				if (combos.isEmpty()) {
+					skippedCount++;
+					continue;
+				}
+
+				for (MajorCombinationDTO combo : combos) {
+					String mon1 = combo.getMon1();
+					String mon2 = combo.getMon2();
+					String mon3 = combo.getMon3();
+
+					if (!hasAllSubjects(session, cccd, mon1, mon2, mon3)) {
+						List<String> missing = getMissingSubjects(session, cccd, mon1, mon2, mon3);
+						System.out.println("[BP GEN] skipped combo " + combo.getMaToHop() + " (missing: " + String.join(",", missing) + ")");
+						continue;
+					}
+
+					BonusPointDTO dto = new BonusPointDTO();
+					dto.setTsCccd(cccd);
+					String phuongThucExam = getExamPhuongThuc(session, cccd);
+					dto.setPhuongThuc(phuongThucExam == null || phuongThucExam.isEmpty() ? maTruong : phuongThucExam);
+					dto.setMaNganh(maNganh);
+					dto.setMaToHop(combo.getMaToHop());
+					dto.setDiemCC(null);
+					dto.setDiemUtxt(null);
+					dto.setDiemTong(0.0);
+					dto.setGhiChu("Tự động sinh từ nguyện vọng");
+
+					try {
+						if (dao.create(dto)) {
+							generatedCount++;
+							System.out.println("[BP GEN] created bp for " + cccd + " - " + combo.getMaToHop());
+						}
+					} catch (Exception ex) {
+						System.out.println("[BP GEN] failed to save bp for " + cccd + " - " + combo.getMaToHop() + ": " + ex.getMessage());
+						ex.printStackTrace();
+					}
+				}
+			}
+
+			return new GenerationResult(
+				replaceExisting,
+				aspirations.size(),
+				generatedCount,
+				skippedCount,
+				deletedExisting,
+				"Sinh dữ liệu điểm cộng thành công: " + generatedCount + " record được tạo từ " + aspirations.size() + " nguyện vọng"
+			);
+		} catch (Exception ex) {
+			throw new SQLException("Lỗi sinh dữ liệu điểm cộng: " + ex.getMessage(), ex);
+		}
+	}
 	/**
 	 * Lấy tất cả tổ hợp của ngành
 	 */
@@ -151,8 +336,7 @@ public class BonusPointService {
 		List<Object[]> rows = session.createNativeQuery("""
 				SELECT manganh, matohop, th_mon1, th_mon2, th_mon3
 				FROM xt_nganh_tohop
-				WHERE LOWER(REPLACE(REPLACE(manganh, ' ', ''), '_', '')) = LOWER(REPLACE(REPLACE(?1, ' ', ''), '_', ''))
-				ORDER BY matohop ASC
+				WHERE LOWER(REPLACE(REPLACE(REPLACE(manganh, ' ', ''), '_', ''), '*', '')) = LOWER(REPLACE(REPLACE(REPLACE(?1, ' ', ''), '_', ''), '*', ''))
 				""").setParameter(1, normalized).list();
 
 		List<MajorCombinationDTO> result = new ArrayList<>();
@@ -198,35 +382,36 @@ public class BonusPointService {
 	// }
 
 	/**
-	
-		* Kiểm tra thí sinh có đủ môn của tổ hợp không
-  	*/
+	 * Kiểm tra thí sinh có đủ môn của tổ hợp không
+	 */
 	private boolean hasAllSubjects(
 		Session session,
 		String cccd,
 		String mon1,
 		String mon2,
 		String mon3
-		) {
+	) {
 
-			String normalizedCccd = normalize(cccd);
+		String normalizedCccd = normalize(cccd);
 
-			Object[] row = session.createNativeQuery("""
-				SELECT
-					xt.TO, xt.LI, xt.HO, xt.SI, xt.SU, xt.DI, xt.VA, xt.N1_THI, xt.CNCN, xt.CNNN, xt.TI, xt.KTPL
-				FROM xt_diemthixettuyen xt
-				WHERE LOWER(REPLACE(REPLACE(xt.cccd, ' ', ''), '*', ''))
-					= LOWER(REPLACE(REPLACE(:cccdParam, ' ', ''), '*', ''))
-			""", Object[].class) // <-- Thêm Object[].class vào đây
-			.setParameter("cccdParam", normalizedCccd) // <-- Dùng Named Parameter cho an toàn
-			.uniqueResult();
+		@SuppressWarnings("unchecked")
+		List<Object[]> rows = session.createNativeQuery("""
+			SELECT
+				xt.TO, xt.LI, xt.HO, xt.SI, xt.SU, xt.DI, xt.VA,
+				xt.N1_CC, xt.CNCN, xt.CNNN, xt.TI, xt.KTPL
+			FROM xt_diemthixettuyen xt
+			WHERE LOWER(REPLACE(REPLACE(REPLACE(xt.cccd, ' ', ''), '_', ''), '*', ''))
+				= LOWER(REPLACE(REPLACE(REPLACE(:cccdParam, ' ', ''), '_', ''), '*', ''))
+		""")
+			.setParameter("cccdParam", normalizedCccd)
+			.list();
 
-			if (row == null) {
+		if (rows == null || rows.isEmpty()) {
 			return false;
 		}
 
+		Object[] row = rows.get(0);
 		Map<String, BigDecimal> subjectMap = new HashMap<>();
-
 		subjectMap.put("TO", toBigDecimal(row[0]));
 		subjectMap.put("LI", toBigDecimal(row[1]));
 		subjectMap.put("HO", toBigDecimal(row[2]));
@@ -241,28 +426,95 @@ public class BonusPointService {
 		subjectMap.put("KTPL", toBigDecimal(row[11]));
 
 		return hasSubject(subjectMap, mon1)
-		&& hasSubject(subjectMap, mon2)
-		&& hasSubject(subjectMap, mon3);
-		}
-
-		/**
-
-		* Kiểm tra môn có điểm không
-		*/
-		private boolean hasSubject(
-		Map<String, BigDecimal> subjectMap,
-		String subject
-		) {
-
-		String normalized = normalize(subject);
-
-		BigDecimal score = subjectMap.get(normalized);
-
-		return score != null
-		&& score.compareTo(BigDecimal.ZERO) > 0;
+			&& hasSubject(subjectMap, mon2)
+			&& hasSubject(subjectMap, mon3);
 	}
 
+	/**
+	 * Kiểm tra môn có điểm không
+	 */
+	private boolean hasSubject(
+		Map<String, BigDecimal> subjectMap,
+		String subject
+	) {
+		if (subject == null || subject.trim().isEmpty()) {
+			return false;
+		}
 
+		String normalized = normalize(subject);
+		if (normalized.equals("N1THI") || normalized.equals("N1CC") || normalized.equals("N1_CC")) {
+			normalized = "N1";
+		}
+
+		BigDecimal score = subjectMap.get(normalized);
+		return score != null && score.compareTo(BigDecimal.ZERO) > 0;
+	}
+
+	/**
+	 * Trả về danh sách môn thiếu (chuẩn hoá) cho tổ hợp, dùng để debug
+	 */
+	private List<String> getMissingSubjects(Session session, String cccd, String mon1, String mon2, String mon3) {
+		List<String> missing = new ArrayList<>();
+		Map<String, BigDecimal> subjectMap = loadSubjectMap(session, cccd);
+		if (subjectMap == null) {
+			missing.add("ALL");
+			return missing;
+		}
+		if (!hasSubject(subjectMap, mon1)) missing.add(mon1 == null ? "" : mon1);
+		if (!hasSubject(subjectMap, mon2)) missing.add(mon2 == null ? "" : mon2);
+		if (!hasSubject(subjectMap, mon3)) missing.add(mon3 == null ? "" : mon3);
+		return missing;
+	}
+
+	private Map<String, BigDecimal> loadSubjectMap(Session session, String cccd) {
+		String normalizedCccd = normalize(cccd);
+		@SuppressWarnings("unchecked")
+		List<Object[]> rows = session.createNativeQuery("""
+			SELECT
+				xt.TO, xt.LI, xt.HO, xt.SI, xt.SU, xt.DI, xt.VA,
+				xt.N1_CC, xt.CNCN, xt.CNNN, xt.TI, xt.KTPL
+			FROM xt_diemthixettuyen xt
+			WHERE LOWER(REPLACE(REPLACE(REPLACE(xt.cccd, ' ', ''), '_', ''), '*', ''))
+				= LOWER(REPLACE(REPLACE(REPLACE(?1, ' ', ''), '_', ''), '*', ''))
+		""")
+			.setParameter(1, normalizedCccd)
+			.list();
+		if (rows == null || rows.isEmpty()) return null;
+		Object[] row = rows.get(0);
+		Map<String, BigDecimal> subjectMap = new HashMap<>();
+		subjectMap.put("TO", toBigDecimal(row[0]));
+		subjectMap.put("LI", toBigDecimal(row[1]));
+		subjectMap.put("HO", toBigDecimal(row[2]));
+		subjectMap.put("SI", toBigDecimal(row[3]));
+		subjectMap.put("SU", toBigDecimal(row[4]));
+		subjectMap.put("DI", toBigDecimal(row[5]));
+		subjectMap.put("VA", toBigDecimal(row[6]));
+		subjectMap.put("N1", toBigDecimal(row[7]));
+		subjectMap.put("CNCN", toBigDecimal(row[8]));
+		subjectMap.put("CNNN", toBigDecimal(row[9]));
+		subjectMap.put("TI", toBigDecimal(row[10]));
+		subjectMap.put("KTPL", toBigDecimal(row[11]));
+		return subjectMap;
+	}
+
+	/**
+	 * Lấy phuong thuc thi của thí sinh từ xt_diemthixettuyen
+	 */
+	private String getExamPhuongThuc(Session session, String cccd) {
+		String normalizedCccd = normalize(cccd);
+		@SuppressWarnings("unchecked")
+		List<Object> rows = session.createNativeQuery("""
+			SELECT tx.d_phuongthuc
+			FROM xt_diemthixettuyen tx
+			WHERE LOWER(REPLACE(REPLACE(REPLACE(tx.cccd, ' ', ''), '_', ''), '*', ''))
+				= LOWER(REPLACE(REPLACE(REPLACE(?1, ' ', ''), '_', ''), '*', ''))
+		""")
+			.setParameter(1, normalizedCccd)
+			.list();
+
+		if (rows == null || rows.isEmpty()) return "";
+		return toString(rows.get(0));
+	}
 
 
 	/**
@@ -314,7 +566,7 @@ public class BonusPointService {
 		if (value == null) {
 			return "";
 		}
-		return value.trim().replaceAll("\\s+", "").replaceAll("_", "");
+		return value.trim().replaceAll("\\s+", "").replaceAll("_", "").toUpperCase(Locale.ROOT);
 	}
 
 	private String toString(Object obj) {

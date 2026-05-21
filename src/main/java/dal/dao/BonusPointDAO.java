@@ -8,6 +8,7 @@ import java.security.NoSuchAlgorithmException;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
 
@@ -79,6 +80,41 @@ public class BonusPointDAO {
 			return results;
 		} catch (Exception ex) {
 			throw asSqlException("tai danh sach diem cong", ex);
+		}
+	}
+
+	public List<BonusPointDTO> findRowsByCccd(String cccd) throws SQLException {
+		String normalizedCccd = normalizeCccd(cccd);
+		String sql = """
+			select d.iddiemcong, d.ts_cccd, d.manganh, d.matohop, d.phuongthuc, d.diemCC, d.diemUtxt, d.diemTong, d.ghichu, d.dc_keys
+			from xt_diemcongxetuyen d
+			where lower(replace(replace(replace(d.ts_cccd, ' ', ''), '_', ''), '*', '')) = :cccd
+		""";
+
+		try (Session session = HibernateUtil.getSessionFactory().openSession()) {
+			@SuppressWarnings("unchecked")
+			List<Object[]> rows = session.createNativeQuery(sql)
+					.setParameter("cccd", normalizedCccd)
+					.list();
+
+			List<BonusPointDTO> results = new ArrayList<>();
+			for (Object[] row : rows) {
+				BonusPointDTO dto = new BonusPointDTO();
+				dto.setId(toInt(row[0]));
+				dto.setTsCccd(toStr(row[1]));
+				dto.setMaNganh(toStr(row[2]));
+				dto.setMaToHop(toStr(row[3]));
+				dto.setPhuongThuc(toStr(row[4]));
+				dto.setDiemCC(toDouble(row[5]));
+				dto.setDiemUtxt(toDouble(row[6]));
+				dto.setDiemTong(toDouble(row[7]));
+				dto.setGhiChu(toStr(row[8]));
+				dto.setDcKeys(toStr(row[9]));
+				results.add(dto);
+			}
+			return results;
+		} catch (Exception ex) {
+			throw asSqlException("tai danh sach diem cong theo cccd", ex);
 		}
 	}
 
@@ -230,6 +266,13 @@ public class BonusPointDAO {
 
 	private static String safeNullable(String value) {
 		return value == null || value.trim().isEmpty() ? null : value.trim();
+	}
+
+	private static String normalizeCccd(String cccd) {
+		if (cccd == null) {
+			return "";
+		}
+		return cccd.trim().replaceAll("\\s+", "").replace("_", "").replace("*", "").toLowerCase(Locale.ROOT);
 	}
 
 	private static Integer toInt(Object value) {

@@ -197,7 +197,7 @@ public class NguyenVongDAO {
             session.beginTransaction();
             session.createNativeMutationQuery("""
                 create table if not exists xt_nguyen_vong (
-                    id bigint not null auto_increment,
+                    id int not null auto_increment,
                     cccd varchar(50),
                     thutunv int,
                     matruong varchar(50),

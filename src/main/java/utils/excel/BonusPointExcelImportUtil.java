@@ -99,6 +99,56 @@ public final class BonusPointExcelImportUtil {
         }
     }
 
+    public static List<BonusPointDTO> importEnglishCertificateRows(File file) throws IOException {
+        try (FileInputStream input = new FileInputStream(file);
+             Workbook workbook = new XSSFWorkbook(input)) {
+            DataFormatter formatter = new DataFormatter();
+            FormulaEvaluator evaluator = workbook.getCreationHelper().createFormulaEvaluator();
+
+            Sheet sheet = null;
+            Row headerRow = null;
+            Map<String, Integer> headerIndex = null;
+
+            for (int sheetIndex = 0; sheetIndex < workbook.getNumberOfSheets(); sheetIndex++) {
+                Sheet candidate = workbook.getSheetAt(sheetIndex);
+                HeaderMatch match = findHeaderRow(candidate, formatter, evaluator);
+                if (match != null) {
+                    sheet = candidate;
+                    headerRow = match.headerRow;
+                    headerIndex = match.headerIndex;
+                    break;
+                }
+            }
+
+            if (sheet == null) {
+                return List.of();
+            }
+
+            List<BonusPointDTO> results = new ArrayList<>();
+            int startRow = headerRow != null ? headerRow.getRowNum() + 1 : findFirstDataRow(sheet, formatter, evaluator);
+            for (int rowIndex = Math.max(startRow, 0); rowIndex <= sheet.getLastRowNum(); rowIndex++) {
+                Row row = sheet.getRow(rowIndex);
+                if (row == null) {
+                    continue;
+                }
+                if (isLikelyHeaderRow(row, formatter, evaluator)) {
+                    continue;
+                }
+
+                BonusPointDTO dto = new BonusPointDTO();
+                dto.setTsCccd(readText(row, formatter, evaluator, headerIndex, CCCD_HEADERS, FALLBACK_CCCD_COL));
+                dto.setDiemCC(readNumber(row, formatter, evaluator, headerIndex, BONUS_SCORE_HEADERS, FALLBACK_BONUS_SCORE_COL));
+
+                if (isBlank(dto.getTsCccd()) || dto.getDiemCC() == null) {
+                    continue;
+                }
+
+                results.add(dto);
+            }
+            return results;
+        }
+    }
+
     private static HeaderMatch findHeaderRow(Sheet sheet, DataFormatter formatter, FormulaEvaluator evaluator) {
         if (sheet == null) {
             return null;

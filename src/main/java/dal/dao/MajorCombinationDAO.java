@@ -114,6 +114,29 @@ public class MajorCombinationDAO {
 		return result;
 	}
 
+	public boolean hasEnglishSubject(String maToHop) throws SQLException {
+		String normalizedToHop = normalizeToHopCode(maToHop);
+		String sql = "select coalesce(mon1, ''), coalesce(mon2, ''), coalesce(mon3, '') from xt_tohop_monthi where lower(replace(replace(replace(matohop, ' ', ''), '_', ''), '*', '')) = :toHop limit 1";
+		try (Session session = HibernateUtil.getSessionFactory().openSession()) {
+			@SuppressWarnings("unchecked")
+			List<Object[]> rows = session.createNativeQuery(sql)
+					.setParameter("toHop", normalizedToHop.toLowerCase(Locale.ROOT))
+					.list();
+			if (rows == null || rows.isEmpty()) {
+				return false;
+			}
+			Object[] row = rows.get(0);
+			return isEnglishSubject(toStr(row[0])) || isEnglishSubject(toStr(row[1])) || isEnglishSubject(toStr(row[2]));
+		} catch (Exception ex) {
+			throw asSqlException("kiem tra to hop co mon Anh", ex);
+		}
+	}
+
+	private boolean isEnglishSubject(String subject) {
+		String normalized = safe(subject).toLowerCase(Locale.ROOT).replaceAll("đ", "d");
+		return normalized.contains("anh");
+	}
+
 	private String normalizeToHopCode(String rawCode) {
 		String value = safe(rawCode);
 		int bracketIndex = value.indexOf('(');

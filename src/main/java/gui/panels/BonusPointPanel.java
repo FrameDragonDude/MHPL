@@ -108,20 +108,24 @@ public class BonusPointPanel extends JPanel {
 		JPanel actions = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
 		actions.setOpaque(false);
 		JButton btnImport = new JButton("Import");
-		JButton btnGenerate = new JButton("Sinh dữ liệu NVXT");
-		JButton btnAdd = new JButton("+ Thêm điểm cộng");
-		styleButton(btnImport, COLOR_GREEN);
-		styleButton(btnGenerate, COLOR_BLUE_SOFT);
-		styleButton(btnAdd, COLOR_BLUE);
-		btnImport.setMargin(new Insets(6, 16, 6, 16));
-		btnGenerate.setMargin(new Insets(6, 16, 6, 16));
-		btnAdd.setMargin(new Insets(6, 16, 6, 16));
-		actions.add(btnImport);
-		actions.add(btnGenerate);
-		actions.add(btnAdd);
+			JButton btnImportEnglish = new JButton("Import chứng chỉ Anh");
+			JButton btnGenerate = new JButton("Sinh dữ liệu");
+			JButton btnAdd = new JButton("+ Thêm điểm cộng");
+			styleButton(btnImport, COLOR_GREEN);
+			styleButton(btnImportEnglish, COLOR_GREEN);
+			styleButton(btnGenerate, COLOR_BLUE_SOFT);
+			styleButton(btnAdd, COLOR_BLUE);
+			btnImport.setMargin(new Insets(6, 16, 6, 16));
+			btnImportEnglish.setMargin(new Insets(6, 16, 6, 16));
+			btnGenerate.setMargin(new Insets(6, 16, 6, 16));
+			btnAdd.setMargin(new Insets(6, 16, 6, 16));
+			actions.add(btnImport);
+			actions.add(btnImportEnglish);
+			actions.add(btnGenerate);
+			actions.add(btnAdd);
 
-		btnImport.addActionListener(e -> importFromExcel());
-		btnGenerate.addActionListener(e -> generateFromAspirationData());
+			btnImport.addActionListener(e -> importFromExcel());
+			btnImportEnglish.addActionListener(e -> importEnglishCertificate());
 		btnAdd.addActionListener(e -> addRow());
 
 		wrapper.add(left, BorderLayout.WEST);
@@ -411,6 +415,34 @@ public class BonusPointPanel extends JPanel {
 			loadPage(1);
 		} catch (Exception ex) {
 			showError("Không thể import file Excel", ex);
+		}
+	}
+
+	private void importEnglishCertificate() {
+		JFileChooser chooser = new JFileChooser();
+		chooser.setDialogTitle("Chọn file Excel chứng chỉ tiếng Anh");
+		chooser.setFileFilter(new FileNameExtensionFilter("Excel files (*.xlsx)", "xlsx"));
+
+		int result = chooser.showOpenDialog(this);
+		if (result != JFileChooser.APPROVE_OPTION) {
+			return;
+		}
+
+		File file = chooser.getSelectedFile();
+		try {
+			BonusPointService.EnglishCertificateImportResult resultInfo = service.importEnglishCertificateScores(file);
+			String message = "Import chứng chỉ Anh xong: "
+				+ resultInfo.getTotalRows() + " dòng đọc, "
+				+ resultInfo.getUpdatedRows() + " dòng cập nhật, "
+				+ resultInfo.getNotFoundRows() + " CCCD không tìm thấy, "
+				+ resultInfo.getSkippedRows() + " dòng bỏ qua";
+			if (resultInfo.getErrorRows() > 0) {
+				message += ", " + resultInfo.getErrorRows() + " lỗi.";
+			}
+			JOptionPane.showMessageDialog(this, message, "Kết quả import chứng chỉ Anh", JOptionPane.INFORMATION_MESSAGE);
+			loadPage(1);
+		} catch (Exception ex) {
+			showError("Không thể import chứng chỉ Anh", ex);
 		}
 	}
 
