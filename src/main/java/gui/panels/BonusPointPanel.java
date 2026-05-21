@@ -108,38 +108,39 @@ public class BonusPointPanel extends JPanel {
 		JPanel actions = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
 		actions.setOpaque(false);
 		JButton btnImport = new JButton("Import");
-			JButton btnImportEnglish = new JButton("Import chứng chỉ Anh");
-			JButton btnGenerate = new JButton("Sinh dữ liệu");
-				JButton btnUpdatePriority = new JButton("Cập nhật ưu tiên");
-			JButton btnAdd = new JButton("+ Thêm điểm cộng");
-			styleButton(btnImport, COLOR_GREEN);
-			styleButton(btnImportEnglish, COLOR_GREEN);
-			styleButton(btnGenerate, COLOR_BLUE_SOFT);
-				styleButton(btnUpdatePriority, COLOR_BLUE_SOFT);
-			styleButton(btnAdd, COLOR_BLUE);
-			btnImport.setMargin(new Insets(6, 16, 6, 16));
-			btnImportEnglish.setMargin(new Insets(6, 16, 6, 16));
-			btnGenerate.setMargin(new Insets(6, 16, 6, 16));
-			btnAdd.setMargin(new Insets(6, 16, 6, 16));
-			actions.add(btnImport);
-			actions.add(btnImportEnglish);
-			actions.add(btnGenerate);
-				actions.add(btnUpdatePriority);
-			actions.add(btnAdd);
+		JButton btnImportEnglish = new JButton("Import chứng chỉ Anh");
+		JButton btnGenerate = new JButton("Sinh dữ liệu");
+			JButton btnUpdatePriority = new JButton("Cập nhật ưu tiên");
+		JButton btnAdd = new JButton("+ Thêm điểm cộng");
+		styleButton(btnImport, COLOR_GREEN);
+		styleButton(btnImportEnglish, COLOR_GREEN);
+		styleButton(btnGenerate, COLOR_BLUE_SOFT);
+			styleButton(btnUpdatePriority, COLOR_BLUE_SOFT);
+		styleButton(btnAdd, COLOR_BLUE);
+		btnImport.setMargin(new Insets(6, 16, 6, 16));
+		btnImportEnglish.setMargin(new Insets(6, 16, 6, 16));
+		btnGenerate.setMargin(new Insets(6, 16, 6, 16));
+		btnAdd.setMargin(new Insets(6, 16, 6, 16));
+		actions.add(btnImport);
+		actions.add(btnImportEnglish);
+		actions.add(btnGenerate);
+			actions.add(btnUpdatePriority);
+		actions.add(btnAdd);
 
-			btnImport.addActionListener(e -> importFromExcel());
-			btnImportEnglish.addActionListener(e -> importEnglishCertificate());
-				btnUpdatePriority.addActionListener(e -> {
-					int confirm = JOptionPane.showConfirmDialog(this, "Cập nhật điểm ưu tiên cho tất cả bản ghi?", "Xác nhận cập nhật", JOptionPane.YES_NO_OPTION);
-					if (confirm != JOptionPane.YES_OPTION) return;
-					try {
-						BonusPointService.UpdatePriorityResult res = service.updateAllPriorityPoints();
-						JOptionPane.showMessageDialog(this, "Hoàn tất cập nhật: " + res.getUpdated() + " bản ghi cập nhật, " + res.getFailed() + " lỗi.", "Kết quả", JOptionPane.INFORMATION_MESSAGE);
-						loadPage(1);
-					} catch (Exception ex) {
-						showError("Không thể cập nhật điểm ưu tiên", ex instanceof Exception ? (Exception) ex : new Exception(ex));
-					}
-				});
+		btnImport.addActionListener(e -> importFromExcel());
+		btnImportEnglish.addActionListener(e -> importEnglishCertificate());
+		btnUpdatePriority.addActionListener(e -> {
+			int confirm = JOptionPane.showConfirmDialog(this, "Cập nhật điểm ưu tiên cho tất cả bản ghi?", "Xác nhận cập nhật", JOptionPane.YES_NO_OPTION);
+			if (confirm != JOptionPane.YES_OPTION) return;
+			try {
+				BonusPointService.UpdatePriorityResult res = service.updateAllPriorityPoints();
+				JOptionPane.showMessageDialog(this, "Hoàn tất cập nhật: " + res.getUpdated() + " bản ghi cập nhật, " + res.getFailed() + " lỗi.", "Kết quả", JOptionPane.INFORMATION_MESSAGE);
+				loadPage(1);
+			} catch (Exception ex) {
+				showError("Không thể cập nhật điểm ưu tiên", ex instanceof Exception ? (Exception) ex : new Exception(ex));
+			}
+		});
+		btnGenerate.addActionListener(e -> generateFromAspirationData());
 		btnAdd.addActionListener(e -> addRow());
 
 		wrapper.add(left, BorderLayout.WEST);

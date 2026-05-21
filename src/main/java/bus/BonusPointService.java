@@ -458,13 +458,13 @@ public class BonusPointService {
 		List<Object[]> rows = session.createNativeQuery("""
 			SELECT
 				xt.TO, xt.LI, xt.HO, xt.SI, xt.SU, xt.DI, xt.VA,
-				xt.N1_CC, xt.CNCN, xt.CNNN, xt.TI, xt.KTPL
+				xt.N1_THI, xt.N1_CC, xt.CNCN, xt.CNNN, xt.TI, xt.KTPL
 			FROM xt_diemthixettuyen xt
 			WHERE LOWER(REPLACE(REPLACE(REPLACE(xt.cccd, ' ', ''), '_', ''), '*', ''))
 				= LOWER(REPLACE(REPLACE(REPLACE(:cccdParam, ' ', ''), '_', ''), '*', ''))
 		""")
-			.setParameter("cccdParam", normalizedCccd)
-			.list();
+				.setParameter("cccdParam", normalizedCccd)
+				.list();
 
 		if (rows == null || rows.isEmpty()) {
 			return false;
@@ -479,11 +479,15 @@ public class BonusPointService {
 		subjectMap.put("SU", toBigDecimal(row[4]));
 		subjectMap.put("DI", toBigDecimal(row[5]));
 		subjectMap.put("VA", toBigDecimal(row[6]));
-		subjectMap.put("N1", toBigDecimal(row[7]));
-		subjectMap.put("CNCN", toBigDecimal(row[8]));
-		subjectMap.put("CNNN", toBigDecimal(row[9]));
-		subjectMap.put("TI", toBigDecimal(row[10]));
-		subjectMap.put("KTPL", toBigDecimal(row[11]));
+		BigDecimal n1Thi = toBigDecimal(row[7]);
+		BigDecimal n1Cc = toBigDecimal(row[8]);
+		subjectMap.put("N1_THI", n1Thi);
+		subjectMap.put("N1_CC", n1Cc);
+		subjectMap.put("N1", maxNonNull(n1Thi, n1Cc));
+		subjectMap.put("CNCN", toBigDecimal(row[9]));
+		subjectMap.put("CNNN", toBigDecimal(row[10]));
+		subjectMap.put("TI", toBigDecimal(row[11]));
+		subjectMap.put("KTPL", toBigDecimal(row[12]));
 
 		return hasSubject(subjectMap, mon1)
 			&& hasSubject(subjectMap, mon2)
@@ -502,7 +506,11 @@ public class BonusPointService {
 		}
 
 		String normalized = normalize(subject);
-		if (normalized.equals("N1THI") || normalized.equals("N1CC") || normalized.equals("N1_CC")) {
+		if (normalized.equals("N1THI")) {
+			normalized = "N1_THI";
+		} else if (normalized.equals("N1CC") || normalized.equals("N1_CC")) {
+			normalized = "N1_CC";
+		} else if (normalized.equals("N1")) {
 			normalized = "N1";
 		}
 
@@ -532,13 +540,13 @@ public class BonusPointService {
 		List<Object[]> rows = session.createNativeQuery("""
 			SELECT
 				xt.TO, xt.LI, xt.HO, xt.SI, xt.SU, xt.DI, xt.VA,
-				xt.N1_CC, xt.CNCN, xt.CNNN, xt.TI, xt.KTPL
+				xt.N1_THI, xt.N1_CC, xt.CNCN, xt.CNNN, xt.TI, xt.KTPL
 			FROM xt_diemthixettuyen xt
 			WHERE LOWER(REPLACE(REPLACE(REPLACE(xt.cccd, ' ', ''), '_', ''), '*', ''))
 				= LOWER(REPLACE(REPLACE(REPLACE(?1, ' ', ''), '_', ''), '*', ''))
 		""")
-			.setParameter(1, normalizedCccd)
-			.list();
+				.setParameter(1, normalizedCccd)
+				.list();
 		if (rows == null || rows.isEmpty()) return null;
 		Object[] row = rows.get(0);
 		Map<String, BigDecimal> subjectMap = new HashMap<>();
@@ -549,12 +557,22 @@ public class BonusPointService {
 		subjectMap.put("SU", toBigDecimal(row[4]));
 		subjectMap.put("DI", toBigDecimal(row[5]));
 		subjectMap.put("VA", toBigDecimal(row[6]));
-		subjectMap.put("N1", toBigDecimal(row[7]));
-		subjectMap.put("CNCN", toBigDecimal(row[8]));
-		subjectMap.put("CNNN", toBigDecimal(row[9]));
-		subjectMap.put("TI", toBigDecimal(row[10]));
-		subjectMap.put("KTPL", toBigDecimal(row[11]));
+		BigDecimal n1Thi = toBigDecimal(row[7]);
+		BigDecimal n1Cc = toBigDecimal(row[8]);
+		subjectMap.put("N1_THI", n1Thi);
+		subjectMap.put("N1_CC", n1Cc);
+		subjectMap.put("N1", maxNonNull(n1Thi, n1Cc));
+		subjectMap.put("CNCN", toBigDecimal(row[9]));
+		subjectMap.put("CNNN", toBigDecimal(row[10]));
+		subjectMap.put("TI", toBigDecimal(row[11]));
+		subjectMap.put("KTPL", toBigDecimal(row[12]));
 		return subjectMap;
+	}
+
+	private BigDecimal maxNonNull(BigDecimal a, BigDecimal b) {
+		if (a == null || a.compareTo(BigDecimal.ZERO) <= 0) return b == null ? BigDecimal.ZERO : b;
+		if (b == null || b.compareTo(BigDecimal.ZERO) <= 0) return a;
+		return a.compareTo(b) >= 0 ? a : b;
 	}
 
 	/**
