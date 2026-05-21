@@ -139,6 +139,66 @@ public class BonusPointService {
 		}
 	}
 
+	/**
+	 * Cập nhật điểm ưu tiên cho tất cả bản ghi trong xt_diemcongxetuyen.
+	 * Trả về số bản ghi đã cập nhật và số lỗi nếu có.
+	 */
+	public UpdatePriorityResult updateAllPriorityPoints() throws SQLException {
+		int updated = 0;
+		int failed = 0;
+		try (Session session = HibernateUtil.getSessionFactory().openSession()) {
+			int pages = countPages("", "");
+			for (int p = 1; p <= pages; p++) {
+				List<BonusPointDTO> rows = getRows("", "", p);
+				for (BonusPointDTO dto : rows) {
+					try {
+						// Tìm tổ hợp tương ứng
+						List<MajorCombinationDTO> combos = getMajorCombinationsByMajor(session, dto.getMaNganh());
+						MajorCombinationDTO matched = null;
+						for (MajorCombinationDTO c : combos) {
+							if (normalize(c.getMaToHop()).equals(normalize(dto.getMaToHop()))) {
+								matched = c;
+								break;
+							}
+						}
+						if (matched == null) {
+							// không tìm thấy tổ hợp, bỏ qua
+							continue;
+						}
+						java.math.BigDecimal diemu = calculateDiemUtxt(session, dto.getTsCccd(), matched.getMon1(), matched.getMon2(), matched.getMon3());
+						double diemUtxt = diemu == null ? 0.0 : diemu.doubleValue();
+						double diemCC = dto.getDiemCC() == null ? 0.0 : dto.getDiemCC();
+						double tong = diemCC + diemUtxt;
+						if (tong > 3.0) tong = 3.0;
+						dto.setDiemUtxt(diemUtxt);
+						dto.setDiemTong(tong);
+						// cập nhật
+						boolean ok = dao.update(dto);
+						if (ok) updated++; else failed++;
+					} catch (Exception ex) {
+						failed++;
+						// nếu transaction vẫn active thì rollback
+						// tiếp tục các bản ghi khác
+					}
+				}
+			}
+		}
+		return new UpdatePriorityResult(updated, failed);
+	}
+
+	public static class UpdatePriorityResult {
+		private final int updated;
+		private final int failed;
+
+		public UpdatePriorityResult(int updated, int failed) {
+			this.updated = updated;
+			this.failed = failed;
+		}
+
+		public int getUpdated() { return updated; }
+		public int getFailed() { return failed; }
+	}
+
 	// public GenerationResult generateBonusPointsFromAspirations(boolean replaceExisting) throws SQLException {
 	// 	try (Session session = HibernateUtil.getSessionFactory().openSession()) {
 	// 		Transaction tx = session.beginTransaction();

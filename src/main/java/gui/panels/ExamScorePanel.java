@@ -11,6 +11,7 @@ import javax.swing.table.TableCellRenderer;
 import utils.excel.ExamScoresExcelImportUtil;
 import utils.excel.ExamScoresExcelExportUtil;
 import utils.excel.ExamScoresMultiSheetExcelImportUtil;
+import utils.excel.N1CcExcelImportUtil;
 import bus.ExamScoreService;
 import dto.ExamScoreDTO;
 import gui.MainFrame;
@@ -97,18 +98,21 @@ public class ExamScorePanel extends JPanel {
         JPanel actions = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
         JButton btnImport = new JButton("Nhập Excel");
         JButton btnImportMulti = new JButton("Nhập VSAT/ĐGNL");
+        JButton btnImportN1 = new JButton("Nhập điểm quy đổi");
         JButton btnExport = new JButton("Xuất Excel");
         JButton btnAdd = new JButton("+ Nhập điểm");
         JButton btnStats = new JButton("Xem thống kê");
         styleButton(btnStats, new Color(255, 178, 102));
         styleButton(btnImport, COLOR_GREEN);
         styleButton(btnImportMulti, new Color(0, 150, 136));
+        styleButton(btnImportN1, new Color(102, 187, 106));
         styleButton(btnExport, new Color(30, 136, 229));
         styleButton(btnAdd, COLOR_BLUE);
 
         btnExport.addActionListener(e -> exportExamScoresToExcel());
         btnImport.addActionListener(e -> handleImportExcel());
         btnImportMulti.addActionListener(e -> handleImportVasatDgnlExcel());
+        btnImportN1.addActionListener(e -> handleImportN1CcExcel());
         
         btnStats.addActionListener(e -> {
             mainFrame.switchPanel("STATISTICS");
@@ -132,6 +136,7 @@ public class ExamScorePanel extends JPanel {
         actions.add(btnExport);
         actions.add(btnImport);
         actions.add(btnImportMulti);
+        actions.add(btnImportN1);
         actions.add(btnAdd);
 
         wrapper.add(left, BorderLayout.WEST);
@@ -381,6 +386,55 @@ public class ExamScorePanel extends JPanel {
                         "Lỗi import VSAT/ĐGNL: " + ex.getMessage(),
                         "Lỗi", JOptionPane.ERROR_MESSAGE);
                 });
+            }
+        }).start();
+    }
+
+    private void handleImportN1CcExcel() {
+        JFileChooser fileChooser = new JFileChooser();
+        fileChooser.setDialogTitle("Chọn file Excel điểm quy đổi (cccd, điểm quy đổi)");
+
+        int result = fileChooser.showOpenDialog(this);
+        if (result != JFileChooser.APPROVE_OPTION) return;
+
+        java.io.File file = fileChooser.getSelectedFile();
+
+        new Thread(() -> {
+            try {
+                java.util.Map<String, Double> map = N1CcExcelImportUtil.importN1Cc(file);
+                int updated = 0;
+                int notFound = 0;
+                int failed = 0;
+
+                for (java.util.Map.Entry<String, Double> e : map.entrySet()) {
+                    String cccd = e.getKey();
+                    Double val = e.getValue();
+                    try {
+                        java.util.List<ExamScoreDTO> found = examScoreService.getAllExamScores(cccd, null);
+                        if (found == null || found.isEmpty()) {
+                            notFound++;
+                            continue;
+                        }
+                        for (ExamScoreDTO dto : found) {
+                            dto.setDiemN1Cc(val);
+                            boolean ok = examScoreService.updateExamScore(dto);
+                            if (ok) updated++; else failed++;
+                        }
+                    } catch (Exception ex) {
+                        failed++;
+                    }
+                }
+
+                final int fUpdated = updated;
+                final int fNotFound = notFound;
+                final int fFailed = failed;
+                SwingUtilities.invokeLater(() -> {
+                    JOptionPane.showMessageDialog(this, "Kết quả nhập: " + fUpdated + " cập nhật, " + fNotFound + " không tìm thấy, " + fFailed + " lỗi.");
+                    refreshData();
+                });
+
+            } catch (Exception ex) {
+                SwingUtilities.invokeLater(() -> JOptionPane.showMessageDialog(this, "Lỗi import điểm quy đổi: " + ex.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE));
             }
         }).start();
     }
