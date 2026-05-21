@@ -12,6 +12,7 @@ public class NganhTuyenSinhDTO {
     private String nThpt;
     private String nVsat;
     private String diemTrungTuyen;
+    private String phuongThuc;
     private Integer soThiSinhDangKy;
 
     public Integer getId() {
@@ -100,6 +101,14 @@ public class NganhTuyenSinhDTO {
 
     public void setDiemTrungTuyen(String diemTrungTuyen) {
         this.diemTrungTuyen = diemTrungTuyen;
+    }
+
+    public String getPhuongThuc() {
+        return phuongThuc;
+    }
+
+    public void setPhuongThuc(String phuongThuc) {
+        this.phuongThuc = phuongThuc;
     }
 
     public Integer getSoThiSinhDangKy() {

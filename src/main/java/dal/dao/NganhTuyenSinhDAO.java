@@ -34,23 +34,26 @@ public class NganhTuyenSinhDAO {
         String code = safe(codeKeyword);
         String name = safe(nameKeyword);
         int offset = (Math.max(page, 1) - 1) * Math.max(pageSize, 1);
-                                String sql = """
-                                                select n.idnganh,
-                                                             n.manganh,
-                                                             n.tennganh,
-                                                             n.n_tuyenthang,
-                                                             n.n_diemsan,
-                                                             n.n_chitieu,
-                                                               n.n_diemtrungtuyen,
-                                                               count(v.idnv) as so_thi_sinh_dangky
-                                                from xt_nganh n
-                                                left join xt_nguyenvongxettuyen v on lower(trim(v.nv_manganh)) = lower(trim(n.manganh))
-                        where (:code = '' or n.manganh like :codeLike)
-                            and (:name = '' or n.tennganh like :nameLike)
-                        group by n.idnganh, n.manganh, n.tennganh, n.n_tuyenthang, n.n_diemsan, n.n_chitieu, n.n_diemtrungtuyen
-                        order by n.idnganh asc
-                        limit :limitValue offset :offsetValue
-                        """;
+                                                                String sql = """
+                                                                                                                                                                                                select n.idnganh,
+                                                                                                                                                                                                                                                 n.manganh,
+                                                                                                                                                                                                                                                 n.tennganh,
+                                                                                                                                                                                                                                                 n.n_tuyenthang,
+                                                                                                                                                                                                                                                 n.n_diemsan,
+                                                                                                                                                                                                                                                 n.n_chitieu,
+                                                                                                                                                                                                                                                         n.n_diemtrungtuyen,
+                                                                                                                                                                                                                                                         n.n_dgnl,
+                                                                                                                                                                                                                                                         n.n_thpt,
+                                                                                                                                                                                                                                                         n.n_vsat,
+                                                                                                                                                                                                                                                             count(distinct nullif(trim(v.cccd), '')) as so_thi_sinh_dangky
+                                                                                                                                                                                                                                from xt_nganh n
+                                                                                                                                                                                                                                left join xt_nguyen_vong v on lower(trim(v.maxettuyen)) = lower(trim(n.manganh))
+                                                where (:code = '' or n.manganh like :codeLike)
+                                                        and (:name = '' or n.tennganh like :nameLike)
+                                                group by n.idnganh, n.manganh, n.tennganh, n.n_tuyenthang, n.n_diemsan, n.n_chitieu, n.n_diemtrungtuyen
+                                                order by n.idnganh asc
+                                                limit :limitValue offset :offsetValue
+                                                """;
         try (Session session = HibernateUtil.getSessionFactory().openSession()) {
             @SuppressWarnings("unchecked")
             List<Object[]> rows = session.createNativeQuery(sql)
@@ -72,7 +75,16 @@ public class NganhTuyenSinhDAO {
                 dto.setNguongDauVao(toStr(row[4]));
                 dto.setChiTieuChot(toInt(row[5]));
                 dto.setDiemTrungTuyen(toStr(row[6]));
-                dto.setSoThiSinhDangKy(toInt(row[7]));
+                // build phương thức text from flags
+                String dgnl = toStr(row[7]);
+                String thpt = toStr(row[8]);
+                String vsat = toStr(row[9]);
+                StringBuilder method = new StringBuilder();
+                if (!dgnl.isEmpty()) { if (method.length() > 0) method.append(", "); method.append("DGNL"); }
+                if (!thpt.isEmpty()) { if (method.length() > 0) method.append(", "); method.append("THPT"); }
+                if (!vsat.isEmpty()) { if (method.length() > 0) method.append(", "); method.append("VSAT"); }
+                dto.setPhuongThuc(method.toString());
+                dto.setSoThiSinhDangKy(toInt(row[10]));
                 results.add(dto);
             }
             return results;

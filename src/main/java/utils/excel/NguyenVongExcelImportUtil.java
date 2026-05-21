@@ -22,11 +22,14 @@ public final class NguyenVongExcelImportUtil {
     private NguyenVongExcelImportUtil() {
     }
 
+    // Core headers: we require at minimum CCCD and Mã xét tuyển.
+    // Other headers are optional and will be handled if present.
     private static final String[] REQUIRED_HEADER_KEYS = {
-        "cccd", "thutunv", "matruong", "tentruong", "maxettuyen", "tenmaxettuyen"
+        "cccd", "maxettuyen"
     };
 
-    private static final int DEFAULT_MAX_ROWS = 100;
+    // 0 means no limit (import all rows)
+    private static final int DEFAULT_MAX_ROWS = 0;
 
     public static List<NguyenVongDTO> importRows(File file) throws IOException {
         return importRows(file, DEFAULT_MAX_ROWS);
@@ -105,6 +108,7 @@ public final class NguyenVongExcelImportUtil {
             }
             Map<String, Integer> headerIndex = buildHeaderIndex(row, formatter, evaluator);
             if (matchesRequiredHeaders(headerIndex)) {
+                System.out.println("[DEBUG] NguyenVongExcelImportUtil: matched header on sheet='" + sheet.getSheetName() + "' row=" + rowIndex);
                 return new HeaderMatch(row, headerIndex);
             }
         }
@@ -112,12 +116,10 @@ public final class NguyenVongExcelImportUtil {
     }
 
     private static boolean matchesRequiredHeaders(Map<String, Integer> headerIndex) {
-        for (String key : REQUIRED_HEADER_KEYS) {
-            if (headerIndex.get(normalize(key)) == null) {
-                return false;
-            }
-        }
-        return true;
+        // Require at least CCCD and Mã xét tuyển (maxettuyen). Other headers may be absent.
+        boolean hasCccd = headerIndex.get(normalize("cccd")) != null;
+        boolean hasMaXet = headerIndex.get(normalize("maxettuyen")) != null || headerIndex.get(normalize("ma xet tuyen")) != null;
+        return hasCccd && hasMaXet;
     }
 
     private static Map<String, Integer> buildHeaderIndex(Row headerRow, DataFormatter formatter, FormulaEvaluator evaluator) {
